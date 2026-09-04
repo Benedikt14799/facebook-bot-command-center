@@ -8,7 +8,7 @@
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
-import { warmupInfo } from "@/lib/warmup";
+import { warmupInfo, parseWeights, weightedActionOrder } from "@/lib/warmup";
 import { AiBlockedError, generateText } from "@/lib/ai.server";
 
 type Admin = SupabaseClient<Database>;
