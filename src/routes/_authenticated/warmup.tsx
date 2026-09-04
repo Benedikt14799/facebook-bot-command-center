@@ -170,33 +170,13 @@ function WarmupPage() {
                 <InfoHint text="Sicherheitsnetz: Bei gehäuften Fehlern oder Sperrhinweisen pausiert das System den Bot automatisch und verlängert die Aufwärmphase um 3 Tage." />
               </div>
 
-              <table className="mt-4 w-full text-xs">
-                <thead className="text-muted-foreground">
-                  <tr>
-                    <th className="py-1 text-left font-normal">ab Tag</th>
-                    <th className="py-1 text-left font-normal">Likes</th>
-                    <th className="py-1 text-left font-normal">Kommentare</th>
-                    <th className="py-1 text-left font-normal">Nachrichten</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {info.plan.map((stage, i) => (
-                    <tr
-                      key={stage.day}
-                      className={
-                        i === info.stageIndex && info.active
-                          ? "text-primary"
-                          : "text-muted-foreground"
-                      }
-                    >
-                      <td className="py-1">{stage.day}</td>
-                      <td className="py-1">{stage.likes}</td>
-                      <td className="py-1">{stage.comments}</td>
-                      <td className="py-1">{stage.dms}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <ProfileEditor
+                bot={bot}
+                activeStageIndex={info.active ? info.stageIndex : -1}
+                onSave={(values) => patch.mutate({ id: bot.id, values })}
+                saving={patch.isPending}
+              />
+
             </section>
           );
         })}
