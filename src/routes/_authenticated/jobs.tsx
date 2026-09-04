@@ -829,21 +829,17 @@ function EditJobDialog({
             <Button onClick={() => save.mutate("duplicate")} disabled={save.isPending}>
               Als neuen Auftrag duplizieren
             </Button>
+          ) : failed ? (
+            <Button onClick={() => save.mutate("retry")} disabled={save.isPending}>
+              Als Wiederholung neu einplanen
+            </Button>
           ) : (
             <>
-              {failed ? (
-                <Button
-                  variant="outline"
-                  onClick={() => save.mutate("requeue")}
-                  disabled={save.isPending}
-                >
-                  Speichern & neu einplanen
-                </Button>
-              ) : null}
               <Button onClick={() => save.mutate("save")} disabled={save.isPending}>
                 Speichern
               </Button>
             </>
+
           )}
         </DialogFooter>
       </DialogContent>
