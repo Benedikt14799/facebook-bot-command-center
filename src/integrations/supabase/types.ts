@@ -198,6 +198,7 @@ export type Database = {
           warmup_plan: Json
           warmup_preset: string
           warmup_start: string
+          warmup_weights: Json
           weekend_factor: number
         }
         Insert: {
@@ -232,6 +233,7 @@ export type Database = {
           warmup_plan?: Json
           warmup_preset?: string
           warmup_start?: string
+          warmup_weights?: Json
           weekend_factor?: number
         }
         Update: {
@@ -266,6 +268,7 @@ export type Database = {
           warmup_plan?: Json
           warmup_preset?: string
           warmup_start?: string
+          warmup_weights?: Json
           weekend_factor?: number
         }
         Relationships: []
