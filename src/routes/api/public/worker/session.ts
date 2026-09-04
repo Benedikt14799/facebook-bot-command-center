@@ -5,6 +5,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { authenticateWorker, json } from "@/lib/worker-auth.server";
 import { normalizeAntidetect, normalizeBehavior, normalizeFingerprint } from "@/lib/stealth";
+import { clearManualMode } from "@/lib/alerts.server";
 
 export const Route = createFileRoute("/api/public/worker/session")({
   server: {
