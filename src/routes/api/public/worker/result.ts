@@ -3,9 +3,13 @@
  *
  * Bei erfolgreichen Auftraegen wird zusaetzlich ein Eintrag in der Kontaktakte
  * der betroffenen Person angelegt (Like, Kommentar, Welcome-DM, Follow-up).
+ *
+ * Ungueltige Auftraege koennen niemals als done gemeldet werden; der Server
+ * zwingt stattdessen den Status failed.
  */
 import { createFileRoute } from "@tanstack/react-router";
 import { authenticateWorker, json } from "@/lib/worker-auth.server";
+import { validateJob } from "@/lib/job-validation";
 import { advanceStage, logContact, upsertRecipient } from "@/lib/contacts.server";
 
 /** Auftragstyp -> Art des Eintrags in der Kontaktakte. */
