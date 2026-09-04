@@ -677,16 +677,21 @@ function EditJobDialog({
         return;
       }
 
-      await doUpdateJob({
-        data: {
-          id: job.id,
-          ...base,
-          status: mode === "requeue" ? "pending" : undefined,
-          claimed_at: mode === "requeue" ? null : undefined,
-          claimed_by: mode === "requeue" ? null : undefined,
-          finished_at: mode === "requeue" ? null : undefined,
-        },
-      });
+      if (mode === "requeue") {
+        await doUpdateJob({
+          data: {
+            id: job.id,
+            ...base,
+            status: "pending",
+            error: null,
+            claimed_at: null,
+            claimed_by: null,
+            finished_at: null,
+          },
+        });
+      } else {
+        await doUpdateJob({ data: { id: job.id, ...base } });
+      }
     },
     onSuccess: () => {
       toast.success("Auftrag gespeichert");
