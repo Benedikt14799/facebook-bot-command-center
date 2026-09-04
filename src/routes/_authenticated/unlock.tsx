@@ -132,23 +132,30 @@ function BotUnlockCard({
   const save = useServerFn(saveSessionCookies);
   const release = useServerFn(releaseManualMode);
 
-  const wrap = <T,>(fn: (v: T) => Promise<unknown>, msg: string) =>
-    useMutation({
-      mutationFn: fn,
-      onSuccess: () => {
-        toast.success(msg);
-        onDone();
-      },
-      onError: (e: Error) => toast.error(e.message),
-    });
-
-  const mAsk = wrap(() => ask({ data: { botId } }), "Der Worker öffnet das Fenster beim nächsten Durchlauf.");
-  const mStop = wrap(() => stop({ data: { botId } }), "Anforderung zurückgenommen.");
-  const mSave = wrap(
-    () => save({ data: { botId, cookiesJson: cookies, userAgent: ua || null } }),
-    "Cookies gespeichert — Bot ist wieder freigeschaltet.",
-  );
-  const mRelease = wrap(() => release({ data: { botId } }), "Manueller Modus aufgehoben.");
+  // Eine Mutation fuer alle Aktionen: was passieren soll, kommt beim Klick rein.
+  const act = useMutation({
+    mutationFn: async (what: "ask" | "stop" | "save" | "release") => {
+      if (what === "ask") {
+        await ask({ data: { botId } });
+        return "Der Worker öffnet das Fenster beim nächsten Durchlauf.";
+      }
+      if (what === "stop") {
+        await stop({ data: { botId } });
+        return "Anforderung zurückgenommen.";
+      }
+      if (what === "save") {
+        await save({ data: { botId, cookiesJson: cookies, userAgent: ua || null } });
+        return "Cookies gespeichert — Bot ist wieder freigeschaltet.";
+      }
+      await release({ data: { botId } });
+      return "Manueller Modus aufgehoben.";
+    },
+    onSuccess: (msg) => {
+      toast.success(msg);
+      onDone();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
 
   return (
     <section className="rounded-lg border border-destructive/40 bg-card p-4">

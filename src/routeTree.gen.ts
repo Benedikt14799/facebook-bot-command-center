@@ -19,6 +19,7 @@ import { Route as AuthenticatedJobsRouteImport } from './routes/_authenticated/j
 import { Route as AuthenticatedLogsRouteImport } from './routes/_authenticated/logs'
 import { Route as AuthenticatedMessagesRouteImport } from './routes/_authenticated/messages'
 import { Route as AuthenticatedTemplatesRouteImport } from './routes/_authenticated/templates'
+import { Route as AuthenticatedUnlockRouteImport } from './routes/_authenticated/unlock'
 import { Route as AuthenticatedWarmupRouteImport } from './routes/_authenticated/warmup'
 import { Route as AuthenticatedWorkerHealthRouteImport } from './routes/_authenticated/worker-health'
 import { Route as AuthenticatedWorkersRouteImport } from './routes/_authenticated/workers'
@@ -85,6 +86,11 @@ const AuthenticatedMessagesRoute = AuthenticatedMessagesRouteImport.update({
 const AuthenticatedTemplatesRoute = AuthenticatedTemplatesRouteImport.update({
   id: '/templates',
   path: '/templates',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedUnlockRoute = AuthenticatedUnlockRouteImport.update({
+  id: '/unlock',
+  path: '/unlock',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedWarmupRoute = AuthenticatedWarmupRouteImport.update({
@@ -194,6 +200,7 @@ export interface FileRoutesByFullPath {
   '/logs': typeof AuthenticatedLogsRoute
   '/messages': typeof AuthenticatedMessagesRoute
   '/templates': typeof AuthenticatedTemplatesRoute
+  '/unlock': typeof AuthenticatedUnlockRoute
   '/warmup': typeof AuthenticatedWarmupRoute
   '/worker-health': typeof AuthenticatedWorkerHealthRoute
   '/workers': typeof AuthenticatedWorkersRoute
@@ -223,6 +230,7 @@ export interface FileRoutesByTo {
   '/logs': typeof AuthenticatedLogsRoute
   '/messages': typeof AuthenticatedMessagesRoute
   '/templates': typeof AuthenticatedTemplatesRoute
+  '/unlock': typeof AuthenticatedUnlockRoute
   '/warmup': typeof AuthenticatedWarmupRoute
   '/worker-health': typeof AuthenticatedWorkerHealthRoute
   '/workers': typeof AuthenticatedWorkersRoute
@@ -254,6 +262,7 @@ export interface FileRoutesById {
   '/_authenticated/logs': typeof AuthenticatedLogsRoute
   '/_authenticated/messages': typeof AuthenticatedMessagesRoute
   '/_authenticated/templates': typeof AuthenticatedTemplatesRoute
+  '/_authenticated/unlock': typeof AuthenticatedUnlockRoute
   '/_authenticated/warmup': typeof AuthenticatedWarmupRoute
   '/_authenticated/worker-health': typeof AuthenticatedWorkerHealthRoute
   '/_authenticated/workers': typeof AuthenticatedWorkersRoute
@@ -285,6 +294,7 @@ export interface FileRouteTypes {
     | '/logs'
     | '/messages'
     | '/templates'
+    | '/unlock'
     | '/warmup'
     | '/worker-health'
     | '/workers'
@@ -314,6 +324,7 @@ export interface FileRouteTypes {
     | '/logs'
     | '/messages'
     | '/templates'
+    | '/unlock'
     | '/warmup'
     | '/worker-health'
     | '/workers'
@@ -344,6 +355,7 @@ export interface FileRouteTypes {
     | '/_authenticated/logs'
     | '/_authenticated/messages'
     | '/_authenticated/templates'
+    | '/_authenticated/unlock'
     | '/_authenticated/warmup'
     | '/_authenticated/worker-health'
     | '/_authenticated/workers'
@@ -451,6 +463,13 @@ declare module '@tanstack/react-router' {
       path: '/templates'
       fullPath: '/templates'
       preLoaderRoute: typeof AuthenticatedTemplatesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/unlock': {
+      id: '/_authenticated/unlock'
+      path: '/unlock'
+      fullPath: '/unlock'
+      preLoaderRoute: typeof AuthenticatedUnlockRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/warmup': {
@@ -590,6 +609,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedLogsRoute: typeof AuthenticatedLogsRoute
   AuthenticatedMessagesRoute: typeof AuthenticatedMessagesRoute
   AuthenticatedTemplatesRoute: typeof AuthenticatedTemplatesRoute
+  AuthenticatedUnlockRoute: typeof AuthenticatedUnlockRoute
   AuthenticatedWarmupRoute: typeof AuthenticatedWarmupRoute
   AuthenticatedWorkerHealthRoute: typeof AuthenticatedWorkerHealthRoute
   AuthenticatedWorkersRoute: typeof AuthenticatedWorkersRoute
@@ -607,6 +627,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedLogsRoute: AuthenticatedLogsRoute,
   AuthenticatedMessagesRoute: AuthenticatedMessagesRoute,
   AuthenticatedTemplatesRoute: AuthenticatedTemplatesRoute,
+  AuthenticatedUnlockRoute: AuthenticatedUnlockRoute,
   AuthenticatedWarmupRoute: AuthenticatedWarmupRoute,
   AuthenticatedWorkerHealthRoute: AuthenticatedWorkerHealthRoute,
   AuthenticatedWorkersRoute: AuthenticatedWorkersRoute,
