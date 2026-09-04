@@ -31,12 +31,13 @@ export type EnvCheck = {
 export function checkEnv(): EnvCheck {
   const clientEnv = (import.meta.env ?? {}) as Record<string, string | undefined>;
   const isServer = typeof window === "undefined";
-  const serverEnv = (isServer ? (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env : undefined) ?? {};
+  const serverEnv =
+    (isServer
+      ? (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env
+      : undefined) ?? {};
 
   const missingClient = CLIENT_VARS.filter((k) => !clientEnv[k] && !serverEnv[k]);
-  const missingServer = isServer
-    ? SERVER_VARS.filter((k) => !serverEnv[k] && !clientEnv[k])
-    : [];
+  const missingServer = isServer ? SERVER_VARS.filter((k) => !serverEnv[k] && !clientEnv[k]) : [];
   const missingOptional = isServer
     ? Object.keys(OPTIONAL_SERVER_VARS).filter((k) => !serverEnv[k])
     : [];
@@ -58,9 +59,7 @@ export function validateEnv() {
   const result = checkEnv();
 
   for (const key of result.missingOptional) {
-    console.warn(
-      `[env] Optionale Variable ${key} fehlt — betroffen: ${OPTIONAL_SERVER_VARS[key]}`,
-    );
+    console.warn(`[env] Optionale Variable ${key} fehlt — betroffen: ${OPTIONAL_SERVER_VARS[key]}`);
   }
 
   if (result.ok) return result;

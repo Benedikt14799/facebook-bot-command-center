@@ -35,9 +35,15 @@ export const Route = createFileRoute("/_authenticated/groups")({
   head: () => ({
     meta: [
       { title: "Gruppen — FB/Control" },
-      { name: "description", content: "Facebook-Gruppen verwalten: Regeln, Caps, Bots und Empfänger." },
+      {
+        name: "description",
+        content: "Facebook-Gruppen verwalten: Regeln, Caps, Bots und Empfänger.",
+      },
       { property: "og:title", content: "Gruppen — FB/Control" },
-      { property: "og:description", content: "Facebook-Gruppen verwalten: Regeln, Caps, Bots und Empfänger." },
+      {
+        property: "og:description",
+        content: "Facebook-Gruppen verwalten: Regeln, Caps, Bots und Empfänger.",
+      },
     ],
   }),
   component: GroupsPage,
@@ -92,7 +98,9 @@ function GroupsPage() {
 
   const assign = useMutation({
     mutationFn: async ({ groupId, botId }: { groupId: string; botId: string }) => {
-      const { error } = await supabase.from("bot_groups").insert({ group_id: groupId, bot_id: botId });
+      const { error } = await supabase
+        .from("bot_groups")
+        .insert({ group_id: groupId, bot_id: botId });
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["bot_groups"] }),
@@ -228,7 +236,10 @@ function GroupsPage() {
                   onChange={(e) => setSelected({ ...selected, name: e.target.value })}
                 />
               </Row>
-              <Row label="FB-Gruppen-ID" hint="Die Zahl aus der Gruppen-URL. Der Worker nutzt sie, um die Gruppe eindeutig anzusteuern.">
+              <Row
+                label="FB-Gruppen-ID"
+                hint="Die Zahl aus der Gruppen-URL. Der Worker nutzt sie, um die Gruppe eindeutig anzusteuern."
+              >
                 <Input
                   value={selected.fb_group_id ?? ""}
                   onChange={(e) => setSelected({ ...selected, fb_group_id: e.target.value })}
@@ -240,13 +251,19 @@ function GroupsPage() {
                   onChange={(e) => setSelected({ ...selected, url: e.target.value })}
                 />
               </Row>
-              <Row label="Sprache" hint="Sprache der Gruppe — bestimmt, in welcher Sprache Texte erzeugt werden.">
+              <Row
+                label="Sprache"
+                hint="Sprache der Gruppe — bestimmt, in welcher Sprache Texte erzeugt werden."
+              >
                 <Input
                   value={selected.language ?? ""}
                   onChange={(e) => setSelected({ ...selected, language: e.target.value })}
                 />
               </Row>
-              <Row label="Mitglieder" hint="Ungefähre Gruppengröße, nur zur Einschätzung des Potenzials.">
+              <Row
+                label="Mitglieder"
+                hint="Ungefähre Gruppengröße, nur zur Einschätzung des Potenzials."
+              >
                 <Input
                   type="number"
                   value={selected.member_count ?? 0}
@@ -255,7 +272,10 @@ function GroupsPage() {
                   }
                 />
               </Row>
-              <Row label="Status" hint="active = Aktionen erlaubt, pending = Beitritt läuft, paused/blocked = keine Aktionen.">
+              <Row
+                label="Status"
+                hint="active = Aktionen erlaubt, pending = Beitritt läuft, paused/blocked = keine Aktionen."
+              >
                 <Select
                   value={selected.status}
                   onValueChange={(v) => setSelected({ ...selected, status: v })}
@@ -272,7 +292,11 @@ function GroupsPage() {
                   </SelectContent>
                 </Select>
               </Row>
-              <Row label="Erlaubte Aktionen" full hint="Welche Aktionstypen in dieser Gruppe überhaupt erlaubt sind — z. B. nur Likes und Kommentare, keine DMs.">
+              <Row
+                label="Erlaubte Aktionen"
+                full
+                hint="Welche Aktionstypen in dieser Gruppe überhaupt erlaubt sind — z. B. nur Likes und Kommentare, keine DMs."
+              >
                 <div className="flex gap-2">
                   {ACTIONS.map((a) => {
                     const on = selected.allowed_actions.includes(a);
@@ -300,7 +324,10 @@ function GroupsPage() {
                   })}
                 </div>
               </Row>
-              <Row label="Cap Likes" hint="Tageslimit für Likes speziell in dieser Gruppe (zusätzlich zum Bot-Limit).">
+              <Row
+                label="Cap Likes"
+                hint="Tageslimit für Likes speziell in dieser Gruppe (zusätzlich zum Bot-Limit)."
+              >
                 <Input
                   type="number"
                   value={selected.cap_likes ?? 0}
@@ -316,14 +343,20 @@ function GroupsPage() {
                   }
                 />
               </Row>
-              <Row label="Cap DMs" hint="Tageslimit für Direktnachrichten an Mitglieder dieser Gruppe.">
+              <Row
+                label="Cap DMs"
+                hint="Tageslimit für Direktnachrichten an Mitglieder dieser Gruppe."
+              >
                 <Input
                   type="number"
                   value={selected.cap_dms ?? 0}
                   onChange={(e) => setSelected({ ...selected, cap_dms: Number(e.target.value) })}
                 />
               </Row>
-              <Row label="Cooldown (min)" hint="Mindestpause zwischen zwei Aktionen in dieser Gruppe.">
+              <Row
+                label="Cooldown (min)"
+                hint="Mindestpause zwischen zwei Aktionen in dieser Gruppe."
+              >
                 <Input
                   type="number"
                   value={selected.cooldown_minutes}
@@ -332,7 +365,10 @@ function GroupsPage() {
                   }
                 />
               </Row>
-              <Row label="Aktiv von" hint="Frühester Zeitpunkt, zu dem in dieser Gruppe gearbeitet wird.">
+              <Row
+                label="Aktiv von"
+                hint="Frühester Zeitpunkt, zu dem in dieser Gruppe gearbeitet wird."
+              >
                 <Input
                   type="time"
                   value={(selected.active_from ?? "").slice(0, 5)}
@@ -348,21 +384,32 @@ function GroupsPage() {
                   onChange={(e) => setSelected({ ...selected, active_to: `${e.target.value}:00` })}
                 />
               </Row>
-              <Row label="Min-Score" hint="Mindestbewertung eines Empfängers, damit er angeschrieben wird — filtert uninteressante Profile heraus.">
+              <Row
+                label="Min-Score"
+                hint="Mindestbewertung eines Empfängers, damit er angeschrieben wird — filtert uninteressante Profile heraus."
+              >
                 <Input
                   type="number"
                   value={selected.min_score}
                   onChange={(e) => setSelected({ ...selected, min_score: Number(e.target.value) })}
                 />
               </Row>
-              <Row label="Tonfall" full hint="Schreibstil speziell für diese Gruppe, überschreibt den Bot-Tonfall.">
+              <Row
+                label="Tonfall"
+                full
+                hint="Schreibstil speziell für diese Gruppe, überschreibt den Bot-Tonfall."
+              >
                 <Textarea
                   rows={3}
                   value={selected.tone ?? ""}
                   onChange={(e) => setSelected({ ...selected, tone: e.target.value })}
                 />
               </Row>
-              <Row label="Notizen" full hint="Freie Notizen, z. B. Gruppenregeln oder was in dieser Gruppe gut funktioniert.">
+              <Row
+                label="Notizen"
+                full
+                hint="Freie Notizen, z. B. Gruppenregeln oder was in dieser Gruppe gut funktioniert."
+              >
                 <Textarea
                   rows={2}
                   value={selected.notes ?? ""}

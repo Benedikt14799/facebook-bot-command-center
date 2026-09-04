@@ -22,7 +22,10 @@ export const Route = createFileRoute("/_authenticated/logs")({
       { title: "Protokoll — FB/Control" },
       { name: "description", content: "Ereignisse, Warnungen und Fehler aller Bots und Worker." },
       { property: "og:title", content: "Protokoll — FB/Control" },
-      { property: "og:description", content: "Ereignisse, Warnungen und Fehler aller Bots und Worker." },
+      {
+        property: "og:description",
+        content: "Ereignisse, Warnungen und Fehler aller Bots und Worker.",
+      },
     ],
   }),
   component: LogsPage,

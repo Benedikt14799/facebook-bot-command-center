@@ -39,7 +39,10 @@ export const Route = createFileRoute("/api/public/worker/messages")({
         const direction = body.direction === "in" ? "in" : "out";
 
         let recipientId = body.recipient_id ?? null;
-        if (!recipientId && (body.recipient_name || body.recipient_fb_id || body.recipient_profile_url)) {
+        if (
+          !recipientId &&
+          (body.recipient_name || body.recipient_fb_id || body.recipient_profile_url)
+        ) {
           recipientId = await upsertRecipient(ctx.admin, {
             userId: ctx.userId,
             groupId: body.group_id ?? null,
@@ -54,7 +57,10 @@ export const Route = createFileRoute("/api/public/worker/messages")({
         } else if (recipientId && direction === "in") {
           await ctx.admin
             .from("recipients")
-            .update({ last_context: body.body, context_updated_at: new Date().toISOString() } as never)
+            .update({
+              last_context: body.body,
+              context_updated_at: new Date().toISOString(),
+            } as never)
             .eq("id", recipientId);
         }
 

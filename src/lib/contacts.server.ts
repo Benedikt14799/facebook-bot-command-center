@@ -99,11 +99,7 @@ export function parseName(input: {
 
   // Fallback: Slug der Profil-URL, z. B. /benedikt.mueller oder /profile.php?id=…
   if (!full && input.profileUrl) {
-    const slug = input.profileUrl
-      .split("?")[0]!
-      .replace(/\/+$/, "")
-      .split("/")
-      .pop();
+    const slug = input.profileUrl.split("?")[0]!.replace(/\/+$/, "").split("/").pop();
     if (slug && !/^profile\.php$/i.test(slug) && /[a-zA-Z]/.test(slug)) {
       const parts = slug
         .replace(/-\d+$/, "")
@@ -123,7 +119,9 @@ export function parseName(input: {
     .map((t) => t.replace(/^[^\p{L}]+|[^\p{L}.'’-]+$/gu, ""))
     .filter(Boolean);
 
-  const nameTokens = tokens.map((t) => (t === t.toUpperCase() || t === t.toLowerCase() ? capitalize(t) : t));
+  const nameTokens = tokens.map((t) =>
+    t === t.toUpperCase() || t === t.toLowerCase() ? capitalize(t) : t,
+  );
 
   const firstToken = nameTokens.find(
     (t) =>
@@ -221,7 +219,10 @@ export async function upsertRecipient(admin: Admin, input: PersonInput) {
   for (const k of Object.keys(patch)) if (patch[k] === undefined) delete patch[k];
 
   if (existing) {
-    await admin.from("recipients").update(patch as never).eq("id", existing.id);
+    await admin
+      .from("recipients")
+      .update(patch as never)
+      .eq("id", existing.id);
     return existing.id;
   }
 
@@ -281,7 +282,10 @@ export async function advanceStage(admin: Admin, recipientId: string, stage: Sta
   if (next <= current) return;
   const patch: Record<string, unknown> = { stage };
   if (stage === "offer_sent") patch["offer_sent_at"] = new Date().toISOString();
-  await admin.from("recipients").update(patch as never).eq("id", recipientId);
+  await admin
+    .from("recipients")
+    .update(patch as never)
+    .eq("id", recipientId);
 }
 
 /** Bisherigen Gespraechsverlauf einer Person fuer die KI aufbereiten. */
@@ -298,7 +302,11 @@ export async function conversationHistory(
     .limit(limit);
   return (data ?? [])
     .reverse()
-    .map((m) => ({ direction: m.direction === "in" ? "in" : "out", body: m.body, at: m.created_at }));
+    .map((m) => ({
+      direction: m.direction === "in" ? "in" : "out",
+      body: m.body,
+      at: m.created_at,
+    }));
 }
 
 /**

@@ -5,7 +5,6 @@
  */
 import { createFileRoute } from "@tanstack/react-router";
 
-
 export const Route = createFileRoute("/api/public/cron/plan")({
   server: {
     handlers: {
@@ -14,14 +13,21 @@ export const Route = createFileRoute("/api/public/cron/plan")({
         const admin0 = supabaseAdmin as never as {
           from: (t: string) => {
             select: (c: string) => {
-              eq: (k: string, v: string) => { maybeSingle: () => Promise<{ data: { token: string } | null }> };
+              eq: (
+                k: string,
+                v: string,
+              ) => { maybeSingle: () => Promise<{ data: { token: string } | null }> };
             };
           };
         };
 
         // Zugangspruefung: Token kommt aus der internen Tabelle cron_tokens
         const provided = request.headers.get("x-cron-token") ?? "";
-        const { data: row } = await admin0.from("cron_tokens").select("token").eq("name", "scheduler").maybeSingle();
+        const { data: row } = await admin0
+          .from("cron_tokens")
+          .select("token")
+          .eq("name", "scheduler")
+          .maybeSingle();
         if (!row || !provided || provided !== row.token) {
           return new Response("Unauthorized", { status: 401 });
         }

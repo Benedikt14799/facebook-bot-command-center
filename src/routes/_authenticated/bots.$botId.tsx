@@ -29,9 +29,15 @@ export const Route = createFileRoute("/_authenticated/bots/$botId")({
   head: () => ({
     meta: [
       { title: "Bot-Details — FB/Control" },
-      { name: "description", content: "Warmup, Zeitfenster, Limits, Tonfall und Cookie-Session eines Bots." },
+      {
+        name: "description",
+        content: "Warmup, Zeitfenster, Limits, Tonfall und Cookie-Session eines Bots.",
+      },
       { property: "og:title", content: "Bot-Details — FB/Control" },
-      { property: "og:description", content: "Warmup, Zeitfenster, Limits und Cookie-Session eines Bots." },
+      {
+        property: "og:description",
+        content: "Warmup, Zeitfenster, Limits und Cookie-Session eines Bots.",
+      },
     ],
   }),
   component: BotDetail,
@@ -139,12 +145,18 @@ function BotDetail() {
     >
       <div className="grid gap-4 lg:grid-cols-2">
         <section className="rounded-lg border border-border bg-card p-4">
-          <h2 className="mb-3 flex items-center gap-2 text-sm font-medium text-foreground">Profil <InfoHint text="Stammdaten des Bots: Name, Facebook-Profil, optionaler Proxy und Notizen." /></h2>
+          <h2 className="mb-3 flex items-center gap-2 text-sm font-medium text-foreground">
+            Profil{" "}
+            <InfoHint text="Stammdaten des Bots: Name, Facebook-Profil, optionaler Proxy und Notizen." />
+          </h2>
           <div className="grid gap-3 sm:grid-cols-2">
             <Field label="Name">
               <Input value={f.name ?? ""} onChange={(e) => set({ name: e.target.value })} />
             </Field>
-            <Field label="FB-Profilname" hint="Der Name, wie er auf Facebook angezeigt wird — hilft beim Zuordnen von Nachrichten.">
+            <Field
+              label="FB-Profilname"
+              hint="Der Name, wie er auf Facebook angezeigt wird — hilft beim Zuordnen von Nachrichten."
+            >
               <Input
                 value={f.fb_profile_name ?? ""}
                 onChange={(e) => set({ fb_profile_name: e.target.value })}
@@ -156,10 +168,16 @@ function BotDetail() {
                 onChange={(e) => set({ profile_url: e.target.value })}
               />
             </Field>
-            <Field label="Proxy" hint="Optionale Proxy-Adresse, damit jedes Profil über eine eigene IP arbeitet. Reduziert das Risiko, dass Facebook Profile verknüpft.">
+            <Field
+              label="Proxy"
+              hint="Optionale Proxy-Adresse, damit jedes Profil über eine eigene IP arbeitet. Reduziert das Risiko, dass Facebook Profile verknüpft."
+            >
               <Input value={f.proxy ?? ""} onChange={(e) => set({ proxy: e.target.value })} />
             </Field>
-            <Field label="Status" hint="live = arbeitet normal, warmup = eingeschränkter Aufwärmbetrieb, paused = pausiert, blocked = von Facebook eingeschränkt.">
+            <Field
+              label="Status"
+              hint="live = arbeitet normal, warmup = eingeschränkter Aufwärmbetrieb, paused = pausiert, blocked = von Facebook eingeschränkt."
+            >
               <Select value={f.status} onValueChange={(v) => set({ status: v })}>
                 <SelectTrigger>
                   <SelectValue />
@@ -173,7 +191,10 @@ function BotDetail() {
                 </SelectContent>
               </Select>
             </Field>
-            <Field label="Warmup-Start" hint="Startdatum der Aufwärmphase. Je jünger, desto vorsichtiger arbeitet der Bot (weniger Aktionen pro Tag).">
+            <Field
+              label="Warmup-Start"
+              hint="Startdatum der Aufwärmphase. Je jünger, desto vorsichtiger arbeitet der Bot (weniger Aktionen pro Tag)."
+            >
               <Input
                 type="date"
                 value={f.warmup_start ?? ""}
@@ -209,9 +230,15 @@ function BotDetail() {
         </section>
 
         <section className="rounded-lg border border-border bg-card p-4">
-          <h2 className="mb-3 flex items-center gap-2 text-sm font-medium text-foreground">Zeitplan & Limits <InfoHint text="Arbeitsfenster, Zufalls-Jitter, Wochenendfaktor und Tages-Caps. So verhält sich der Bot menschlich und wird seltener von Facebook gesperrt." /></h2>
+          <h2 className="mb-3 flex items-center gap-2 text-sm font-medium text-foreground">
+            Zeitplan & Limits{" "}
+            <InfoHint text="Arbeitsfenster, Zufalls-Jitter, Wochenendfaktor und Tages-Caps. So verhält sich der Bot menschlich und wird seltener von Facebook gesperrt." />
+          </h2>
           <div className="grid gap-3 sm:grid-cols-2">
-            <Field label="Aktiv von" hint="Beginn des täglichen Arbeitsfensters, z. B. 08:00 — außerhalb passiert nichts.">
+            <Field
+              label="Aktiv von"
+              hint="Beginn des täglichen Arbeitsfensters, z. B. 08:00 — außerhalb passiert nichts."
+            >
               <Input
                 type="time"
                 value={(f.active_from ?? "").slice(0, 5)}
@@ -225,17 +252,26 @@ function BotDetail() {
                 onChange={(e) => set({ active_to: `${e.target.value}:00` })}
               />
             </Field>
-            <Field label="Zeitzone" hint="Zeitzone, in der die Arbeitszeiten gelten (z. B. Europe/Berlin).">
+            <Field
+              label="Zeitzone"
+              hint="Zeitzone, in der die Arbeitszeiten gelten (z. B. Europe/Berlin)."
+            >
               <Input value={f.timezone ?? ""} onChange={(e) => set({ timezone: e.target.value })} />
             </Field>
-            <Field label="Jitter (Minuten)" hint="Zufällige Verschiebung jeder Aktion in Minuten, damit kein maschinelles Muster entsteht.">
+            <Field
+              label="Jitter (Minuten)"
+              hint="Zufällige Verschiebung jeder Aktion in Minuten, damit kein maschinelles Muster entsteht."
+            >
               <Input
                 type="number"
                 value={f.jitter_minutes ?? 0}
                 onChange={(e) => set({ jitter_minutes: Number(e.target.value) })}
               />
             </Field>
-            <Field label="Wochenend-Faktor" hint="Multiplikator für Wochenenden, z. B. 0.6 = 40 % weniger Aktionen.">
+            <Field
+              label="Wochenend-Faktor"
+              hint="Multiplikator für Wochenenden, z. B. 0.6 = 40 % weniger Aktionen."
+            >
               <Input
                 type="number"
                 step="0.1"
@@ -250,14 +286,20 @@ function BotDetail() {
                 onChange={(e) => set({ cap_likes: Number(e.target.value) })}
               />
             </Field>
-            <Field label="Cap Kommentare / Tag" hint="Maximale Kommentare pro Tag für dieses Profil.">
+            <Field
+              label="Cap Kommentare / Tag"
+              hint="Maximale Kommentare pro Tag für dieses Profil."
+            >
               <Input
                 type="number"
                 value={f.cap_comments ?? 0}
                 onChange={(e) => set({ cap_comments: Number(e.target.value) })}
               />
             </Field>
-            <Field label="Cap DMs / Tag" hint="Maximale Direktnachrichten pro Tag. Bei neuen Profilen niedrig halten.">
+            <Field
+              label="Cap DMs / Tag"
+              hint="Maximale Direktnachrichten pro Tag. Bei neuen Profilen niedrig halten."
+            >
               <Input
                 type="number"
                 value={f.cap_dms ?? 0}
@@ -273,14 +315,20 @@ function BotDetail() {
             <InfoHint text="Als wen tritt der Bot in der Gruppe auf und wann platziert er dein Angebot? Beides fließt in die KI-Texte ein." />
           </h2>
           <div className="grid gap-3">
-            <Field label="Rolle / Persona" hint="Wie sich der Bot in der Gruppe versteht, z. B. „Gruppenbetreuer“ oder „langjähriges Mitglied“. Neue Mitglieder halten ihn dann für genau das.">
+            <Field
+              label="Rolle / Persona"
+              hint="Wie sich der Bot in der Gruppe versteht, z. B. „Gruppenbetreuer“ oder „langjähriges Mitglied“. Neue Mitglieder halten ihn dann für genau das."
+            >
               <Input
                 value={(f as { persona_role?: string | null }).persona_role ?? ""}
                 placeholder="Gruppenbetreuer, hilft neuen Mitgliedern"
                 onChange={(e) => set({ persona_role: e.target.value } as never)}
               />
             </Field>
-            <Field label="Angebot / Referral" hint="Was der Bot irgendwann platzieren soll — als hilfreicher Tipp formuliert, nicht als Werbung. Leer lassen, wenn nichts platziert werden soll.">
+            <Field
+              label="Angebot / Referral"
+              hint="Was der Bot irgendwann platzieren soll — als hilfreicher Tipp formuliert, nicht als Werbung. Leer lassen, wenn nichts platziert werden soll."
+            >
               <Textarea
                 rows={3}
                 value={(f as { offer_text?: string | null }).offer_text ?? ""}
@@ -288,14 +336,20 @@ function BotDetail() {
                 onChange={(e) => set({ offer_text: e.target.value } as never)}
               />
             </Field>
-            <Field label="Link zum Angebot" hint="Optionaler Link, der zum Angebot mitgeschickt wird.">
+            <Field
+              label="Link zum Angebot"
+              hint="Optionaler Link, der zum Angebot mitgeschickt wird."
+            >
               <Input
                 value={(f as { offer_link?: string | null }).offer_link ?? ""}
                 placeholder="https://…"
                 onChange={(e) => set({ offer_link: e.target.value } as never)}
               />
             </Field>
-            <Field label="Angebot platzieren" hint="Nach wie vielen Antworten der Person das Angebot eingebaut wird. Zweite Antwort wirkt natürlicher.">
+            <Field
+              label="Angebot platzieren"
+              hint="Nach wie vielen Antworten der Person das Angebot eingebaut wird. Zweite Antwort wirkt natürlicher."
+            >
               <Select
                 value={String((f as { offer_step?: number | null }).offer_step ?? 2)}
                 onValueChange={(v) => set({ offer_step: Number(v) } as never)}
@@ -313,9 +367,15 @@ function BotDetail() {
         </section>
 
         <section className="rounded-lg border border-border bg-card p-4">
-          <h2 className="mb-3 flex items-center gap-2 text-sm font-medium text-foreground">Textgenerierung <InfoHint text="Vorlagen, KI oder beides. Der Tonfall steuert, wie die Texte klingen — damit sie nicht nach KI wirken." /></h2>
+          <h2 className="mb-3 flex items-center gap-2 text-sm font-medium text-foreground">
+            Textgenerierung{" "}
+            <InfoHint text="Vorlagen, KI oder beides. Der Tonfall steuert, wie die Texte klingen — damit sie nicht nach KI wirken." />
+          </h2>
           <div className="grid gap-3">
-            <Field label="Modus" hint="Vorlagen = feste Textbausteine, KI = generierte Texte, beides = Vorlage als Grundlage, KI variiert sie.">
+            <Field
+              label="Modus"
+              hint="Vorlagen = feste Textbausteine, KI = generierte Texte, beides = Vorlage als Grundlage, KI variiert sie."
+            >
               <Select value={f.text_mode} onValueChange={(v) => set({ text_mode: v })}>
                 <SelectTrigger>
                   <SelectValue />
@@ -327,7 +387,10 @@ function BotDetail() {
                 </SelectContent>
               </Select>
             </Field>
-            <Field label="Tonfall / Schreibstil" hint="Beschreibe, wie der Bot schreiben soll — knapp, locker, ohne Emojis usw. Wichtig, damit es nicht nach KI klingt.">
+            <Field
+              label="Tonfall / Schreibstil"
+              hint="Beschreibe, wie der Bot schreiben soll — knapp, locker, ohne Emojis usw. Wichtig, damit es nicht nach KI klingt."
+            >
               <Textarea
                 rows={4}
                 value={f.tone ?? ""}
@@ -360,13 +423,19 @@ function BotDetail() {
         </section>
 
         <section className="rounded-lg border border-border bg-card p-4">
-          <h2 className="mb-1 flex items-center gap-2 text-sm font-medium text-foreground">Cookie-Session <InfoHint text="Du meldest dich manuell bei Facebook an, exportierst die Cookies und fügst sie hier ein. Sie werden verschlüsselt gespeichert und nur vom Worker gelesen, nie im Browser angezeigt." /></h2>
+          <h2 className="mb-1 flex items-center gap-2 text-sm font-medium text-foreground">
+            Cookie-Session{" "}
+            <InfoHint text="Du meldest dich manuell bei Facebook an, exportierst die Cookies und fügst sie hier ein. Sie werden verschlüsselt gespeichert und nur vom Worker gelesen, nie im Browser angezeigt." />
+          </h2>
           <p className="mb-3 text-xs text-muted-foreground">
             Melde dich manuell im Browser an, exportiere die Facebook-Cookies als JSON-Array und
             füge sie hier ein. Aus Sicherheitsgründen können hinterlegte Cookies nicht wieder
             ausgelesen werden — nur dein Worker liest sie serverseitig.
           </p>
-          <Field label="Cookies (JSON)" hint="Cookies aus deinem eingeloggten Browser exportieren und hier einfügen. Damit übernimmt der Worker deine Facebook-Sitzung, ohne Passwort.">
+          <Field
+            label="Cookies (JSON)"
+            hint="Cookies aus deinem eingeloggten Browser exportieren und hier einfügen. Damit übernimmt der Worker deine Facebook-Sitzung, ohne Passwort."
+          >
             <Textarea
               rows={7}
               className="font-mono text-xs"
@@ -376,7 +445,10 @@ function BotDetail() {
             />
           </Field>
           <div className="mt-3">
-            <Field label="User-Agent (optional)" hint="Browser-Kennung deines echten Browsers. Gleich lassen wie beim Cookie-Export, sonst wirkt der Login verdächtig.">
+            <Field
+              label="User-Agent (optional)"
+              hint="Browser-Kennung deines echten Browsers. Gleich lassen wie beim Cookie-Export, sonst wirkt der Login verdächtig."
+            >
               <Input value={userAgent} onChange={(e) => setUserAgent(e.target.value)} />
             </Field>
           </div>

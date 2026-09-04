@@ -27,16 +27,26 @@ export const Route = createFileRoute("/_authenticated/ai-settings")({
   head: () => ({
     meta: [
       { title: "KI-Einstellungen — FB/Control" },
-      { name: "description", content: "Eingebaute KI oder eigenen Anbieter mit Schlüssel verwenden." },
+      {
+        name: "description",
+        content: "Eingebaute KI oder eigenen Anbieter mit Schlüssel verwenden.",
+      },
       { property: "og:title", content: "KI-Einstellungen — FB/Control" },
-      { property: "og:description", content: "Eingebaute KI oder eigenen Anbieter mit Schlüssel verwenden." },
+      {
+        property: "og:description",
+        content: "Eingebaute KI oder eigenen Anbieter mit Schlüssel verwenden.",
+      },
     ],
   }),
   component: AiSettingsPage,
 });
 
 const PROVIDERS = [
-  { value: "lovable", label: "Eingebaute KI (kein Schlüssel nötig)", model: "google/gemini-3.7-flash" },
+  {
+    value: "lovable",
+    label: "Eingebaute KI (kein Schlüssel nötig)",
+    model: "google/gemini-3.7-flash",
+  },
   { value: "openai", label: "OpenAI", model: "gpt-4o-mini" },
   { value: "openrouter", label: "OpenRouter", model: "openai/gpt-4o-mini" },
   { value: "anthropic", label: "Anthropic", model: "claude-3-5-sonnet-latest" },

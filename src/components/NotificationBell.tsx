@@ -8,11 +8,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { supabase } from "@/integrations/supabase/client";
 import { fmt } from "@/lib/db";
 
@@ -96,9 +92,14 @@ export function NotificationBell() {
                 ) : null}
                 <p className="mt-1 text-[11px] text-muted-foreground">
                   {fmt(n["created_at"] as string)}
-                  {["checkpoint", "captcha", "blocked", "login_required", "session_expired", "two_factor"].includes(
-                    String(n["type"]),
-                  ) ? (
+                  {[
+                    "checkpoint",
+                    "captcha",
+                    "blocked",
+                    "login_required",
+                    "session_expired",
+                    "two_factor",
+                  ].includes(String(n["type"])) ? (
                     <>
                       {" · "}
                       <Link to="/unlock" className="text-primary hover:underline">

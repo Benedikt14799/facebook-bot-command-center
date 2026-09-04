@@ -18,10 +18,16 @@ export const saveBotSecrets = createServerFn({ method: "POST" })
   .inputValidator((input: SecretInput) => input)
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const patch: Record<string, unknown> = { bot_id: data.bot_id, user_id: userId, updated_at: new Date().toISOString() };
-    if (data.proxy_password !== undefined) patch['proxy_password'] = data.proxy_password || null;
-    if (data.antidetect_key !== undefined) patch['antidetect_key'] = data.antidetect_key || null;
-    const { error } = await supabase.from("bot_secrets").upsert(patch as never, { onConflict: "bot_id" });
+    const patch: Record<string, unknown> = {
+      bot_id: data.bot_id,
+      user_id: userId,
+      updated_at: new Date().toISOString(),
+    };
+    if (data.proxy_password !== undefined) patch["proxy_password"] = data.proxy_password || null;
+    if (data.antidetect_key !== undefined) patch["antidetect_key"] = data.antidetect_key || null;
+    const { error } = await supabase
+      .from("bot_secrets")
+      .upsert(patch as never, { onConflict: "bot_id" });
     if (error) throw new Error(error.message);
     return { ok: true };
   });
@@ -51,20 +57,24 @@ async function lookupHost(host: string): Promise<ProxyCheck> {
       `http://ip-api.com/json/${encodeURIComponent(host)}?fields=status,message,country,countryCode,isp,org,as,hosting,proxy,mobile,query`,
     );
     const j = (await r.json()) as Record<string, any>;
-    if (j['status'] === "success") {
+    if (j["status"] === "success") {
       return {
         ok: true,
-        ip: j['query'],
-        country: j['countryCode'],
-        isp: j['isp'],
-        org: j['org'],
-        asn: j['as'],
-        hosting: !!j['hosting'],
-        type: j['mobile'] ? "mobile" : j['hosting'] ? "datacenter" : "residential",
+        ip: j["query"],
+        country: j["countryCode"],
+        isp: j["isp"],
+        org: j["org"],
+        asn: j["as"],
+        hosting: !!j["hosting"],
+        type: j["mobile"] ? "mobile" : j["hosting"] ? "datacenter" : "residential",
         latency_ms: Date.now() - started,
       };
     }
-    return { ok: false, message: j['message'] || "IP-Dienst lieferte kein Ergebnis", latency_ms: Date.now() - started };
+    return {
+      ok: false,
+      message: j["message"] || "IP-Dienst lieferte kein Ergebnis",
+      latency_ms: Date.now() - started,
+    };
   } catch (e) {
     return { ok: false, message: (e as Error).message, latency_ms: Date.now() - started };
   }

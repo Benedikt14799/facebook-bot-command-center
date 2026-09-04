@@ -28,7 +28,7 @@ export const Route = createFileRoute("/auth")({
     ],
   }),
   validateSearch: (search: Record<string, unknown>): { demo?: boolean } =>
-    search['demo'] === true || search['demo'] === "true" ? { demo: true } : {},
+    search["demo"] === true || search["demo"] === "true" ? { demo: true } : {},
   component: AuthPage,
 });
 
@@ -152,9 +152,7 @@ function AuthPage() {
           className="mt-4 w-full text-xs text-muted-foreground hover:text-foreground"
           onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
         >
-          {mode === "signin"
-            ? "Noch kein Konto? Registrieren"
-            : "Schon registriert? Anmelden"}
+          {mode === "signin" ? "Noch kein Konto? Registrieren" : "Schon registriert? Anmelden"}
         </button>
       </div>
     </div>

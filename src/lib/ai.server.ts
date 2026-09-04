@@ -42,7 +42,10 @@ const BANNED = [
 
 /** Nachbearbeitung: Anfuehrungszeichen weg, Floskeln raus, Laenge begrenzen. */
 export function humanize(text: string, maxChars = 320) {
-  let out = text.trim().replace(/^["'„»]|["'“«]$/g, "").trim();
+  let out = text
+    .trim()
+    .replace(/^["'„»]|["'“«]$/g, "")
+    .trim();
   out = out.replace(/\s*\n{2,}\s*/g, "\n");
   for (const re of BANNED) out = out.replace(re, "");
   out = out.replace(/[ \t]{2,}/g, " ").trim();
@@ -79,9 +82,26 @@ export function sprinkleTypos(
   const allow = (k: TypoKind) => kinds.length === 0 || kinds.includes(k);
 
   const NEIGHBOR: Record<string, string> = {
-    a: "s", s: "d", d: "f", f: "g", g: "h", h: "j", j: "k", k: "l",
-    e: "r", r: "t", t: "z", z: "u", u: "i", i: "o", o: "p",
-    n: "m", m: "n", b: "v", v: "c", c: "x",
+    a: "s",
+    s: "d",
+    d: "f",
+    f: "g",
+    g: "h",
+    h: "j",
+    j: "k",
+    k: "l",
+    e: "r",
+    r: "t",
+    t: "z",
+    z: "u",
+    u: "i",
+    i: "o",
+    o: "p",
+    n: "m",
+    m: "n",
+    b: "v",
+    v: "c",
+    c: "x",
   };
   const UMLAUT: Record<string, string> = { ä: "a", ö: "o", ü: "u", ß: "ss" };
 
@@ -117,30 +137,45 @@ export function sprinkleTypos(
     const letters = [...word];
     const pos = letters.findIndex((c, i) => i > 0 && /\p{L}/u.test(c));
     if (pos < 1) continue;
-    const i = Math.min(pos + Math.floor(Math.random() * (letters.length - pos - 1)), letters.length - 2);
+    const i = Math.min(
+      pos + Math.floor(Math.random() * (letters.length - pos - 1)),
+      letters.length - 2,
+    );
     const c = letters[i]!.toLowerCase();
 
     const allVariants: { kind: TypoKind; make: () => string }[] = [
       // Buchstabendreher
-      { kind: "swap", make: () => {
-        const copy = [...letters];
-        const tmp = copy[i]!;
-        copy[i] = copy[i + 1]!;
-        copy[i + 1] = tmp;
-        return copy.join("");
-      } },
+      {
+        kind: "swap",
+        make: () => {
+          const copy = [...letters];
+          const tmp = copy[i]!;
+          copy[i] = copy[i + 1]!;
+          copy[i + 1] = tmp;
+          return copy.join("");
+        },
+      },
       // Buchstabe verschluckt
       { kind: "drop", make: () => letters.filter((_, k) => k !== i).join("") },
       // Buchstabe doppelt
-      { kind: "double", make: () => [...letters.slice(0, i), letters[i]!, ...letters.slice(i)].join("") },
+      {
+        kind: "double",
+        make: () => [...letters.slice(0, i), letters[i]!, ...letters.slice(i)].join(""),
+      },
       // Nachbartaste
-      { kind: "neighbor", make: () =>
-        NEIGHBOR[c]
-          ? [...letters.slice(0, i), NEIGHBOR[c]!, ...letters.slice(i + 1)].join("")
-          : word },
+      {
+        kind: "neighbor",
+        make: () =>
+          NEIGHBOR[c]
+            ? [...letters.slice(0, i), NEIGHBOR[c]!, ...letters.slice(i + 1)].join("")
+            : word,
+      },
       // Umlaut vergessen
-      { kind: "umlaut", make: () =>
-        UMLAUT[c] ? [...letters.slice(0, i), UMLAUT[c]!, ...letters.slice(i + 1)].join("") : word },
+      {
+        kind: "umlaut",
+        make: () =>
+          UMLAUT[c] ? [...letters.slice(0, i), UMLAUT[c]!, ...letters.slice(i + 1)].join("") : word,
+      },
     ];
     const variants = allVariants.filter((v) => allow(v.kind));
 
@@ -292,11 +327,7 @@ export function endpointFor(config: AiConfig) {
 }
 
 /** Rohaufruf: ein System- und ein Nutzer-Prompt, Rueckgabe ist der reine Text. */
-export async function callModel(
-  config: AiConfig,
-  system: string,
-  user: string,
-): Promise<string> {
+export async function callModel(config: AiConfig, system: string, user: string): Promise<string> {
   if (config.provider === "anthropic") {
     const res = await fetch(endpointFor(config), {
       method: "POST",

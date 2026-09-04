@@ -34,9 +34,15 @@ export const Route = createFileRoute("/_authenticated/templates")({
   head: () => ({
     meta: [
       { title: "Vorlagen — FB/Control" },
-      { name: "description", content: "Textvorlagen und Variationen für DMs, Antworten und Kommentare." },
+      {
+        name: "description",
+        content: "Textvorlagen und Variationen für DMs, Antworten und Kommentare.",
+      },
       { property: "og:title", content: "Vorlagen — FB/Control" },
-      { property: "og:description", content: "Textvorlagen und Variationen für DMs, Antworten und Kommentare." },
+      {
+        property: "og:description",
+        content: "Textvorlagen und Variationen für DMs, Antworten und Kommentare.",
+      },
     ],
   }),
   component: TemplatesPage,
@@ -121,11 +127,17 @@ function TemplatesPage() {
             </DialogHeader>
             <div className="space-y-3">
               <div className="space-y-1.5">
-                <Label className="flex items-center gap-2">Name <InfoHint text="Interne Bezeichnung der Vorlage, z. B. „Begrüßung neue Mitglieder“." /></Label>
+                <Label className="flex items-center gap-2">
+                  Name{" "}
+                  <InfoHint text="Interne Bezeichnung der Vorlage, z. B. „Begrüßung neue Mitglieder“." />
+                </Label>
                 <Input value={name} onChange={(e) => setName(e.target.value)} />
               </div>
               <div className="space-y-1.5">
-                <Label className="flex items-center gap-2">Typ <InfoHint text="Wofür die Vorlage genutzt wird: DM, Antwort auf Nachrichten oder Gruppen-Kommentar." /></Label>
+                <Label className="flex items-center gap-2">
+                  Typ{" "}
+                  <InfoHint text="Wofür die Vorlage genutzt wird: DM, Antwort auf Nachrichten oder Gruppen-Kommentar." />
+                </Label>
                 <Select value={kind} onValueChange={setKind}>
                   <SelectTrigger>
                     <SelectValue />
@@ -140,11 +152,17 @@ function TemplatesPage() {
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label className="flex items-center gap-2">Text <InfoHint text="Grundtext. Platzhalter wie {name} werden vom Worker ersetzt." /></Label>
+                <Label className="flex items-center gap-2">
+                  Text{" "}
+                  <InfoHint text="Grundtext. Platzhalter wie {name} werden vom Worker ersetzt." />
+                </Label>
                 <Textarea rows={4} value={body} onChange={(e) => setBody(e.target.value)} />
               </div>
               <div className="space-y-1.5">
-                <Label className="flex items-center gap-2">Variationen (eine pro Zeile) <InfoHint text="Alternative Formulierungen. Pro Aktion wird zufällig eine gewählt, damit nicht immer derselbe Text rausgeht." /></Label>
+                <Label className="flex items-center gap-2">
+                  Variationen (eine pro Zeile){" "}
+                  <InfoHint text="Alternative Formulierungen. Pro Aktion wird zufällig eine gewählt, damit nicht immer derselbe Text rausgeht." />
+                </Label>
                 <Textarea
                   rows={4}
                   value={variations}
@@ -153,7 +171,10 @@ function TemplatesPage() {
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="space-y-1.5">
-                  <Label className="flex items-center gap-2">Nur für Bot <InfoHint text="Vorlage auf ein Profil beschränken, z. B. wenn ein Bot einen eigenen Tonfall hat." /></Label>
+                  <Label className="flex items-center gap-2">
+                    Nur für Bot{" "}
+                    <InfoHint text="Vorlage auf ein Profil beschränken, z. B. wenn ein Bot einen eigenen Tonfall hat." />
+                  </Label>
                   <Select value={botId} onValueChange={setBotId}>
                     <SelectTrigger>
                       <SelectValue placeholder="alle" />
@@ -168,7 +189,10 @@ function TemplatesPage() {
                   </Select>
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="flex items-center gap-2">Nur für Gruppe <InfoHint text="Vorlage nur in dieser Gruppe verwenden — passend zu Thema und Zielgruppe." /></Label>
+                  <Label className="flex items-center gap-2">
+                    Nur für Gruppe{" "}
+                    <InfoHint text="Vorlage nur in dieser Gruppe verwenden — passend zu Thema und Zielgruppe." />
+                  </Label>
                   <Select value={groupId} onValueChange={setGroupId}>
                     <SelectTrigger>
                       <SelectValue placeholder="alle" />

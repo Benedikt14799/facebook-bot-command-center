@@ -15,15 +15,15 @@ Basis-URL: die Preview- bzw. Published-URL des Projekts.
 
 ## Endpunkte
 
-| Methode | Pfad | Zweck |
-| --- | --- | --- |
-| POST | `/api/public/worker/heartbeat` | `{ "version": "1.0.0" }` — meldet den Worker online |
-| POST | `/api/public/worker/poll` | `{ "bot_id"?, "limit"? }` — holt fällige Jobs und setzt sie auf `running` |
-| POST | `/api/public/worker/result` | `{ "job_id", "status": "done\|failed\|skipped", "result"?, "error"? }` |
-| POST | `/api/public/worker/messages` | Nachricht ins Backlog schreiben (`direction: in\|out`) |
-| POST | `/api/public/worker/events` | Log-Ereignis (`level: info\|warn\|error`) |
-| GET | `/api/public/worker/session?bot_id=…` | Cookies + User-Agent für den Bot |
-| POST | `/api/public/worker/session` | Cookies aktualisieren / Session-Status setzen |
+| Methode | Pfad                                  | Zweck                                                                     |
+| ------- | ------------------------------------- | ------------------------------------------------------------------------- |
+| POST    | `/api/public/worker/heartbeat`        | `{ "version": "1.0.0" }` — meldet den Worker online                       |
+| POST    | `/api/public/worker/poll`             | `{ "bot_id"?, "limit"? }` — holt fällige Jobs und setzt sie auf `running` |
+| POST    | `/api/public/worker/result`           | `{ "job_id", "status": "done\|failed\|skipped", "result"?, "error"? }`    |
+| POST    | `/api/public/worker/messages`         | Nachricht ins Backlog schreiben (`direction: in\|out`)                    |
+| POST    | `/api/public/worker/events`           | Log-Ereignis (`level: info\|warn\|error`)                                 |
+| GET     | `/api/public/worker/session?bot_id=…` | Cookies + User-Agent für den Bot                                          |
+| POST    | `/api/public/worker/session`          | Cookies aktualisieren / Session-Status setzen                             |
 
 Wichtig: Jobs mit `needs_approval = true` werden **nicht** ausgeliefert, bis sie
 im Cockpit freigegeben wurden. `poll` liefert zusätzlich die Bot-Datensätze mit
@@ -77,9 +77,9 @@ Worker holt sie serverseitig über `/api/public/worker/session`.
 
 Zwei zeitgesteuerte Abläufe laufen serverseitig:
 
-| Ablauf | Takt | Route | Aufgabe |
-| --- | --- | --- | --- |
-| Planer | alle 10 Min | `POST /api/public/cron/plan` | erzeugt automatisch Aufträge für Bots mit Autopilot: Arbeitszeit, Tages-Caps, Aufwärmstufe, Wochenendfaktor, Jitter; Texte per KI oder Vorlage |
+| Ablauf  | Takt        | Route                               | Aufgabe                                                                                                                                                                                                       |
+| ------- | ----------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Planer  | alle 10 Min | `POST /api/public/cron/plan`        | erzeugt automatisch Aufträge für Bots mit Autopilot: Arbeitszeit, Tages-Caps, Aufwärmstufe, Wochenendfaktor, Jitter; Texte per KI oder Vorlage                                                                |
 | Wartung | alle 30 Min | `POST /api/public/cron/maintenance` | Worker-Offlineerkennung (5 Min ohne Heartbeat), hängende Jobs (>20 Min) neu einreihen oder abbrechen, Simulationsmodus abarbeiten, Bots bei ≥3 Fehlern/Stunde pausieren und Aufwärmphase um 3 Tage verlängern |
 
 Beide Routen sind mit dem Header `x-cron-token` geschützt (interner Schlüssel in
@@ -146,6 +146,7 @@ optional das Angebot als Kontext — und schreibt daraus kurze, natürliche Text
 ## Tarnung: Proxy, Fingerprint und Verhalten
 
 ### Proxy (Pflicht auf Servern)
+
 - Empfohlen: **Static Residential (ISP)** oder **Mobil-Proxy (4G/5G)**, IP im Land des Accounts.
 - Rechenzentrums-IPs (Hetzner, AWS, DigitalOcean …) führen fast immer zu Checkpoint oder Sperre.
 - Rotierende Residential-Proxys nur mit fester Sitzungsbindung — IP-Wechsel im Minutentakt ist ein Alarmsignal.
@@ -153,24 +154,28 @@ optional das Angebot als Kontext — und schreibt daraus kurze, natürliche Text
 - `Proxy prüfen` im Cockpit bewertet den Proxy-Endpunkt (Land, Anbieter, Hosting-Flag). Die echte Ausgangs-IP meldet der Worker per `POST /api/public/worker/ip-report` bei jedem Sitzungsstart; bei Hosting-IP wird der Bot automatisch pausiert und ein `proxy_warning`-Ereignis erzeugt.
 
 ### Session-Endpunkt
+
 `GET /api/public/worker/session?bot_id=…` liefert zusätzlich zu Cookies und User-Agent:
 
-| Feld | Inhalt |
-| --- | --- |
-| `proxy` | `{ type, server, username, password, country, rotate_url }` oder `null` |
-| `fingerprint` | Plattform, User-Agent, Auflösung, RAM, CPU-Kerne, Sprache, Zeitzone |
-| `behavior` | Tippverzögerungen, Pausen, Scroll-Verhalten, Sitzungslängen, Lesezeit |
-| `browser_mode` | `stealth` oder `antidetect` |
-| `antidetect` | Anbieter, lokale API-URL, Profil-ID, API-Schlüssel, Stealth-Rückfall |
+| Feld           | Inhalt                                                                  |
+| -------------- | ----------------------------------------------------------------------- |
+| `proxy`        | `{ type, server, username, password, country, rotate_url }` oder `null` |
+| `fingerprint`  | Plattform, User-Agent, Auflösung, RAM, CPU-Kerne, Sprache, Zeitzone     |
+| `behavior`     | Tippverzögerungen, Pausen, Scroll-Verhalten, Sitzungslängen, Lesezeit   |
+| `browser_mode` | `stealth` oder `antidetect`                                             |
+| `antidetect`   | Anbieter, lokale API-URL, Profil-ID, API-Schlüssel, Stealth-Rückfall    |
 
 ### Browserstart
+
 - **Stealth-Chromium (Standard):** persistentes Profil je Bot, `--disable-blink-features=AutomationControlled`, Init-Script gegen `navigator.webdriver`, Proxy + Fingerprint aus dem Cockpit.
 - **Antidetect per CDP (optional):** AdsPower, Dolphin{anty} oder GoLogin werden über ihre lokale API gestartet, der Worker verbindet sich mit `connect_over_cdp`. Schlägt der Start fehl, greift optional Stealth-Chromium.
 
 ### Menschliches Verhalten
+
 Der Worker nutzt nur Zufallswerte innerhalb der eingestellten Bereiche: `human_type` (Anschlag für Anschlag inkl. Tippfehler + Korrektur), `human_pause`, `human_scroll` (Feed-Aufwärmen vor der ersten Aktion) und `read_delay` (Lesezeit abhängig von der Textlänge). Niemals `page.fill()` verwenden.
 
 ### Checkpoint-Erkennung
+
 `check_blocked()` prüft URL und Seiteninhalt auf Checkpoint-/Sperrhinweise, bricht sofort ab und meldet ein `blocked`-Ereignis — das Cockpit pausiert den Bot daraufhin automatisch.
 
 ## Checkpoint-Erkennung und visuelle Freischaltung
@@ -178,13 +183,13 @@ Der Worker nutzt nur Zufallswerte innerhalb der eingestellten Bereiche: `human_t
 Der Worker erkennt Checkpoint-, CAPTCHA-, 2FA-, Login- und Sperrseiten und meldet
 sie als Ereignis mit dem passenden Typ:
 
-| Typ | Bedeutung |
-| --- | --- |
-| `checkpoint` | Facebook verlangt eine Identitätsbestätigung |
-| `captcha` | Sicherheitsabfrage / reCAPTCHA |
-| `two_factor` | Zwei-Faktor-Code nötig |
-| `login_required` | Sitzung abgelaufen, erneuter Login nötig |
-| `blocked` | Konto gesperrt oder eingeschränkt |
+| Typ              | Bedeutung                                    |
+| ---------------- | -------------------------------------------- |
+| `checkpoint`     | Facebook verlangt eine Identitätsbestätigung |
+| `captcha`        | Sicherheitsabfrage / reCAPTCHA               |
+| `two_factor`     | Zwei-Faktor-Code nötig                       |
+| `login_required` | Sitzung abgelaufen, erneuter Login nötig     |
+| `blocked`        | Konto gesperrt oder eingeschränkt            |
 
 Bei jedem dieser Typen setzt das Cockpit den Bot sofort in den **manuellen Modus**:
 Automatik aus, keine weiteren Jobs (`/worker/poll` liefert für diesen Bot nichts mehr),
@@ -192,10 +197,10 @@ Benachrichtigung in der Glocke oben rechts.
 
 ### Freischaltung
 
-| Methode | Endpunkt | Zweck |
-| --- | --- | --- |
-| GET | `/api/public/worker/unlock` | offene Freischalt-Anfragen abholen |
-| POST | `/api/public/worker/unlock` | `{bot_id, state: "open"\|"done"\|"failed"\|"cancelled", note?}` |
+| Methode | Endpunkt                    | Zweck                                                           |
+| ------- | --------------------------- | --------------------------------------------------------------- |
+| GET     | `/api/public/worker/unlock` | offene Freischalt-Anfragen abholen                              |
+| POST    | `/api/public/worker/unlock` | `{bot_id, state: "open"\|"done"\|"failed"\|"cancelled", note?}` |
 
 Ablauf: Im Cockpit unter **Freischaltung** auf „Fenster öffnen“ klicken. Der Worker
 öffnet beim nächsten Durchlauf ein sichtbares Browserfenster mit demselben Profil,

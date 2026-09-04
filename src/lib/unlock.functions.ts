@@ -44,7 +44,9 @@ export const cancelUnlock = createServerFn({ method: "POST" })
  */
 export const saveSessionCookies = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { botId: string; cookiesJson: string; userAgent?: string | null }) => input)
+  .inputValidator(
+    (input: { botId: string; cookiesJson: string; userAgent?: string | null }) => input,
+  )
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { clearManualMode } = await import("@/lib/alerts.server");

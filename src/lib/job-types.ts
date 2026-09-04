@@ -120,8 +120,7 @@ export type JobTypoSettings = {
 /** Liest die Tippfehler-Einstellungen aus einer Auftrags-Payload. */
 export function readTypoSettings(payload: unknown): JobTypoSettings | null {
   const t = (payload as { typo?: unknown } | null)?.typo as
-    | { rate?: unknown; kinds?: unknown }
-    | undefined;
+    { rate?: unknown; kinds?: unknown } | undefined;
   if (!t || typeof t !== "object") return null;
   const rate = typeof t.rate === "number" ? Math.min(Math.max(t.rate, 0), 1) : 0.12;
   const allowed = TYPO_KINDS.map((k) => k.value);

@@ -24,9 +24,15 @@ export const Route = createFileRoute("/_authenticated/recipients/$recipientId")(
   head: () => ({
     meta: [
       { title: "Kontaktakte — FB/Control" },
-      { name: "description", content: "Vollständige Historie einer Person: Likes, Nachrichten und Antworten." },
+      {
+        name: "description",
+        content: "Vollständige Historie einer Person: Likes, Nachrichten und Antworten.",
+      },
       { property: "og:title", content: "Kontaktakte — FB/Control" },
-      { property: "og:description", content: "Vollständige Historie einer Person: Likes, Nachrichten und Antworten." },
+      {
+        property: "og:description",
+        content: "Vollständige Historie einer Person: Likes, Nachrichten und Antworten.",
+      },
     ],
   }),
   component: RecipientDetail,
@@ -72,11 +78,7 @@ function RecipientDetail() {
           .select("*")
           .eq("recipient_id", recipientId)
           .order("created_at", { ascending: false }),
-        supabase
-          .from("jobs")
-          .select("*")
-          .eq("recipient_id", recipientId)
-          .eq("status", "failed"),
+        supabase.from("jobs").select("*").eq("recipient_id", recipientId).eq("status", "failed"),
       ]);
 
       // Checkpoint-/Sperr-Ereignisse des zugehoerigen Bots einblenden.
@@ -84,15 +86,22 @@ function RecipientDetail() {
         ...new Set([...(ce.data ?? []), ...(msgs.data ?? [])].map((r) => r.bot_id).filter(Boolean)),
       ] as string[];
       const events = botIds.length
-        ? (
+        ? ((
             await supabase
               .from("events")
               .select("*")
               .in("bot_id", botIds)
-              .in("type", ["checkpoint", "captcha", "blocked", "login_required", "session_expired", "two_factor"])
+              .in("type", [
+                "checkpoint",
+                "captcha",
+                "blocked",
+                "login_required",
+                "session_expired",
+                "two_factor",
+              ])
               .order("created_at", { ascending: false })
               .limit(50)
-          ).data ?? []
+          ).data ?? [])
         : [];
 
       return buildTimeline({
@@ -131,7 +140,12 @@ function RecipientDetail() {
               label="Profil"
               value={
                 p.profile_url ? (
-                  <a href={p.profile_url} target="_blank" rel="noreferrer" className="hover:underline">
+                  <a
+                    href={p.profile_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="hover:underline"
+                  >
                     öffnen
                   </a>
                 ) : (

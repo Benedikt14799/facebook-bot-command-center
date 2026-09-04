@@ -115,13 +115,7 @@ function UnlockPage() {
   );
 }
 
-function BotUnlockCard({
-  bot,
-  onDone,
-}: {
-  bot: Record<string, unknown>;
-  onDone: () => void;
-}) {
+function BotUnlockCard({ bot, onDone }: { bot: Record<string, unknown>; onDone: () => void }) {
   const botId = String(bot["id"]);
   const state = String(bot["unlock_state"] ?? "needed");
   const [cookies, setCookies] = useState("");
@@ -163,7 +157,8 @@ function BotUnlockCard({
         <div>
           <h2 className="text-sm font-medium text-foreground">{String(bot["name"])}</h2>
           <p className="text-xs text-muted-foreground">
-            {String(bot["manual_reason"] ?? "Sitzung abgelaufen")} · seit {fmt(bot["manual_since"] as string)}
+            {String(bot["manual_reason"] ?? "Sitzung abgelaufen")} · seit{" "}
+            {fmt(bot["manual_since"] as string)}
           </p>
         </div>
         <StatusBadge value={UNLOCK_LABEL[state] ?? state} />
@@ -184,7 +179,9 @@ function BotUnlockCard({
                 : "Startet ein sichtbares Browserfenster auf deinem Worker-Rechner."}
           </p>
           {bot["unlock_note"] ? (
-            <p className="text-xs text-muted-foreground">Hinweis vom Worker: {String(bot["unlock_note"])}</p>
+            <p className="text-xs text-muted-foreground">
+              Hinweis vom Worker: {String(bot["unlock_note"])}
+            </p>
           ) : null}
           <div className="flex gap-2">
             <Button size="sm" onClick={() => act.mutate("ask")} disabled={act.isPending}>

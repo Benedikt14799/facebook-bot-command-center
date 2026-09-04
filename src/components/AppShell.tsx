@@ -101,9 +101,7 @@ export function AppShell({
               {title}
               {hint ? <InfoHint text={hint} side="bottom" /> : null}
             </h1>
-            {subtitle ? (
-              <p className="mt-0.5 text-sm text-muted-foreground">{subtitle}</p>
-            ) : null}
+            {subtitle ? <p className="mt-0.5 text-sm text-muted-foreground">{subtitle}</p> : null}
           </div>
           <div className="flex items-center gap-2">
             {actions}
