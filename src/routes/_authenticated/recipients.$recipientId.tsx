@@ -32,6 +32,15 @@ export const Route = createFileRoute("/_authenticated/recipients/$recipientId")(
   component: RecipientDetail,
 });
 
+/** Farbe des Zeitleisten-Strichs je Ereignisart. */
+const BORDER: Record<string, string> = {
+  sent: "border-primary/60",
+  received: "border-success/60",
+  reaction: "border-border",
+  error: "border-destructive/60",
+  checkpoint: "border-warning/60",
+};
+
 function RecipientDetail() {
   const { recipientId } = Route.useParams();
 
