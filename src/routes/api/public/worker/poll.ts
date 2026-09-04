@@ -6,7 +6,7 @@
  * den Worker ausgeliefert, damit kein Browser gestartet wird.
  */
 import { createFileRoute } from "@tanstack/react-router";
-import { authenticateWorker, json } from "@/lib/worker-auth.server";
+import { authenticateWorker, json, readJsonBody } from "@/lib/worker-auth.server";
 import { validateJob } from "@/lib/job-validation";
 
 export const Route = createFileRoute("/api/public/worker/poll")({
@@ -15,7 +15,9 @@ export const Route = createFileRoute("/api/public/worker/poll")({
       POST: async ({ request }) => {
         const ctx = await authenticateWorker(request);
         if (ctx instanceof Response) return ctx;
-        const body = (await request.json().catch(() => ({}))) as {
+        const parsedBody = await readJsonBody(request);
+        if (parsedBody instanceof Response) return parsedBody;
+        const body = parsedBody as {
           bot_id?: string;
           limit?: number;
         };

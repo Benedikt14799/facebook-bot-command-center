@@ -3,7 +3,7 @@
  * Cookies sind fuer den Browser nicht lesbar - nur Worker/Service-Rolle.
  */
 import { createFileRoute } from "@tanstack/react-router";
-import { authenticateWorker, json } from "@/lib/worker-auth.server";
+import { authenticateWorker, json, readJsonBody } from "@/lib/worker-auth.server";
 import { normalizeAntidetect, normalizeBehavior, normalizeFingerprint } from "@/lib/stealth";
 import { clearManualMode } from "@/lib/alerts.server";
 
@@ -69,7 +69,9 @@ export const Route = createFileRoute("/api/public/worker/session")({
       POST: async ({ request }) => {
         const ctx = await authenticateWorker(request);
         if (ctx instanceof Response) return ctx;
-        const body = (await request.json().catch(() => null)) as {
+        const parsedBody = await readJsonBody(request);
+        if (parsedBody instanceof Response) return parsedBody;
+        const body = parsedBody as {
           bot_id?: string;
           cookies?: unknown;
           user_agent?: string;

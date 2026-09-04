@@ -6,7 +6,7 @@
  * Antworten den kompletten Verlauf als Kontext nutzen koennen.
  */
 import { createFileRoute } from "@tanstack/react-router";
-import { authenticateWorker, json } from "@/lib/worker-auth.server";
+import { authenticateWorker, json, readJsonBody } from "@/lib/worker-auth.server";
 import { advanceStage, logContact, upsertRecipient } from "@/lib/contacts.server";
 
 export const Route = createFileRoute("/api/public/worker/messages")({
@@ -15,7 +15,9 @@ export const Route = createFileRoute("/api/public/worker/messages")({
       POST: async ({ request }) => {
         const ctx = await authenticateWorker(request);
         if (ctx instanceof Response) return ctx;
-        const body = (await request.json().catch(() => null)) as {
+        const parsedBody = await readJsonBody(request);
+        if (parsedBody instanceof Response) return parsedBody;
+        const body = parsedBody as {
           bot_id?: string;
           group_id?: string;
           recipient_id?: string;
