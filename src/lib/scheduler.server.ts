@@ -176,7 +176,10 @@ export async function runPlanner(admin: Admin, now = new Date()): Promise<PlanRe
     const groupIds = (links ?? []).map((l) => l.group_id);
 
     let created = 0;
-    for (const type of ["like", "comment", "dm_new_member"] as const) {
+    // Reihenfolge und Textquelle richten sich nach dem Warmup-Profil des Bots.
+    const weights = parseWeights((bot as { warmup_weights?: unknown }).warmup_weights);
+    const useAi = bot.text_mode === "ai" && Math.random() * 100 < weights.ai;
+    for (const type of weightedActionOrder(weights)) {
       if (created >= JOBS_PER_BOT - openSoon) break;
       const limit = limits[type];
       if (!limit || (used[type] ?? 0) >= limit) continue;
