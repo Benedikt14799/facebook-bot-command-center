@@ -644,10 +644,12 @@ function EditJobDialog({
   const done = job.status === "done";
   const failed = job.status === "failed";
 
+  const doSaveJob = useServerFn(saveJob);
+
   function buildPayload(): Record<string, unknown> {
     const base: Record<string, unknown> = { ...payload };
-    if (text.trim()) base.text = text.trim();
-    base.typo = { rate: typo.rate, kinds: typo.kinds };
+    if (text.trim()) base["text"] = text.trim();
+    base["typo"] = { rate: typo.rate, kinds: typo.kinds };
     return base;
   }
 
@@ -658,13 +660,13 @@ function EditJobDialog({
         bot_id: botId,
         group_id: groupId || null,
         type,
-        payload: basePayload,
+        payload: basePayload as unknown as Json,
         generated_text: text.trim() || null,
         scheduled_for: when ? new Date(when).toISOString() : new Date().toISOString(),
       };
 
       if (mode === "duplicate") {
-        await doUpdateJob({
+        await doSaveJob({
           data: {
             ...base,
             recipient_id: (job as { recipient_id?: string | null }).recipient_id ?? null,
@@ -680,7 +682,6 @@ function EditJobDialog({
           id: job.id,
           ...base,
           status: mode === "requeue" ? "pending" : undefined,
-          error: mode === "requeue" ? null : undefined,
           claimed_at: mode === "requeue" ? null : undefined,
           claimed_by: mode === "requeue" ? null : undefined,
           finished_at: mode === "requeue" ? null : undefined,
