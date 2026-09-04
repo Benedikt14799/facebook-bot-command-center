@@ -107,7 +107,8 @@ function SetupPage() {
   const workers = useQuery({ queryKey: ["workers"], queryFn: () => selectAll("workers") });
   const jobs = useQuery({
     queryKey: ["jobs", "setup"],
-    queryFn: () => selectAll("jobs", (q) => q.order("scheduled_for", { ascending: false }).limit(50)),
+    queryFn: () =>
+      selectAll("jobs", (q) => q.order("scheduled_for", { ascending: false }).limit(50)),
   });
 
   const botList = bots.data ?? [];
@@ -125,7 +126,16 @@ function SetupPage() {
   const hasDoneJob = jobList.some((j) => j.status === "done");
   const hasAutopilot = botList.some((b) => b.autopilot);
 
-  const steps = [hasBot, hasGroup, hasProxy, hasWorker, workerOnline, hasSession, hasDoneJob, hasAutopilot];
+  const steps = [
+    hasBot,
+    hasGroup,
+    hasProxy,
+    hasWorker,
+    workerOnline,
+    hasSession,
+    hasDoneJob,
+    hasAutopilot,
+  ];
   const doneCount = steps.filter(Boolean).length;
 
   const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
@@ -235,9 +245,9 @@ pip install requests playwright playwright-stealth
 playwright install chromium
 python fbcontrol_worker.py`}</Code>
           <p>
-            Auf einem Linux-VPS zusätzlich <span className="font-mono">playwright install-deps
-            chromium</span>. Für den Dauerbetrieb als systemd-Dienst, launchd-Job oder geplante
-            Aufgabe einrichten.
+            Auf einem Linux-VPS zusätzlich{" "}
+            <span className="font-mono">playwright install-deps chromium</span>. Für den
+            Dauerbetrieb als systemd-Dienst, launchd-Job oder geplante Aufgabe einrichten.
           </p>
           <Link to="/worker-health">
             <Button size="sm" variant="outline">
@@ -254,9 +264,9 @@ python fbcontrol_worker.py`}</Code>
         >
           <p>
             Freischaltung anfordern: Der Worker öffnet ein sichtbares Browserfenster mit demselben
-            Profil, Proxy und Fingerprint. Nach dem Login werden die Cookies gespeichert.
-            Alternativ die Cookies als JSON importieren — der Cookie{" "}
-            <span className="font-mono">c_user</span> muss enthalten sein.
+            Profil, Proxy und Fingerprint. Nach dem Login werden die Cookies gespeichert. Alternativ
+            die Cookies als JSON importieren — der Cookie <span className="font-mono">c_user</span>{" "}
+            muss enthalten sein.
           </p>
           <Link to="/unlock">
             <Button size="sm" variant="outline">
@@ -273,8 +283,8 @@ python fbcontrol_worker.py`}</Code>
         >
           <p>
             Auftrag anlegen: Aktion „Beiträge liken", Startzeit jetzt, Payload{" "}
-            <span className="font-mono">{`{ "count": 1 }`}</span>. Status läuft von
-            „geplant" über „läuft" bis „erledigt".
+            <span className="font-mono">{`{ "count": 1 }`}</span>. Status läuft von „geplant" über
+            „läuft" bis „erledigt".
           </p>
           <Link to="/jobs">
             <Button size="sm" variant="outline">
@@ -309,7 +319,8 @@ python fbcontrol_worker.py`}</Code>
         </div>
         <p className="mt-2">
           Die vollständige Fassung mit systemd-Dienst, Fehlermeldungen, Endpunkt-Referenz und
-          Härtungsempfehlungen liegt als <span className="font-mono">BETRIEB.md</span> im Repository.
+          Härtungsempfehlungen liegt als <span className="font-mono">BETRIEB.md</span> im
+          Repository.
         </p>
       </div>
     </AppShell>

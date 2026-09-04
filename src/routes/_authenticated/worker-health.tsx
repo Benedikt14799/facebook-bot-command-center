@@ -52,10 +52,7 @@ function WorkerHealthPage() {
 
   const jobs = useQuery({
     queryKey: ["jobs", "health"],
-    queryFn: () =>
-      selectAll("jobs", (q) =>
-        q.order("updated_at", { ascending: false }).limit(100),
-      ),
+    queryFn: () => selectAll("jobs", (q) => q.order("updated_at", { ascending: false }).limit(100)),
     refetchInterval: 30_000,
   });
 
@@ -63,17 +60,13 @@ function WorkerHealthPage() {
     queryKey: ["events", "health"],
     queryFn: () =>
       selectAll("events", (q) =>
-        q
-          .in("level", ["warn", "error"])
-          .order("created_at", { ascending: false })
-          .limit(20),
+        q.in("level", ["warn", "error"]).order("created_at", { ascending: false }).limit(20),
       ),
     refetchInterval: 30_000,
   });
 
   const bots = useQuery({ queryKey: ["bots"], queryFn: () => selectAll("bots") });
-  const botName = (id: string | null) =>
-    (bots.data ?? []).find((b) => b.id === id)?.name ?? "—";
+  const botName = (id: string | null) => (bots.data ?? []).find((b) => b.id === id)?.name ?? "—";
 
   const failed = (jobs.data ?? []).filter((j) => j.status === "failed");
   const recentRuns = (jobs.data ?? [])

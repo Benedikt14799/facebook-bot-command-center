@@ -18,9 +18,15 @@ export const Route = createFileRoute("/_authenticated/workers")({
   head: () => ({
     meta: [
       { title: "Worker — FB/Control" },
-      { name: "description", content: "Worker-Tokens verwalten und Anbindung des lokalen Playwright-Workers." },
+      {
+        name: "description",
+        content: "Worker-Tokens verwalten und Anbindung des lokalen Playwright-Workers.",
+      },
       { property: "og:title", content: "Worker — FB/Control" },
-      { property: "og:description", content: "Worker-Tokens verwalten und Anbindung des lokalen Workers." },
+      {
+        property: "og:description",
+        content: "Worker-Tokens verwalten und Anbindung des lokalen Workers.",
+      },
     ],
   }),
   component: WorkersPage,
@@ -130,13 +136,16 @@ function WorkersPage() {
       </div>
 
       <section className="mt-6 rounded-lg border border-border bg-card p-4">
-        <h2 className="flex items-center gap-2 text-sm font-medium text-foreground">Anbindung <InfoHint text="So verbindest du deinen Worker: Token als Header mitschicken und die gezeigten Endpunkte abfragen. Details stehen in WORKER_INTEGRATION.md." /></h2>
+        <h2 className="flex items-center gap-2 text-sm font-medium text-foreground">
+          Anbindung{" "}
+          <InfoHint text="So verbindest du deinen Worker: Token als Header mitschicken und die gezeigten Endpunkte abfragen. Details stehen in WORKER_INTEGRATION.md." />
+        </h2>
         <p className="mt-1 text-xs text-muted-foreground">
           Dein lokaler Worker spricht die API mit dem Header{" "}
           <code className="font-mono">x-worker-token</code> an.
         </p>
         <pre className="mt-3 overflow-x-auto rounded bg-secondary p-3 font-mono text-xs text-foreground">
-{`POST ${baseUrl}/api/public/worker/heartbeat   { "version": "1.0.0" }
+          {`POST ${baseUrl}/api/public/worker/heartbeat   { "version": "1.0.0" }
 POST ${baseUrl}/api/public/worker/poll        { "bot_id": "optional", "limit": 5 }
 POST ${baseUrl}/api/public/worker/result      { "job_id": "...", "status": "done", "result": {} }
 POST ${baseUrl}/api/public/worker/messages    { "bot_id": "...", "direction": "in", "body": "..." }

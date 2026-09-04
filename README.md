@@ -62,12 +62,12 @@ Die App läuft danach auf `http://localhost:8080`.
 
 Die Datei `.env` wird von Lovable Cloud automatisch verwaltet und enthält:
 
-| Variable | Sichtbarkeit | Zweck |
-| --- | --- | --- |
-| `VITE_SUPABASE_URL` | Browser | Backend-URL |
-| `VITE_SUPABASE_PUBLISHABLE_KEY` | Browser | öffentlicher Key (RLS greift) |
-| `SUPABASE_URL` | Server | Backend-URL für Serverfunktionen |
-| `SUPABASE_SERVICE_ROLE_KEY` | Server | Admin-Zugriff für die Worker-API |
+| Variable                        | Sichtbarkeit | Zweck                            |
+| ------------------------------- | ------------ | -------------------------------- |
+| `VITE_SUPABASE_URL`             | Browser      | Backend-URL                      |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | Browser      | öffentlicher Key (RLS greift)    |
+| `SUPABASE_URL`                  | Server       | Backend-URL für Serverfunktionen |
+| `SUPABASE_SERVICE_ROLE_KEY`     | Server       | Admin-Zugriff für die Worker-API |
 
 Der Service-Role-Key wird **nie** an den Browser ausgeliefert; er wird nur in
 serverseitigen Dateien (`*.server.ts`, Serverrouten) verwendet.
@@ -91,19 +91,19 @@ Alle Tabellen liegen im Schema `public`, haben eine `user_id` und sind per
 **Row Level Security** auf `auth.uid()` beschränkt. `service_role` hat Vollzugriff
 (für die Worker-API). `updated_at` wird per Trigger `set_updated_at()` gepflegt.
 
-| Tabelle | Zweck | Wichtige Spalten |
-| --- | --- | --- |
-| `bots` | Profile/Bots | `name`, `status`, `paused`, `warmup_start`, `active_from`, `active_to`, `jitter`, `weekend_factor`, `cap_likes`, `cap_comments`, `cap_dms`, `text_mode`, `tone`, `session_status`, `last_seen_at` |
-| `bot_sessions` | Facebook-Cookies je Bot | `bot_id` (unique), `cookies` (jsonb), `user_agent`, `updated_at` |
-| `groups` | Facebook-Gruppen | `name`, `fb_group_id`, `topic`, `language`, `member_count`, `status`, gruppenspezifische Caps/Regeln |
-| `bot_groups` | Zuordnung Bot ↔ Gruppe | `bot_id`, `group_id`, Beitrittsstatus |
-| `recipients` | Empfänger-/Kontaktlisten | `group_id`, `external_id`, `name`, `score`, `status` |
-| `templates` | Textvorlagen | `name`, `kind`, `body`, `variants`, `active` |
-| `jobs` | geplante Aktionen | `bot_id`, `group_id`, `type`, `status`, `scheduled_for`, `needs_approval`, `attempts`, `claimed_by`, `payload`, `result`, `error` |
-| `messages` | Backlog | `direction` (`in`/`out`), `channel`, `body`, `bot_id`, `group_id`, `recipient_id`, `job_id`, `thread_ref`, `external_id`, `source` |
-| `events` | Protokoll | `level` (`info`/`warn`/`error`), `type`, `message`, `meta` |
-| `workers` | registrierte Worker | `name`, `token`, `status`, `version`, `last_seen_at` |
-| `ai_usage` | KI-Verbrauch | Modell, Tokens, Kosten |
+| Tabelle        | Zweck                    | Wichtige Spalten                                                                                                                                                                                  |
+| -------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `bots`         | Profile/Bots             | `name`, `status`, `paused`, `warmup_start`, `active_from`, `active_to`, `jitter`, `weekend_factor`, `cap_likes`, `cap_comments`, `cap_dms`, `text_mode`, `tone`, `session_status`, `last_seen_at` |
+| `bot_sessions` | Facebook-Cookies je Bot  | `bot_id` (unique), `cookies` (jsonb), `user_agent`, `updated_at`                                                                                                                                  |
+| `groups`       | Facebook-Gruppen         | `name`, `fb_group_id`, `topic`, `language`, `member_count`, `status`, gruppenspezifische Caps/Regeln                                                                                              |
+| `bot_groups`   | Zuordnung Bot ↔ Gruppe   | `bot_id`, `group_id`, Beitrittsstatus                                                                                                                                                             |
+| `recipients`   | Empfänger-/Kontaktlisten | `group_id`, `external_id`, `name`, `score`, `status`                                                                                                                                              |
+| `templates`    | Textvorlagen             | `name`, `kind`, `body`, `variants`, `active`                                                                                                                                                      |
+| `jobs`         | geplante Aktionen        | `bot_id`, `group_id`, `type`, `status`, `scheduled_for`, `needs_approval`, `attempts`, `claimed_by`, `payload`, `result`, `error`                                                                 |
+| `messages`     | Backlog                  | `direction` (`in`/`out`), `channel`, `body`, `bot_id`, `group_id`, `recipient_id`, `job_id`, `thread_ref`, `external_id`, `source`                                                                |
+| `events`       | Protokoll                | `level` (`info`/`warn`/`error`), `type`, `message`, `meta`                                                                                                                                        |
+| `workers`      | registrierte Worker      | `name`, `token`, `status`, `version`, `last_seen_at`                                                                                                                                              |
+| `ai_usage`     | KI-Verbrauch             | Modell, Tokens, Kosten                                                                                                                                                                            |
 
 **Sicherheitshinweis:** `bot_sessions` erlaubt authentifizierten Nutzern
 Schreiben und Löschen, aber **kein** `SELECT` — Cookies können also nicht aus dem
@@ -122,16 +122,16 @@ x-worker-token: <token aus der Seite "Worker">
 content-type: application/json
 ```
 
-| Methode | Pfad | Body / Query | Zweck |
-| --- | --- | --- | --- |
-| POST | `/api/public/worker/heartbeat` | `{ "version": "1.0.0" }` | Worker als online melden |
-| POST | `/api/public/worker/poll` | `{ "bot_id"?, "limit"? }` | fällige Jobs atomar übernehmen (`pending` → `running`), liefert zusätzlich die Bot-Datensätze |
-| POST | `/api/public/worker/result` | `{ "job_id", "status": "done\|failed\|skipped", "result"?, "error"? }` | Ergebnis zurückmelden |
-| POST | `/api/public/worker/messages` | `{ "direction": "in\|out", "body", "bot_id"?, "group_id"?, … }` | Nachricht ins Backlog schreiben |
-| POST | `/api/public/worker/events` | `{ "type", "message", "level"?, "bot_id"?, "meta"? }` | Ereignis protokollieren |
-| GET | `/api/public/worker/session?bot_id=…` | — | Cookies, User-Agent, Proxy, Fingerprint, Verhalten und Antidetect-Konfiguration des Bots |
-| POST | `/api/public/worker/session` | `{ "bot_id", "cookies"?, "user_agent"?, "status"? }` | Cookies/Session-Status aktualisieren |
-| POST | `/api/public/worker/ip-report` | `{ "bot_id", "ip", "country", "isp", "hosting", … }` | tatsächliche Ausgangs-IP der Sitzung melden |
+| Methode | Pfad                                  | Body / Query                                                           | Zweck                                                                                         |
+| ------- | ------------------------------------- | ---------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| POST    | `/api/public/worker/heartbeat`        | `{ "version": "1.0.0" }`                                               | Worker als online melden                                                                      |
+| POST    | `/api/public/worker/poll`             | `{ "bot_id"?, "limit"? }`                                              | fällige Jobs atomar übernehmen (`pending` → `running`), liefert zusätzlich die Bot-Datensätze |
+| POST    | `/api/public/worker/result`           | `{ "job_id", "status": "done\|failed\|skipped", "result"?, "error"? }` | Ergebnis zurückmelden                                                                         |
+| POST    | `/api/public/worker/messages`         | `{ "direction": "in\|out", "body", "bot_id"?, "group_id"?, … }`        | Nachricht ins Backlog schreiben                                                               |
+| POST    | `/api/public/worker/events`           | `{ "type", "message", "level"?, "bot_id"?, "meta"? }`                  | Ereignis protokollieren                                                                       |
+| GET     | `/api/public/worker/session?bot_id=…` | —                                                                      | Cookies, User-Agent, Proxy, Fingerprint, Verhalten und Antidetect-Konfiguration des Bots      |
+| POST    | `/api/public/worker/session`          | `{ "bot_id", "cookies"?, "user_agent"?, "status"? }`                   | Cookies/Session-Status aktualisieren                                                          |
+| POST    | `/api/public/worker/ip-report`        | `{ "bot_id", "ip", "country", "isp", "hosting", … }`                   | tatsächliche Ausgangs-IP der Sitzung melden                                                   |
 
 Regeln:
 

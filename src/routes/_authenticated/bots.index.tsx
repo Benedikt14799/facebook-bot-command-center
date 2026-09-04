@@ -29,7 +29,10 @@ export const Route = createFileRoute("/_authenticated/bots/")({
       { title: "Bots — FB/Control" },
       { name: "description", content: "Facebook-Profile anlegen, pausieren und Sessions prüfen." },
       { property: "og:title", content: "Bots — FB/Control" },
-      { property: "og:description", content: "Facebook-Profile anlegen, pausieren und Sessions prüfen." },
+      {
+        property: "og:description",
+        content: "Facebook-Profile anlegen, pausieren und Sessions prüfen.",
+      },
     ],
   }),
   component: BotsPage,
@@ -45,7 +48,9 @@ function BotsPage() {
 
   const create = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from("bots").insert({ name, profile_url: profileUrl || null });
+      const { error } = await supabase
+        .from("bots")
+        .insert({ name, profile_url: profileUrl || null });
       if (error) throw error;
     },
     onSuccess: () => {
@@ -83,11 +88,17 @@ function BotsPage() {
             </DialogHeader>
             <div className="space-y-3">
               <div className="space-y-1.5">
-                <Label htmlFor="bot-name" className="flex items-center gap-2">Name <InfoHint text="Interner Name zur Unterscheidung, z. B. der Profilname oder die Rolle des Profils." /></Label>
+                <Label htmlFor="bot-name" className="flex items-center gap-2">
+                  Name{" "}
+                  <InfoHint text="Interner Name zur Unterscheidung, z. B. der Profilname oder die Rolle des Profils." />
+                </Label>
                 <Input id="bot-name" value={name} onChange={(e) => setName(e.target.value)} />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="bot-url" className="flex items-center gap-2">Profil-URL (optional) <InfoHint text="Link zum Facebook-Profil. Dient nur der Zuordnung und dem schnellen Nachschauen." /></Label>
+                <Label htmlFor="bot-url" className="flex items-center gap-2">
+                  Profil-URL (optional){" "}
+                  <InfoHint text="Link zum Facebook-Profil. Dient nur der Zuordnung und dem schnellen Nachschauen." />
+                </Label>
                 <Input
                   id="bot-url"
                   value={profileUrl}
@@ -141,7 +152,9 @@ function BotsPage() {
               <span className="flex items-center gap-2 text-xs text-muted-foreground">
                 Session <StatusBadge value={b.session_status} />
                 <span
-                  title={stealthScore(b).reasons.join(" · ") || "Proxy und Fingerprint sind stimmig"}
+                  title={
+                    stealthScore(b).reasons.join(" · ") || "Proxy und Fingerprint sind stimmig"
+                  }
                   className={
                     stealthScore(b).level === "kritisch"
                       ? "text-destructive"

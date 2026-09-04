@@ -80,7 +80,10 @@ function toMinutes(hhmm: string) {
 
 function isWeekend(timezone: string, now = new Date()) {
   try {
-    const day = new Intl.DateTimeFormat("en-US", { timeZone: timezone || "Europe/Berlin", weekday: "short" }).format(now);
+    const day = new Intl.DateTimeFormat("en-US", {
+      timeZone: timezone || "Europe/Berlin",
+      weekday: "short",
+    }).format(now);
     return day === "Sat" || day === "Sun";
   } catch {
     return [0, 6].includes(now.getUTCDay());
@@ -181,10 +184,7 @@ export async function runPlanner(admin: Admin, now = new Date()): Promise<PlanRe
     }
 
     // 4. Ziele bestimmen
-    const { data: links } = await admin
-      .from("bot_groups")
-      .select("group_id")
-      .eq("bot_id", bot.id);
+    const { data: links } = await admin.from("bot_groups").select("group_id").eq("bot_id", bot.id);
     const groupIds = (links ?? []).map((l) => l.group_id);
 
     let created = 0;
@@ -313,10 +313,12 @@ export async function runPlanner(admin: Admin, now = new Date()): Promise<PlanRe
       }
     }
 
-    await admin.from("automation_state").upsert(
-      { user_id: bot.user_id, last_run_at: now.toISOString(), paused: false, last_error: null },
-      { onConflict: "user_id" },
-    );
+    await admin
+      .from("automation_state")
+      .upsert(
+        { user_id: bot.user_id, last_run_at: now.toISOString(), paused: false, last_error: null },
+        { onConflict: "user_id" },
+      );
   }
 
   return result;
@@ -324,10 +326,12 @@ export async function runPlanner(admin: Admin, now = new Date()): Promise<PlanRe
 
 /** Automatik fuer einen Nutzer anhalten und im Protokoll vermerken. */
 export async function pauseAutomation(admin: Admin, userId: string, reason: string) {
-  await admin.from("automation_state").upsert(
-    { user_id: userId, paused: true, paused_reason: reason, last_error: reason },
-    { onConflict: "user_id" },
-  );
+  await admin
+    .from("automation_state")
+    .upsert(
+      { user_id: userId, paused: true, paused_reason: reason, last_error: reason },
+      { onConflict: "user_id" },
+    );
   await admin.from("events").insert({
     user_id: userId,
     level: "error",

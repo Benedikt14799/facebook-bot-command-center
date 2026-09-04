@@ -43,19 +43,63 @@ type Props = {
 };
 
 const BEHAVIOR_FIELDS: { key: keyof Behavior; label: string; hint: string }[] = [
-  { key: "type_delay_min", label: "Tippen min (ms)", hint: "Kürzeste Pause zwischen zwei Tastenanschlägen." },
-  { key: "type_delay_max", label: "Tippen max (ms)", hint: "Längste Pause zwischen zwei Tastenanschlägen." },
-  { key: "typo_chance", label: "Tippfehler-Rate", hint: "0.04 = bei etwa 4 % der Zeichen wird ein Fehler getippt und korrigiert." },
+  {
+    key: "type_delay_min",
+    label: "Tippen min (ms)",
+    hint: "Kürzeste Pause zwischen zwei Tastenanschlägen.",
+  },
+  {
+    key: "type_delay_max",
+    label: "Tippen max (ms)",
+    hint: "Längste Pause zwischen zwei Tastenanschlägen.",
+  },
+  {
+    key: "typo_chance",
+    label: "Tippfehler-Rate",
+    hint: "0.04 = bei etwa 4 % der Zeichen wird ein Fehler getippt und korrigiert.",
+  },
   { key: "pause_min", label: "Pause min (s)", hint: "Kürzeste Pause zwischen zwei Aktionen." },
   { key: "pause_max", label: "Pause max (s)", hint: "Längste Pause zwischen zwei Aktionen." },
-  { key: "warmup_scroll_min", label: "Scroll min", hint: "Mindestanzahl Scroll-Schritte im Feed, bevor gehandelt wird." },
-  { key: "warmup_scroll_max", label: "Scroll max", hint: "Höchstanzahl Scroll-Schritte vor der ersten Aktion." },
-  { key: "idle_click_chance", label: "Leerlauf-Klick", hint: "Wahrscheinlichkeit für eine ziellose Mausbewegung (0–1)." },
-  { key: "session_minutes_min", label: "Sitzung min (min)", hint: "Kürzeste Dauer einer Browsersitzung." },
-  { key: "session_minutes_max", label: "Sitzung max (min)", hint: "Längste Dauer einer Browsersitzung." },
-  { key: "break_minutes_min", label: "Pause min (min)", hint: "Kürzeste Pause zwischen zwei Sitzungen." },
-  { key: "break_minutes_max", label: "Pause max (min)", hint: "Längste Pause zwischen zwei Sitzungen." },
-  { key: "read_ms_per_char", label: "Lesezeit (ms/Zeichen)", hint: "Wartezeit vor dem Antworten, abhängig von der Textlänge." },
+  {
+    key: "warmup_scroll_min",
+    label: "Scroll min",
+    hint: "Mindestanzahl Scroll-Schritte im Feed, bevor gehandelt wird.",
+  },
+  {
+    key: "warmup_scroll_max",
+    label: "Scroll max",
+    hint: "Höchstanzahl Scroll-Schritte vor der ersten Aktion.",
+  },
+  {
+    key: "idle_click_chance",
+    label: "Leerlauf-Klick",
+    hint: "Wahrscheinlichkeit für eine ziellose Mausbewegung (0–1).",
+  },
+  {
+    key: "session_minutes_min",
+    label: "Sitzung min (min)",
+    hint: "Kürzeste Dauer einer Browsersitzung.",
+  },
+  {
+    key: "session_minutes_max",
+    label: "Sitzung max (min)",
+    hint: "Längste Dauer einer Browsersitzung.",
+  },
+  {
+    key: "break_minutes_min",
+    label: "Pause min (min)",
+    hint: "Kürzeste Pause zwischen zwei Sitzungen.",
+  },
+  {
+    key: "break_minutes_max",
+    label: "Pause max (min)",
+    hint: "Längste Pause zwischen zwei Sitzungen.",
+  },
+  {
+    key: "read_ms_per_char",
+    label: "Lesezeit (ms/Zeichen)",
+    hint: "Wartezeit vor dem Antworten, abhängig von der Textlänge.",
+  },
 ];
 
 export function StealthPanel({ botId, form, set }: Props) {
@@ -129,7 +173,10 @@ export function StealthPanel({ botId, form, set }: Props) {
         </p>
 
         <div className="grid gap-3 sm:grid-cols-2">
-          <Field label="Proxy-Typ" hint={PROXY_TYPES.find((p) => p.value === f.proxy_type)?.hint ?? "Art des Proxys."}>
+          <Field
+            label="Proxy-Typ"
+            hint={PROXY_TYPES.find((p) => p.value === f.proxy_type)?.hint ?? "Art des Proxys."}
+          >
             <Select value={f.proxy_type ?? "none"} onValueChange={(v) => set({ proxy_type: v })}>
               <SelectTrigger>
                 <SelectValue />
@@ -143,8 +190,14 @@ export function StealthPanel({ botId, form, set }: Props) {
               </SelectContent>
             </Select>
           </Field>
-          <Field label="Protokoll" hint="http oder socks5 — steht in den Zugangsdaten deines Proxy-Anbieters.">
-            <Select value={f.proxy_protocol ?? "http"} onValueChange={(v) => set({ proxy_protocol: v })}>
+          <Field
+            label="Protokoll"
+            hint="http oder socks5 — steht in den Zugangsdaten deines Proxy-Anbieters."
+          >
+            <Select
+              value={f.proxy_protocol ?? "http"}
+              onValueChange={(v) => set({ proxy_protocol: v })}
+            >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -158,7 +211,10 @@ export function StealthPanel({ botId, form, set }: Props) {
             </Select>
           </Field>
           <Field label="Host" hint="Adresse des Proxy-Servers, z. B. de.isp-proxy.net.">
-            <Input value={f.proxy_host ?? ""} onChange={(e) => set({ proxy_host: e.target.value })} />
+            <Input
+              value={f.proxy_host ?? ""}
+              onChange={(e) => set({ proxy_host: e.target.value })}
+            />
           </Field>
           <Field label="Port">
             <Input
@@ -168,9 +224,15 @@ export function StealthPanel({ botId, form, set }: Props) {
             />
           </Field>
           <Field label="Benutzer">
-            <Input value={f.proxy_user ?? ""} onChange={(e) => set({ proxy_user: e.target.value })} />
+            <Input
+              value={f.proxy_user ?? ""}
+              onChange={(e) => set({ proxy_user: e.target.value })}
+            />
           </Field>
-          <Field label="Passwort" hint="Wird verschlüsselt gespeichert und nur vom Worker gelesen — es kann hier nie wieder angezeigt werden.">
+          <Field
+            label="Passwort"
+            hint="Wird verschlüsselt gespeichert und nur vom Worker gelesen — es kann hier nie wieder angezeigt werden."
+          >
             <Input
               type="password"
               value={proxyPassword}
@@ -178,14 +240,20 @@ export function StealthPanel({ botId, form, set }: Props) {
               onChange={(e) => setProxyPassword(e.target.value)}
             />
           </Field>
-          <Field label="Land (ISO)" hint="Land, in dem die IP liegen soll — muss zum gewohnten Login-Ort des Accounts passen, z. B. DE.">
+          <Field
+            label="Land (ISO)"
+            hint="Land, in dem die IP liegen soll — muss zum gewohnten Login-Ort des Accounts passen, z. B. DE."
+          >
             <Input
               value={f.proxy_country ?? ""}
               placeholder="DE"
               onChange={(e) => set({ proxy_country: e.target.value.toUpperCase() })}
             />
           </Field>
-          <Field label="Rotations-URL (optional)" hint="Bei Mobil-Proxys: Adresse, die einen IP-Wechsel auslöst. Wird nur zwischen Sitzungen aufgerufen, nie mitten in der Arbeit.">
+          <Field
+            label="Rotations-URL (optional)"
+            hint="Bei Mobil-Proxys: Adresse, die einen IP-Wechsel auslöst. Wird nur zwischen Sitzungen aufgerufen, nie mitten in der Arbeit."
+          >
             <Input
               value={f.proxy_rotate_url ?? ""}
               onChange={(e) => set({ proxy_rotate_url: e.target.value })}
@@ -201,10 +269,20 @@ export function StealthPanel({ botId, form, set }: Props) {
         ) : null}
 
         <div className="mt-3 flex flex-wrap items-center gap-2">
-          <Button size="sm" variant="outline" onClick={() => secrets.mutate()} disabled={secrets.isPending || (!proxyPassword && !antidetectKey)}>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => secrets.mutate()}
+            disabled={secrets.isPending || (!proxyPassword && !antidetectKey)}
+          >
             Zugangsdaten speichern
           </Button>
-          <Button size="sm" variant="outline" onClick={() => proxyCheck.mutate()} disabled={proxyCheck.isPending}>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => proxyCheck.mutate()}
+            disabled={proxyCheck.isPending}
+          >
             Proxy prüfen
           </Button>
           <span className="text-xs text-muted-foreground">
@@ -225,9 +303,11 @@ export function StealthPanel({ botId, form, set }: Props) {
           <InfoHint text="Standard-Playwright verrät sich sofort (navigator.webdriver). Der Worker tarnt den Browser und nutzt für diesen Bot immer denselben Fingerprint — wechselnde Geräte-Merkmale wirken verdächtig." />
         </h2>
         <div className="grid gap-3 sm:grid-cols-2">
-          <Field label="Vorlage" hint="Setzt User-Agent, Plattform, Auflösung und Hardware in einem Rutsch auf eine stimmige Kombination.">
+          <Field
+            label="Vorlage"
+            hint="Setzt User-Agent, Plattform, Auflösung und Hardware in einem Rutsch auf eine stimmige Kombination."
+          >
             <Select
-              
               onValueChange={(v) => {
                 const preset = FINGERPRINT_PRESETS.find((p) => p.id === v);
                 if (preset) set({ fingerprint: preset.fp as never });
@@ -245,8 +325,14 @@ export function StealthPanel({ botId, form, set }: Props) {
               </SelectContent>
             </Select>
           </Field>
-          <Field label="Browserstart" hint="Stealth = getarntes Chromium des Workers. Antidetect = ein Profil aus AdsPower/Dolphin/GoLogin, das der Worker per CDP steuert.">
-            <Select value={f.browser_mode ?? "stealth"} onValueChange={(v) => set({ browser_mode: v })}>
+          <Field
+            label="Browserstart"
+            hint="Stealth = getarntes Chromium des Workers. Antidetect = ein Profil aus AdsPower/Dolphin/GoLogin, das der Worker per CDP steuert."
+          >
+            <Select
+              value={f.browser_mode ?? "stealth"}
+              onValueChange={(v) => set({ browser_mode: v })}
+            >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -262,17 +348,32 @@ export function StealthPanel({ botId, form, set }: Props) {
           <Field label="Sprache">
             <Input value={fp.locale} onChange={(e) => setFp({ locale: e.target.value })} />
           </Field>
-          <Field label="Zeitzone" hint="Muss zum Proxy-Land passen — sonst fällt der Widerspruch auf.">
+          <Field
+            label="Zeitzone"
+            hint="Muss zum Proxy-Land passen — sonst fällt der Widerspruch auf."
+          >
             <Input value={fp.timezone} onChange={(e) => setFp({ timezone: e.target.value })} />
           </Field>
           <Field label="Breite × Höhe">
             <div className="flex gap-2">
-              <Input type="number" value={fp.width} onChange={(e) => setFp({ width: Number(e.target.value) })} />
-              <Input type="number" value={fp.height} onChange={(e) => setFp({ height: Number(e.target.value) })} />
+              <Input
+                type="number"
+                value={fp.width}
+                onChange={(e) => setFp({ width: Number(e.target.value) })}
+              />
+              <Input
+                type="number"
+                value={fp.height}
+                onChange={(e) => setFp({ height: Number(e.target.value) })}
+              />
             </div>
           </Field>
           <Field label="RAM (GB)">
-            <Input type="number" value={fp.device_memory} onChange={(e) => setFp({ device_memory: Number(e.target.value) })} />
+            <Input
+              type="number"
+              value={fp.device_memory}
+              onChange={(e) => setFp({ device_memory: Number(e.target.value) })}
+            />
           </Field>
           <Field label="CPU-Kerne">
             <Input
@@ -284,7 +385,11 @@ export function StealthPanel({ botId, form, set }: Props) {
         </div>
         <div className="mt-3">
           <Field label="User-Agent" hint="Muss exakt zu Plattform, Auflösung und Zeitzone passen.">
-            <Input className="font-mono text-xs" value={fp.user_agent} onChange={(e) => setFp({ user_agent: e.target.value })} />
+            <Input
+              className="font-mono text-xs"
+              value={fp.user_agent}
+              onChange={(e) => setFp({ user_agent: e.target.value })}
+            />
           </Field>
         </div>
         {warnings.length ? (
@@ -300,7 +405,10 @@ export function StealthPanel({ botId, form, set }: Props) {
         {f.browser_mode === "antidetect" ? (
           <div className="mt-4 grid gap-3 border-t border-border pt-4 sm:grid-cols-2">
             <Field label="Anbieter" hint="Antidetect-Tool, das lokal auf dem Worker-Rechner läuft.">
-              <Select value={ad.provider} onValueChange={(v) => set({ antidetect: { ...ad, provider: v } as never })}>
+              <Select
+                value={ad.provider}
+                onValueChange={(v) => set({ antidetect: { ...ad, provider: v } as never })}
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -311,13 +419,30 @@ export function StealthPanel({ botId, form, set }: Props) {
                 </SelectContent>
               </Select>
             </Field>
-            <Field label="Lokale API-URL" hint="Adresse der lokalen API des Tools, z. B. http://127.0.0.1:50325.">
-              <Input value={ad.api_url} onChange={(e) => set({ antidetect: { ...ad, api_url: e.target.value } as never })} />
+            <Field
+              label="Lokale API-URL"
+              hint="Adresse der lokalen API des Tools, z. B. http://127.0.0.1:50325."
+            >
+              <Input
+                value={ad.api_url}
+                onChange={(e) => set({ antidetect: { ...ad, api_url: e.target.value } as never })}
+              />
             </Field>
-            <Field label="Profil-ID" hint="ID des Browserprofils im Antidetect-Tool, das zu diesem Bot gehört.">
-              <Input value={ad.profile_id} onChange={(e) => set({ antidetect: { ...ad, profile_id: e.target.value } as never })} />
+            <Field
+              label="Profil-ID"
+              hint="ID des Browserprofils im Antidetect-Tool, das zu diesem Bot gehört."
+            >
+              <Input
+                value={ad.profile_id}
+                onChange={(e) =>
+                  set({ antidetect: { ...ad, profile_id: e.target.value } as never })
+                }
+              />
             </Field>
-            <Field label="API-Schlüssel" hint="Nur bei Anbietern nötig, die einen Token verlangen. Wird serverseitig gespeichert.">
+            <Field
+              label="API-Schlüssel"
+              hint="Nur bei Anbietern nötig, die einen Token verlangen. Wird serverseitig gespeichert."
+            >
               <Input
                 type="password"
                 value={antidetectKey}
@@ -332,7 +457,9 @@ export function StealthPanel({ botId, form, set }: Props) {
               </span>
               <Switch
                 checked={ad.fallback_stealth}
-                onCheckedChange={(v) => set({ antidetect: { ...ad, fallback_stealth: v } as never })}
+                onCheckedChange={(v) =>
+                  set({ antidetect: { ...ad, fallback_stealth: v } as never })
+                }
               />
             </div>
           </div>
@@ -363,7 +490,9 @@ export function StealthPanel({ botId, form, set }: Props) {
                 type="number"
                 step="any"
                 value={behavior[field.key]}
-                onChange={(e) => setBehavior({ [field.key]: Number(e.target.value) } as Partial<Behavior>)}
+                onChange={(e) =>
+                  setBehavior({ [field.key]: Number(e.target.value) } as Partial<Behavior>)
+                }
               />
             </Field>
           ))}

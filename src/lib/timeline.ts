@@ -86,9 +86,7 @@ export function buildTimeline(input: {
     });
   }
 
-  return out
-    .filter((i) => i.at && i.at !== "null")
-    .sort((a, b) => (a.at < b.at ? 1 : -1));
+  return out.filter((i) => i.at && i.at !== "null").sort((a, b) => (a.at < b.at ? 1 : -1));
 }
 
 /** CSV-Datei aus der Zeitleiste erzeugen und herunterladen. */
@@ -120,8 +118,7 @@ export function downloadTimelineCsv(name: string, items: TimelineItem[]) {
 export function printTimeline(name: string, items: TimelineItem[]) {
   const w = window.open("", "_blank", "width=900,height=1000");
   if (!w) return;
-  const esc = (v: string) =>
-    v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const esc = (v: string) => v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   w.document.write(`<!doctype html><html lang="de"><head><meta charset="utf-8">
 <title>Kontaktakte ${esc(name)}</title>
 <style>

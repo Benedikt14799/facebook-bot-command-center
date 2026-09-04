@@ -22,13 +22,13 @@ Die gleiche Anleitung findest du interaktiv im Cockpit unter **Inbetriebnahme** 
 
 Du brauchst:
 
-| Baustein | Empfehlung |
-| --- | --- |
-| Rechner für den Worker | Dauerhaft laufender Mini-PC, Mac oder VPS. Muss Chromium starten können. |
-| Python | 3.11 oder neuer (`python3 --version`) |
-| Facebook-Account | Bestehender, benutzter Account. Frische Accounts fliegen am schnellsten raus. |
-| Proxy | **Static Residential (ISP)** oder **Mobil (4G/5G)**. Standort passend zum Account. |
-| Optional | Antidetect-Browser (AdsPower, Dolphin, GoLogin) für maximale Tarnung |
+| Baustein               | Empfehlung                                                                         |
+| ---------------------- | ---------------------------------------------------------------------------------- |
+| Rechner für den Worker | Dauerhaft laufender Mini-PC, Mac oder VPS. Muss Chromium starten können.           |
+| Python                 | 3.11 oder neuer (`python3 --version`)                                              |
+| Facebook-Account       | Bestehender, benutzter Account. Frische Accounts fliegen am schnellsten raus.      |
+| Proxy                  | **Static Residential (ISP)** oder **Mobil (4G/5G)**. Standort passend zum Account. |
+| Optional               | Antidetect-Browser (AdsPower, Dolphin, GoLogin) für maximale Tarnung               |
 
 Nicht verwenden: Rechenzentrums-IPs (Hetzner, AWS, DigitalOcean …) und schnell rotierende Residential-Proxies. Beides ist bei Facebook ein sofortiger Auslöser für Checkpoints.
 
@@ -231,15 +231,15 @@ Weg B — **Cookies manuell importieren**:
 
 ## Phase 9 — Betrieb und Störungen
 
-| Symptom | Was passiert automatisch | Was du tust |
-| --- | --- | --- |
-| Checkpoint / CAPTCHA / 2FA | Bot geht in manuellen Modus, Autopilot aus, Benachrichtigung | **Freischaltung** öffnen, Fenster anfordern, manuell lösen |
-| Session abgelaufen | Manueller Modus, keine neuen Aufträge für diesen Bot | Neu einloggen oder Cookies importieren |
-| Account gesperrt | Bot wird pausiert/blockiert, Ereignis `blocked` | Account ruhen lassen, Ursachen prüfen, Mengen senken |
-| Worker offline | Worker-Health zeigt „offline" | Prozess/Dienst prüfen, `journalctl -u fbcontrol-worker -f` |
-| Auftrag hängt in „running" | Wartung setzt ihn nach Zeitablauf zurück | Sonst Retry-Button auf **Worker-Health** |
-| Aufträge fehlgeschlagen | Fehlertext am Auftrag | Einzeln oder gesammelt „Erneut versuchen" |
-| KI blockiert (Guthaben/Limit) | Automatik wird pausiert, Meldung im Cockpit | Guthaben aufladen oder eigenen Anbieter hinterlegen |
+| Symptom                       | Was passiert automatisch                                     | Was du tust                                                |
+| ----------------------------- | ------------------------------------------------------------ | ---------------------------------------------------------- |
+| Checkpoint / CAPTCHA / 2FA    | Bot geht in manuellen Modus, Autopilot aus, Benachrichtigung | **Freischaltung** öffnen, Fenster anfordern, manuell lösen |
+| Session abgelaufen            | Manueller Modus, keine neuen Aufträge für diesen Bot         | Neu einloggen oder Cookies importieren                     |
+| Account gesperrt              | Bot wird pausiert/blockiert, Ereignis `blocked`              | Account ruhen lassen, Ursachen prüfen, Mengen senken       |
+| Worker offline                | Worker-Health zeigt „offline"                                | Prozess/Dienst prüfen, `journalctl -u fbcontrol-worker -f` |
+| Auftrag hängt in „running"    | Wartung setzt ihn nach Zeitablauf zurück                     | Sonst Retry-Button auf **Worker-Health**                   |
+| Aufträge fehlgeschlagen       | Fehlertext am Auftrag                                        | Einzeln oder gesammelt „Erneut versuchen"                  |
+| KI blockiert (Guthaben/Limit) | Automatik wird pausiert, Meldung im Cockpit                  | Guthaben aufladen oder eigenen Anbieter hinterlegen        |
 
 Not-Aus: Bot pausieren auf der Bots-Seite; der Planer plant nichts mehr und der Worker bekommt für diesen Bot keine Aufträge.
 
@@ -262,31 +262,31 @@ Not-Aus: Bot pausieren auf der Bots-Seite; der Planer plant nichts mehr und der 
 
 Alle Aufrufe mit Header `x-worker-token: <dein Token>`.
 
-| Methode | Pfad | Zweck |
-| --- | --- | --- |
-| POST | `/api/public/worker/heartbeat` | Lebenszeichen + Version |
-| POST | `/api/public/worker/poll` | Aufträge atomar übernehmen |
-| POST | `/api/public/worker/result` | Ergebnis / Fehler melden |
-| POST | `/api/public/worker/messages` | Ein- und ausgehende Nachrichten protokollieren |
-| POST | `/api/public/worker/recipients` | Person erkennen/anlegen (Name, Profil, Rohdaten) |
-| POST | `/api/public/worker/events` | Ereignisse: login, checkpoint, captcha, two_factor, blocked … |
-| GET | `/api/public/worker/session?bot_id=…` | Cookies, Proxy, Fingerprint, Verhalten |
-| POST | `/api/public/worker/session` | Neue Cookies nach Login speichern |
-| GET | `/api/public/worker/unlock` | Offene Freischaltanfragen |
-| POST | `/api/public/worker/unlock` | Freischaltung auf open/done/failed/cancelled setzen |
+| Methode | Pfad                                  | Zweck                                                         |
+| ------- | ------------------------------------- | ------------------------------------------------------------- |
+| POST    | `/api/public/worker/heartbeat`        | Lebenszeichen + Version                                       |
+| POST    | `/api/public/worker/poll`             | Aufträge atomar übernehmen                                    |
+| POST    | `/api/public/worker/result`           | Ergebnis / Fehler melden                                      |
+| POST    | `/api/public/worker/messages`         | Ein- und ausgehende Nachrichten protokollieren                |
+| POST    | `/api/public/worker/recipients`       | Person erkennen/anlegen (Name, Profil, Rohdaten)              |
+| POST    | `/api/public/worker/events`           | Ereignisse: login, checkpoint, captcha, two_factor, blocked … |
+| GET     | `/api/public/worker/session?bot_id=…` | Cookies, Proxy, Fingerprint, Verhalten                        |
+| POST    | `/api/public/worker/session`          | Neue Cookies nach Login speichern                             |
+| GET     | `/api/public/worker/unlock`           | Offene Freischaltanfragen                                     |
+| POST    | `/api/public/worker/unlock`           | Freischaltung auf open/done/failed/cancelled setzen           |
 
 Details und Beispiel-Payloads: [WORKER_INTEGRATION.md](./WORKER_INTEGRATION.md)
 
 ## Häufige Fehlermeldungen
 
-| Meldung | Ursache | Lösung |
-| --- | --- | --- |
-| `401 Missing worker token` | Header fehlt oder Token falsch | Skript neu herunterladen |
-| `Connection refused` beim Worker | Basis-URL falsch (z. B. `localhost` auf einem anderen Rechner) | Öffentliche URL eintragen |
-| `playwright: executable doesn't exist` | Chromium fehlt | `playwright install chromium` |
-| `Host system is missing dependencies` | VPS ohne Bibliotheken | `playwright install-deps chromium` |
-| Bot bekommt keine Aufträge | Manueller Modus, pausiert, außerhalb der Arbeitszeit oder Cap erreicht | Bot-Detailseite und Freischaltung prüfen |
-| Sofortiger Checkpoint nach Login | Rechenzentrums-IP oder wechselnde IP | Static-Residential- oder Mobil-Proxy nutzen |
+| Meldung                                | Ursache                                                                | Lösung                                      |
+| -------------------------------------- | ---------------------------------------------------------------------- | ------------------------------------------- |
+| `401 Missing worker token`             | Header fehlt oder Token falsch                                         | Skript neu herunterladen                    |
+| `Connection refused` beim Worker       | Basis-URL falsch (z. B. `localhost` auf einem anderen Rechner)         | Öffentliche URL eintragen                   |
+| `playwright: executable doesn't exist` | Chromium fehlt                                                         | `playwright install chromium`               |
+| `Host system is missing dependencies`  | VPS ohne Bibliotheken                                                  | `playwright install-deps chromium`          |
+| Bot bekommt keine Aufträge             | Manueller Modus, pausiert, außerhalb der Arbeitszeit oder Cap erreicht | Bot-Detailseite und Freischaltung prüfen    |
+| Sofortiger Checkpoint nach Login       | Rechenzentrums-IP oder wechselnde IP                                   | Static-Residential- oder Mobil-Proxy nutzen |
 
 ---
 

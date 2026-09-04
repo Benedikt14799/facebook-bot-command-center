@@ -25,8 +25,7 @@ export const Route = createFileRoute("/api/public/worker/recipients")({
         if (ctx instanceof Response) return ctx;
 
         const body = (await request.json().catch(() => null)) as
-          | (Person & { people?: Person[] })
-          | null;
+          (Person & { people?: Person[] }) | null;
         if (!body) return json({ error: "body required" }, 400);
 
         const people = Array.isArray(body.people) ? body.people : [body];

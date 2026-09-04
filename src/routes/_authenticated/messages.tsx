@@ -21,9 +21,15 @@ export const Route = createFileRoute("/_authenticated/messages")({
   head: () => ({
     meta: [
       { title: "Nachrichten — FB/Control" },
-      { name: "description", content: "Backlog aller ein- und ausgehenden Nachrichten und Kommentare." },
+      {
+        name: "description",
+        content: "Backlog aller ein- und ausgehenden Nachrichten und Kommentare.",
+      },
       { property: "og:title", content: "Nachrichten — FB/Control" },
-      { property: "og:description", content: "Backlog aller ein- und ausgehenden Nachrichten und Kommentare." },
+      {
+        property: "og:description",
+        content: "Backlog aller ein- und ausgehenden Nachrichten und Kommentare.",
+      },
     ],
   }),
   component: MessagesPage,

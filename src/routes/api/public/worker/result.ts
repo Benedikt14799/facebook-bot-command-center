@@ -59,7 +59,10 @@ export const Route = createFileRoute("/api/public/worker/result")({
 
         if (status === "done" && job) {
           let recipientId = job.recipient_id;
-          if (!recipientId && (body.recipient_name || body.recipient_fb_id || body.recipient_profile_url)) {
+          if (
+            !recipientId &&
+            (body.recipient_name || body.recipient_fb_id || body.recipient_profile_url)
+          ) {
             recipientId = await upsertRecipient(ctx.admin, {
               userId: ctx.userId,
               groupId: job.group_id,
@@ -70,7 +73,10 @@ export const Route = createFileRoute("/api/public/worker/result")({
               context: body.context ?? null,
             });
             if (recipientId) {
-              await ctx.admin.from("jobs").update({ recipient_id: recipientId } as never).eq("id", job.id);
+              await ctx.admin
+                .from("jobs")
+                .update({ recipient_id: recipientId } as never)
+                .eq("id", job.id);
             }
           }
 
@@ -100,4 +106,3 @@ export const Route = createFileRoute("/api/public/worker/result")({
     },
   },
 });
-

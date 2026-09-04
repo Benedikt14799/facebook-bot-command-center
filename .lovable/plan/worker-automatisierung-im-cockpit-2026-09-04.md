@@ -27,6 +27,7 @@ und lassen sich vor dem Start noch bearbeiten.
 ### Aufwärmphasen-Verwaltung
 
 Eigene Seite "Aufwärmphase", weil das der kritische Teil gegen Sperren ist:
+
 - Aufwärmplan je Bot: Dauer in Tagen und Tagesmengen je Aktionstyp pro Stufe
   (z. B. Tag 1–3 nur Lesen/wenige Likes, Tag 4–7 erste Kommentare, ab Tag 8 DMs)
 - Vorlagen für Aufwärmpläne (vorsichtig / normal / zügig) plus frei anpassbare
@@ -41,7 +42,9 @@ Eigene Seite "Aufwärmphase", weil das der kritische Teil gegen Sperren ist:
   eine Warnung, wenn sie das Tageslimit der Aufwärmphase überschreiten würden.
 
 ### 1. Automatische Job-Planung (pro Bot zuschaltbar)
+
 Ein Planer läuft alle 10 Minuten und erzeugt selbstständig Jobs pro Bot:
+
 - nur innerhalb der Arbeitszeit des Bots, nicht wenn pausiert/gesperrt
 - respektiert Tages-Caps je Aktionstyp (Likes, Kommentare, DMs)
 - verteilt die Aktionen über den Tag mit Zufalls-Jitter, Wochenendfaktor
@@ -50,8 +53,10 @@ Ein Planer läuft alle 10 Minuten und erzeugt selbstständig Jobs pro Bot:
 - neue Seite "Automatik": pro Bot an/aus, Vorschau "Was macht dieser Bot heute?"
 
 ### 2. KI-Texte im Cockpit
+
 Beim Erzeugen eines Jobs schreibt die App den Text bereits mit und legt ihn in
 den Job — der Worker sendet nur noch.
+
 - Tonfall, Sprache und Beispieltexte je Bot bzw. Gruppe
 - Anti-AI-Nachbearbeitung: kurze Sätze, keine Floskeln/Emoji-Schwemme, leichte
   Varianz und Tippfehlertoleranz, Vermeidung typischer KI-Formulierungen
@@ -60,12 +65,15 @@ den Job — der Worker sendet nur noch.
 - Texte, die eine Freigabe brauchen, landen weiter in der Freigabe-Queue
 
 ### 3. Worker-Setup & Download
+
 Neue Ansicht auf der Worker-Seite:
+
 - fertiges Python-Worker-Skript mit eingesetztem Token und Basis-URL als Download
 - Kurzanleitung (Python, Playwright installieren, starten) mit Kopierbuttons
 - Statusanzeige "verbunden / nie gesehen / offline seit X"
 
 ### 4. Überwachung & Alarme
+
 - Worker offline (kein Lebenszeichen) wird automatisch auf "offline" gesetzt
 - hängende Jobs (zu lange "running") werden zurück auf "pending" gestellt,
   nach mehreren Fehlversuchen auf "failed"
@@ -73,6 +81,7 @@ Neue Ansicht auf der Worker-Seite:
 - Warnbanner im Dashboard mit den offenen Problemen
 
 ### 5. Simulationsmodus
+
 Pro Bot umschaltbar: Jobs werden ohne echten Worker verarbeitet, als erledigt
 markiert und erzeugen Beispiel-Nachrichten im Backlog. Damit lassen sich
 Planung, Texte und Auswertung testen, ohne Facebook zu berühren. Deutlich

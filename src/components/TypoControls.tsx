@@ -51,10 +51,7 @@ export function TypoControls({
         </Label>
         <div className="grid gap-1.5 sm:grid-cols-2">
           {TYPO_KINDS.map((k) => (
-            <label
-              key={k.value}
-              className="flex items-start gap-2 text-xs text-muted-foreground"
-            >
+            <label key={k.value} className="flex items-start gap-2 text-xs text-muted-foreground">
               <Checkbox
                 checked={value.kinds.includes(k.value)}
                 disabled={disabled || value.rate === 0}

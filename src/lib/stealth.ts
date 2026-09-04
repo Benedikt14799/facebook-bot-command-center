@@ -6,7 +6,12 @@
 
 export type ProxyType = "none" | "isp" | "mobile" | "residential" | "datacenter";
 
-export const PROXY_TYPES: { value: ProxyType; label: string; hint: string; risk: "high" | "medium" | "low" }[] = [
+export const PROXY_TYPES: {
+  value: ProxyType;
+  label: string;
+  hint: string;
+  risk: "high" | "medium" | "low";
+}[] = [
   {
     value: "none",
     label: "Kein Proxy",
@@ -143,8 +148,10 @@ export function fingerprintWarnings(fp: Fingerprint, proxyCountry?: string | nul
   const isMac = ua.includes("mac os");
   const isMobile = ua.includes("mobile") || ua.includes("android");
 
-  if (isWin && fp.platform !== "Win32") out.push("User-Agent sagt Windows, Plattform ist nicht Win32.");
-  if (isMac && fp.platform !== "MacIntel") out.push("User-Agent sagt macOS, Plattform ist nicht MacIntel.");
+  if (isWin && fp.platform !== "Win32")
+    out.push("User-Agent sagt Windows, Plattform ist nicht Win32.");
+  if (isMac && fp.platform !== "MacIntel")
+    out.push("User-Agent sagt macOS, Plattform ist nicht MacIntel.");
   if (isMobile && fp.width > 600) out.push("Mobiler User-Agent mit Desktop-Auflösung.");
   if (!isMobile && fp.width < 1000) out.push("Desktop-User-Agent mit sehr kleiner Auflösung.");
   if (fp.locale.startsWith("de") && !fp.timezone.startsWith("Europe/"))
@@ -292,13 +299,16 @@ export function stealthScore(input: {
 
   const check = (input.proxy_check ?? null) as ProxyCheck | null;
   if (check?.hosting) reasons.push("IP-Prüfung meldet Hosting-/Rechenzentrums-IP");
-  if (check && check.ok === false) reasons.push(check.message || "Letzte Proxy-Prüfung fehlgeschlagen");
+  if (check && check.ok === false)
+    reasons.push(check.message || "Letzte Proxy-Prüfung fehlgeschlagen");
   if (
     check?.country &&
     input.proxy_country &&
     check.country.toUpperCase() !== input.proxy_country.toUpperCase()
   )
-    reasons.push(`IP-Land ${check.country} weicht vom eingestellten Land ${input.proxy_country} ab`);
+    reasons.push(
+      `IP-Land ${check.country} weicht vom eingestellten Land ${input.proxy_country} ab`,
+    );
 
   const critical =
     input.proxy_type === "none" || !input.proxy_host || risk === "high" || !!check?.hosting;

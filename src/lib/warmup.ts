@@ -118,13 +118,14 @@ export function warmupInfo(bot: BotWarmupInput, now = new Date()): WarmupInfo {
   }
   const stage = stageIndex >= 0 ? plan[stageIndex]! : null;
 
-  const limits = active && stage
-    ? {
-        likes: Math.min(stage.likes, bot.cap_likes),
-        comments: Math.min(stage.comments, bot.cap_comments),
-        dms: Math.min(stage.dms, bot.cap_dms),
-      }
-    : { likes: bot.cap_likes, comments: bot.cap_comments, dms: bot.cap_dms };
+  const limits =
+    active && stage
+      ? {
+          likes: Math.min(stage.likes, bot.cap_likes),
+          comments: Math.min(stage.comments, bot.cap_comments),
+          dms: Math.min(stage.dms, bot.cap_dms),
+        }
+      : { likes: bot.cap_likes, comments: bot.cap_comments, dms: bot.cap_dms };
 
   let liveDate: string | null = null;
   if (bot.warmup_start && !bot.warmup_paused) {
@@ -195,10 +196,12 @@ export function weightedActionOrder(
     { type: "comment", weight: weights.comment },
     { type: "dm_new_member", weight: weights.dm },
   ];
-  return entries
-    .filter((e) => e.weight > 0)
-    // Zufaellige Gewichtung: hohes Gewicht landet meist vorne, bleibt aber variabel.
-    .map((e) => ({ ...e, roll: Math.random() * e.weight }))
-    .sort((a, b) => b.roll - a.roll)
-    .map((e) => e.type);
+  return (
+    entries
+      .filter((e) => e.weight > 0)
+      // Zufaellige Gewichtung: hohes Gewicht landet meist vorne, bleibt aber variabel.
+      .map((e) => ({ ...e, roll: Math.random() * e.weight }))
+      .sort((a, b) => b.roll - a.roll)
+      .map((e) => e.type)
+  );
 }

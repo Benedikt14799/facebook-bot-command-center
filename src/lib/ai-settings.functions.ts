@@ -69,18 +69,25 @@ export const testAiSettings = createServerFn({ method: "POST" })
   .handler(async ({ context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { loadAiConfig, callModel } = await import("@/lib/ai.server");
-    const config = await loadAiConfig(
-      supabaseAdmin as never,
-      context.userId,
-    );
+    const config = await loadAiConfig(supabaseAdmin as never, context.userId);
     try {
       const text = await callModel(
         config,
         "Du antwortest extrem kurz auf Deutsch.",
         "Sag nur: Verbindung steht.",
       );
-      return { ok: true, provider: config.provider, model: config.model, sample: text.slice(0, 120) };
+      return {
+        ok: true,
+        provider: config.provider,
+        model: config.model,
+        sample: text.slice(0, 120),
+      };
     } catch (err) {
-      return { ok: false, provider: config.provider, model: config.model, error: (err as Error).message };
+      return {
+        ok: false,
+        provider: config.provider,
+        model: config.model,
+        error: (err as Error).message,
+      };
     }
   });

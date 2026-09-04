@@ -17,7 +17,10 @@ export const Route = createFileRoute("/_authenticated/recipients/")({
       { title: "Kontakte — FB/Control" },
       { name: "description", content: "Alle erkannten Personen mit Verlauf, Stufe und Antworten." },
       { property: "og:title", content: "Kontakte — FB/Control" },
-      { property: "og:description", content: "Alle erkannten Personen mit Verlauf, Stufe und Antworten." },
+      {
+        property: "og:description",
+        content: "Alle erkannten Personen mit Verlauf, Stufe und Antworten.",
+      },
     ],
   }),
   component: RecipientsPage,

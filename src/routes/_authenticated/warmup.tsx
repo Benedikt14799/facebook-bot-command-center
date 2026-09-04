@@ -188,7 +188,6 @@ function WarmupPage() {
                 onSave={(values) => patch.mutate({ id: bot.id, values })}
                 saving={patch.isPending}
               />
-
             </section>
           );
         })}
@@ -233,7 +232,11 @@ function ProfileEditor({
     setStages(parsePlan(bot.warmup_plan));
     setWeights(parseWeights((bot as { warmup_weights?: unknown }).warmup_weights));
     setExtraDays(bot.warmup_extra_days ?? 0);
-  }, [bot.warmup_plan, bot.warmup_extra_days, (bot as { warmup_weights?: unknown }).warmup_weights]);
+  }, [
+    bot.warmup_plan,
+    bot.warmup_extra_days,
+    (bot as { warmup_weights?: unknown }).warmup_weights,
+  ]);
 
   function setStage(index: number, key: keyof WarmupStage, value: number) {
     setStages((prev) =>

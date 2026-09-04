@@ -26,10 +26,26 @@ export const Route = createFileRoute("/")({
 });
 
 const features = [
-  { icon: Bot, title: "Bot-Verwaltung", text: "Profile, Cookie-Session, Status und Not-Aus je Bot." },
-  { icon: Clock, title: "Warmup & Zeitfenster", text: "Tages-Caps, Jitter, Wochenendfaktor, Arbeitszeiten." },
-  { icon: Activity, title: "Aufträge & Protokoll", text: "Geplante Jobs, Freigabe-Queue, Nachrichten-Backlog." },
-  { icon: ShieldCheck, title: "Worker-API", text: "Dein lokaler Playwright-Worker holt Jobs per Token." },
+  {
+    icon: Bot,
+    title: "Bot-Verwaltung",
+    text: "Profile, Cookie-Session, Status und Not-Aus je Bot.",
+  },
+  {
+    icon: Clock,
+    title: "Warmup & Zeitfenster",
+    text: "Tages-Caps, Jitter, Wochenendfaktor, Arbeitszeiten.",
+  },
+  {
+    icon: Activity,
+    title: "Aufträge & Protokoll",
+    text: "Geplante Jobs, Freigabe-Queue, Nachrichten-Backlog.",
+  },
+  {
+    icon: ShieldCheck,
+    title: "Worker-API",
+    text: "Dein lokaler Playwright-Worker holt Jobs per Token.",
+  },
 ];
 
 function Landing() {
@@ -49,8 +65,8 @@ function Landing() {
           Kommandozentrale für deine Facebook-Automation
         </h1>
         <p className="mx-auto mt-4 max-w-2xl text-center text-pretty text-muted-foreground">
-          Plane Aktionen, verwalte Gruppen und Profile, überwache jede Nachricht — die
-          eigentliche Ausführung übernimmt dein eigener Worker.
+          Plane Aktionen, verwalte Gruppen und Profile, überwache jede Nachricht — die eigentliche
+          Ausführung übernimmt dein eigener Worker.
         </p>
         <div className="mt-8 flex flex-wrap justify-center gap-3">
           <Link to="/auth">

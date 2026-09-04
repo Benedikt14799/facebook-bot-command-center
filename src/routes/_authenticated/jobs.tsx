@@ -35,7 +35,13 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { selectAll, fmt } from "@/lib/db";
-import { JOB_TYPES, jobTypeInfo, jobTypeLabel, readTypoSettings, type JobTypoSettings } from "@/lib/job-types";
+import {
+  JOB_TYPES,
+  jobTypeInfo,
+  jobTypeLabel,
+  readTypoSettings,
+  type JobTypoSettings,
+} from "@/lib/job-types";
 import { TypoControls } from "@/components/TypoControls";
 import type { Job } from "@/lib/db";
 import { toast } from "sonner";
@@ -46,7 +52,10 @@ export const Route = createFileRoute("/_authenticated/jobs")({
       { title: "Aufträge — FB/Control" },
       { name: "description", content: "Geplante Bot-Aktionen, Freigabe-Queue und Ergebnisse." },
       { property: "og:title", content: "Aufträge — FB/Control" },
-      { property: "og:description", content: "Geplante Bot-Aktionen, Freigabe-Queue und Ergebnisse." },
+      {
+        property: "og:description",
+        content: "Geplante Bot-Aktionen, Freigabe-Queue und Ergebnisse.",
+      },
     ],
   }),
   component: JobsPage,
@@ -174,7 +183,10 @@ function JobsPage() {
 
   const patch = useMutation({
     mutationFn: async ({ id, values }: { id: string; values: Record<string, unknown> }) => {
-      const { error } = await supabase.from("jobs").update(values as never).eq("id", id);
+      const { error } = await supabase
+        .from("jobs")
+        .update(values as never)
+        .eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["jobs"] }),
@@ -217,7 +229,10 @@ function JobsPage() {
               </DialogHeader>
               <div className="space-y-3">
                 <div className="space-y-1.5">
-                  <Label className="flex items-center gap-2">Bot <InfoHint text="Welches Profil die Aktion ausführt. Limits und Arbeitszeiten dieses Bots gelten dabei." /></Label>
+                  <Label className="flex items-center gap-2">
+                    Bot{" "}
+                    <InfoHint text="Welches Profil die Aktion ausführt. Limits und Arbeitszeiten dieses Bots gelten dabei." />
+                  </Label>
                   <Select value={botId} onValueChange={setBotId}>
                     <SelectTrigger>
                       <SelectValue placeholder="Bot wählen" />
@@ -232,7 +247,10 @@ function JobsPage() {
                   </Select>
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="flex items-center gap-2">Gruppe (optional) <InfoHint text="Bezugsgruppe der Aktion. Regeln und Tonfall der Gruppe werden dann angewendet." /></Label>
+                  <Label className="flex items-center gap-2">
+                    Gruppe (optional){" "}
+                    <InfoHint text="Bezugsgruppe der Aktion. Regeln und Tonfall der Gruppe werden dann angewendet." />
+                  </Label>
                   <Select value={groupId} onValueChange={setGroupId}>
                     <SelectTrigger>
                       <SelectValue placeholder="Gruppe wählen" />
@@ -247,7 +265,10 @@ function JobsPage() {
                   </Select>
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="flex items-center gap-2">Aktion <InfoHint text="Was der Bot konkret tun soll. Die Erklärung darunter beschreibt die gewählte Aktion." /></Label>
+                  <Label className="flex items-center gap-2">
+                    Aktion{" "}
+                    <InfoHint text="Was der Bot konkret tun soll. Die Erklärung darunter beschreibt die gewählte Aktion." />
+                  </Label>
                   <Select value={type} onValueChange={setType}>
                     <SelectTrigger>
                       <SelectValue />
@@ -266,7 +287,10 @@ function JobsPage() {
                   <TypeHelp value={type} />
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="flex items-center gap-2">Startzeit <InfoHint text="Frühester Ausführungszeitpunkt. Der Worker verschiebt zusätzlich zufällig (Jitter), damit es natürlich wirkt." /></Label>
+                  <Label className="flex items-center gap-2">
+                    Startzeit{" "}
+                    <InfoHint text="Frühester Ausführungszeitpunkt. Der Worker verschiebt zusätzlich zufällig (Jitter), damit es natürlich wirkt." />
+                  </Label>
                   <Input
                     type="datetime-local"
                     value={when}
@@ -274,7 +298,10 @@ function JobsPage() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="flex items-center gap-2">Text (optional) <InfoHint text="Fester Text für diese Aktion. Leer lassen, damit die KI den Text anhand von Person, Kommentar und Verlauf schreibt. {{vorname}} wird ersetzt." /></Label>
+                  <Label className="flex items-center gap-2">
+                    Text (optional){" "}
+                    <InfoHint text="Fester Text für diese Aktion. Leer lassen, damit die KI den Text anhand von Person, Kommentar und Verlauf schreibt. {{vorname}} wird ersetzt." />
+                  </Label>
                   <Textarea
                     rows={3}
                     value={text}
@@ -283,7 +310,10 @@ function JobsPage() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="flex items-center gap-2">Payload (JSON) <InfoHint text="Zusatzdaten für den Worker, z. B. Ziel-Profil oder Beitrags-ID. Leer lassen, wenn nicht nötig." /></Label>
+                  <Label className="flex items-center gap-2">
+                    Payload (JSON){" "}
+                    <InfoHint text="Zusatzdaten für den Worker, z. B. Ziel-Profil oder Beitrags-ID. Leer lassen, wenn nicht nötig." />
+                  </Label>
                   <Textarea
                     rows={3}
                     className="font-mono text-xs"
@@ -373,7 +403,9 @@ function JobsPage() {
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => patch.mutate({ id: j.id, values: { needs_approval: false } })}
+                        onClick={() =>
+                          patch.mutate({ id: j.id, values: { needs_approval: false } })
+                        }
                       >
                         Freigeben
                       </Button>
@@ -490,7 +522,10 @@ function EditJobDialog({
           finished_at: null,
         });
       }
-      const { error } = await supabase.from("jobs").update(values as never).eq("id", job.id);
+      const { error } = await supabase
+        .from("jobs")
+        .update(values as never)
+        .eq("id", job.id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -505,7 +540,11 @@ function EditJobDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            {done ? "Erledigter Auftrag" : failed ? "Fehlgeschlagener Auftrag" : "Auftrag bearbeiten"}
+            {done
+              ? "Erledigter Auftrag"
+              : failed
+                ? "Fehlgeschlagener Auftrag"
+                : "Auftrag bearbeiten"}
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
@@ -570,8 +609,16 @@ function EditJobDialog({
             />
           </div>
           <div className="space-y-1.5">
-            <Label className="flex items-center gap-2">Text <InfoHint text="Der Text, den der Worker sendet. Leer lassen = die KI schreibt ihn beim Ausführen anhand von Person und Verlauf." /></Label>
-            <Textarea rows={3} value={text} disabled={done} onChange={(e) => setText(e.target.value)} />
+            <Label className="flex items-center gap-2">
+              Text{" "}
+              <InfoHint text="Der Text, den der Worker sendet. Leer lassen = die KI schreibt ihn beim Ausführen anhand von Person und Verlauf." />
+            </Label>
+            <Textarea
+              rows={3}
+              value={text}
+              disabled={done}
+              onChange={(e) => setText(e.target.value)}
+            />
           </div>
           <div className="space-y-1.5">
             <Label>Payload (JSON)</Label>
@@ -610,7 +657,11 @@ function EditJobDialog({
           ) : (
             <>
               {failed ? (
-                <Button variant="outline" onClick={() => save.mutate("requeue")} disabled={save.isPending}>
+                <Button
+                  variant="outline"
+                  onClick={() => save.mutate("requeue")}
+                  disabled={save.isPending}
+                >
                   Speichern & neu einplanen
                 </Button>
               ) : null}
