@@ -56,7 +56,8 @@ async function lookupHost(host: string): Promise<ProxyCheck> {
     const r = await fetch(
       `http://ip-api.com/json/${encodeURIComponent(host)}?fields=status,message,country,countryCode,isp,org,as,hosting,proxy,mobile,query`,
     );
-    const j = (await r.json()) as Record<string, unknown>;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const j = (await r.json()) as Record<string, any>;
     if (j["status"] === "success") {
       return {
         ok: true,
