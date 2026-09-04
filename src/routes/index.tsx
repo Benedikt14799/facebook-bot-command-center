@@ -44,14 +44,15 @@ function Landing() {
         </Link>
       </header>
       <main className="mx-auto max-w-4xl px-6 py-20">
-        <h1 className="text-4xl font-semibold tracking-tight text-foreground sm:text-5xl">
+        {/* Hero mittig ausgerichtet */}
+        <h1 className="text-center text-4xl font-semibold tracking-tight text-balance text-foreground sm:text-5xl">
           Kommandozentrale für deine Facebook-Automation
         </h1>
-        <p className="mt-4 max-w-2xl text-muted-foreground">
+        <p className="mx-auto mt-4 max-w-2xl text-center text-pretty text-muted-foreground">
           Plane Aktionen, verwalte Gruppen und Profile, überwache jede Nachricht — die
           eigentliche Ausführung übernimmt dein eigener Worker.
         </p>
-        <div className="mt-8 flex flex-wrap gap-3">
+        <div className="mt-8 flex flex-wrap justify-center gap-3">
           <Link to="/auth">
             <Button size="lg">Cockpit öffnen</Button>
           </Link>
