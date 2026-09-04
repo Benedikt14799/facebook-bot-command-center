@@ -1,3 +1,7 @@
+/**
+ * Auftragsverwaltung: geplante Aktionen der Bots inkl. Freigabe-Queue,
+ * Filtern, Abbrechen und erneutem Versuch.
+ */
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";

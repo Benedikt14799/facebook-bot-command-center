@@ -1,3 +1,7 @@
+/**
+ * Worker-API: faellige Auftraege atomar abholen (claim) inkl. Bot-Kontext
+ * mit Limits und Zeitfenstern.
+ */
 import { createFileRoute } from "@tanstack/react-router";
 import { authenticateWorker, json } from "@/lib/worker-auth.server";
 

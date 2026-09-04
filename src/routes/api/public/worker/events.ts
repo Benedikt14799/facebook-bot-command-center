@@ -1,3 +1,7 @@
+/**
+ * Worker-API: Ereignisse protokollieren; bei einem blocked-Fehler wird der
+ * betroffene Bot automatisch gesperrt und pausiert.
+ */
 import { createFileRoute } from "@tanstack/react-router";
 import { authenticateWorker, json } from "@/lib/worker-auth.server";
 

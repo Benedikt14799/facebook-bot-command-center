@@ -1,3 +1,8 @@
+/**
+ * Authentifizierung der externen Worker (lokaler Rechner / VPS mit Playwright).
+ * Der Worker schickt sein Token per Header, wir pruefen es serverseitig gegen die
+ * workers-Tabelle, aktualisieren den Heartbeat und geben einen Admin-Client zurueck.
+ */
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 

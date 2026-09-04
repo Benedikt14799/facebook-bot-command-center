@@ -1,3 +1,6 @@
+/**
+ * Worker-API: gesendete oder empfangene Nachrichten ins Backlog schreiben.
+ */
 import { createFileRoute } from "@tanstack/react-router";
 import { authenticateWorker, json } from "@/lib/worker-auth.server";
 

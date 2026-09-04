@@ -1,3 +1,6 @@
+/**
+ * Worker-API: Lebenszeichen des Workers (Version + Online-Status).
+ */
 import { createFileRoute } from "@tanstack/react-router";
 import { authenticateWorker, json } from "@/lib/worker-auth.server";
 

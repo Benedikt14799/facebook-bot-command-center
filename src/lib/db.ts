@@ -1,3 +1,8 @@
+/**
+ * Zentrale Datenbank-Helfer: Typ-Aliase fuer alle Supabase-Tabellen,
+ * eine generische selectAll()-Abfrage (RLS greift automatisch pro Nutzer)
+ * und die Datums-Formatierung fuer die Oberflaeche.
+ */
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 

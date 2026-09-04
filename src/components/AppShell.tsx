@@ -1,3 +1,7 @@
+/**
+ * Grundgeruest aller geschuetzten Seiten: Seitennavigation, Kopfzeile mit
+ * Titel, optionalem Info-Hinweis, Aktionen rechts und dem Seiteninhalt.
+ */
 import { InfoHint } from "@/components/InfoHint";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";

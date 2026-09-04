@@ -1,3 +1,7 @@
+/**
+ * Bot-Detailseite: Steuerung eines einzelnen Profils - Status, Aufwaermphase,
+ * Arbeitszeiten, Jitter, Tages-Caps, Textmodus/Tonfall und Cookie-Session.
+ */
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";

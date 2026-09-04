@@ -1,3 +1,6 @@
+/**
+ * Oeffentliche Startseite mit Kurzvorstellung und Einstieg in Login bzw. Demo.
+ */
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { Activity, Bot, Clock, ShieldCheck } from "lucide-react";
