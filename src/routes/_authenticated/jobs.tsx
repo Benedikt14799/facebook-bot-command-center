@@ -47,6 +47,7 @@ import {
 import { TypoControls } from "@/components/TypoControls";
 import { saveJob, updateJob } from "@/lib/jobs.functions";
 import { useServerFn } from "@tanstack/react-start";
+import type { Json } from "@/integrations/supabase/types";
 import type { Job } from "@/lib/db";
 import { toast } from "sonner";
 
