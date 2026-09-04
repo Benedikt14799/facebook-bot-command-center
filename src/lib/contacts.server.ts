@@ -12,28 +12,10 @@ import type { HistoryEntry } from "@/lib/ai.server";
 
 type Admin = SupabaseClient<Database>;
 
-/** Stufen im Kontaktverlauf, in dieser Reihenfolge. */
-export const STAGES = ["new", "contacted", "replied", "offer_sent", "closed"] as const;
-export type Stage = (typeof STAGES)[number];
-
-export const STAGE_LABEL: Record<string, string> = {
-  new: "Neu",
-  contacted: "Angeschrieben",
-  replied: "Hat geantwortet",
-  offer_sent: "Angebot gesendet",
-  closed: "Abgeschlossen",
-};
-
-export const KIND_LABEL: Record<string, string> = {
-  like: "Like vergeben",
-  comment: "Kommentar geschrieben",
-  welcome: "Welcome-Nachricht",
-  follow_up: "Follow-up",
-  reply_in: "Antwort erhalten",
-  reply_out: "Antwort gesendet",
-  offer: "Angebot platziert",
-  scan: "Beim Scan gefunden",
-};
+export { STAGES, STAGE_LABEL, KIND_LABEL } from "@/lib/contact-labels";
+import { STAGES, type Stage } from "@/lib/contact-labels";
+import type { KIND_LABEL as KindLabelType } from "@/lib/contact-labels";
+export type { Stage };
 
 /** Vorname aus einem vollen Namen ableiten. */
 export function firstNameOf(name?: string | null) {
@@ -129,7 +111,7 @@ export type ContactLog = {
   botId?: string | null;
   groupId?: string | null;
   jobId?: string | null;
-  kind: keyof typeof KIND_LABEL | string;
+  kind: string;
   direction?: "in" | "out";
   body?: string | null;
   meta?: Record<string, unknown>;
