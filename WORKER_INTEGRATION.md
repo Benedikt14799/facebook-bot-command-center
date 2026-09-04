@@ -72,3 +72,25 @@ der betroffene Bot automatisch pausiert und auf Status `blocked` gesetzt.
 Cookies werden im Cockpit unter **Bots → Details** als JSON-Array hinterlegt und
 können aus Sicherheitsgründen im Browser nicht wieder gelesen werden. Nur der
 Worker holt sie serverseitig über `/api/public/worker/session`.
+
+## Automatik im Cockpit (ohne Worker)
+
+Zwei zeitgesteuerte Abläufe laufen serverseitig:
+
+| Ablauf | Takt | Route | Aufgabe |
+| --- | --- | --- | --- |
+| Planer | alle 10 Min | `POST /api/public/cron/plan` | erzeugt automatisch Aufträge für Bots mit Autopilot: Arbeitszeit, Tages-Caps, Aufwärmstufe, Wochenendfaktor, Jitter; Texte per KI oder Vorlage |
+| Wartung | alle 30 Min | `POST /api/public/cron/maintenance` | Worker-Offlineerkennung (5 Min ohne Heartbeat), hängende Jobs (>20 Min) neu einreihen oder abbrechen, Simulationsmodus abarbeiten, Bots bei ≥3 Fehlern/Stunde pausieren und Aufwärmphase um 3 Tage verlängern |
+
+Beide Routen sind mit dem Header `x-cron-token` geschützt (interner Schlüssel in
+`cron_tokens`, nur serverseitig lesbar) und laufen dank Sperrtabelle `job_locks`
+nie doppelt.
+
+Pro Bot steuerbar: **Automatik (Autopilot)** ein/aus, **Simulationsmodus**
+(Trockenlauf ohne echten Worker), Aufwärm-Preset (vorsichtig/normal/zügig),
+Pause, Verlängerung und „sofort live“ auf der Seite **Aufwärmphase**.
+Manuelles Anlegen von Aufträgen bleibt unverändert möglich; Aufträge zeigen in
+der Liste, ob sie `auto` oder `manuell` sind.
+
+Auf der Worker-Seite lädst du mit **Worker-Skript herunterladen** ein fertiges
+Python-Startskript inklusive Token und Basis-URL herunter.
