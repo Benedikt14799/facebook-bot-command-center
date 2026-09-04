@@ -120,7 +120,7 @@ export function sprinkleTypos(
     const i = Math.min(pos + Math.floor(Math.random() * (letters.length - pos - 1)), letters.length - 2);
     const c = letters[i]!.toLowerCase();
 
-    const variants: { kind: TypoKind; make: () => string }[] = [
+    const allVariants: { kind: TypoKind; make: () => string }[] = [
       // Buchstabendreher
       { kind: "swap", make: () => {
         const copy = [...letters];
@@ -141,7 +141,8 @@ export function sprinkleTypos(
       // Umlaut vergessen
       { kind: "umlaut", make: () =>
         UMLAUT[c] ? [...letters.slice(0, i), UMLAUT[c]!, ...letters.slice(i + 1)].join("") : word },
-    ].filter((v) => allow(v.kind));
+    ];
+    const variants = allVariants.filter((v) => allow(v.kind));
 
     // Grammatikfehler nur, wenn diese Fehlerart erlaubt ist.
     if (allow("grammar") && word.toLowerCase().includes("dass")) {
