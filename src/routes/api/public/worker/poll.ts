@@ -31,8 +31,17 @@ export const Route = createFileRoute("/api/public/worker/poll")({
         const { data: candidates, error } = await query;
         if (error) return json({ error: error.message }, 500);
 
+        // Bots im manuellen Modus (Checkpoint/CAPTCHA/Login) bekommen nichts,
+        // bis sie im Cockpit wieder freigeschaltet sind.
+        const { data: manualBots } = await ctx.admin
+          .from("bots")
+          .select("id")
+          .eq("user_id", ctx.userId)
+          .eq("manual_mode", true);
+        const blocked = new Set((manualBots ?? []).map((b) => b.id));
+
         const claimed = [];
-        for (const job of candidates ?? []) {
+        for (const job of (candidates ?? []).filter((j) => !blocked.has(j.bot_id))) {
           const { data, error: claimErr } = await ctx.admin
             .from("jobs")
             .update({
