@@ -8,6 +8,7 @@
  */
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import type { TypoKind } from "@/lib/job-types";
 
 export type PreviewInput = {
   botId: string;
@@ -16,6 +17,10 @@ export type PreviewInput = {
   recipientId?: string | null;
   /** Erkannter Text (Kommentar/Beitrag/Nachricht), falls keine Person gewählt ist */
   context?: string | null;
+  /** Auftragsbezogene Obergrenze für Tippfehler (überschreibt die Bot-Einstellung) */
+  typoRate?: number | null;
+  /** Auftragsbezogene bevorzugte Fehlerarten */
+  typoKinds?: TypoKind[] | null;
 };
 
 export type PreviewResult = {
@@ -31,6 +36,7 @@ export type PreviewResult = {
     historyCount: number;
     offer: boolean;
     typoRate: number;
+    typoKinds: TypoKind[];
   };
 };
 
@@ -92,7 +98,13 @@ export const previewJobText = createServerFn({ method: "POST" })
       group?.topic ||
       null;
 
-    const typoRate = Number((b["typo_rate"] as number | null) ?? 0.12);
+    // Auftrag schlaegt Bot-Standard: die Quote wird nach oben begrenzt.
+    const botTypoRate = Number((b["typo_rate"] as number | null) ?? 0.12);
+    const typoRate =
+      typeof data.typoRate === "number"
+        ? Math.min(Math.max(data.typoRate, 0), botTypoRate === 0 ? data.typoRate : 1)
+        : botTypoRate;
+    const typoKinds = data.typoKinds ?? [];
 
     const text = await generateText(
       {
@@ -107,6 +119,7 @@ export const previewJobText = createServerFn({ method: "POST" })
         context: ctxText,
         history,
         typoRate,
+        typoKinds,
         offer: offer
           ? {
               text: (b["offer_text"] as string) ?? "",
@@ -128,6 +141,7 @@ export const previewJobText = createServerFn({ method: "POST" })
         context: ctxText,
         historyCount: history.length,
         offer,
+        typoKinds,
         typoRate,
       },
     };
