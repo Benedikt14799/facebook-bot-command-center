@@ -182,6 +182,49 @@ function WorkerHealthPage() {
         </div>
       </section>
 
+      {/* Tarnung */}
+      <section className="mt-6">
+        <h2 className="mb-2 flex items-center gap-2 text-sm font-medium text-foreground">
+          Tarnung
+          <InfoHint text="Proxy-Typ, zuletzt gemessene Ausgangs-IP und Fingerprint-Konsistenz je Bot. Rot heißt: hohes Sperr-Risiko — Proxy oder Fingerprint anpassen." />
+        </h2>
+        <div className="space-y-2">
+          {(bots.data ?? []).map((b) => {
+            const score = stealthScore(b);
+            const check = (b.proxy_check ?? null) as ProxyCheck | null;
+            return (
+              <div key={b.id} className="rounded-lg border border-border bg-card p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-sm text-foreground">{b.name}</span>
+                  <span
+                    className={
+                      score.level === "kritisch"
+                        ? "text-xs text-destructive"
+                        : score.level === "mittel"
+                          ? "text-xs text-amber-500"
+                          : "text-xs text-emerald-500"
+                    }
+                  >
+                    {score.level}
+                  </span>
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {PROXY_TYPES.find((p) => p.value === b.proxy_type)?.label ?? "Kein Proxy"} ·{" "}
+                  {check?.ip ?? "IP unbekannt"} · {check?.country ?? "?"} ·{" "}
+                  {check?.isp ?? "Anbieter unbekannt"} · geprüft {fmt(b.proxy_checked_at)}
+                </p>
+                {score.reasons.length ? (
+                  <p className="mt-1 text-xs text-amber-500">{score.reasons.join(" · ")}</p>
+                ) : null}
+              </div>
+            );
+          })}
+          {(bots.data ?? []).length === 0 && (
+            <p className="text-sm text-muted-foreground">Noch kein Bot angelegt.</p>
+          )}
+        </div>
+      </section>
+
       {/* Aktuelle Fehler */}
       <section className="mt-6">
         <h2 className="mb-2 flex items-center gap-2 text-sm font-medium text-foreground">
