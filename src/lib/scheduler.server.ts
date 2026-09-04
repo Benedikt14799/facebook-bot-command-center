@@ -97,6 +97,12 @@ export type PlanResult = {
 
 export async function runPlanner(admin: Admin, now = new Date()): Promise<PlanResult> {
   const result: PlanResult = { botsChecked: 0, jobsCreated: 0, skipped: [], paused: [] };
+  // KI-Konfiguration je Nutzer nur einmal laden (eingebaute KI oder eigener Anbieter).
+  const aiConfigs = new Map<string, AiConfig>();
+  const aiConfigFor = async (userId: string) => {
+    if (!aiConfigs.has(userId)) aiConfigs.set(userId, await loadAiConfig(admin, userId));
+    return aiConfigs.get(userId)!;
+  };
 
   const { data: bots } = await admin
     .from("bots")
