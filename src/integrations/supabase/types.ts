@@ -163,6 +163,38 @@ export type Database = {
           },
         ]
       }
+      bot_secrets: {
+        Row: {
+          antidetect_key: string | null
+          bot_id: string
+          proxy_password: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          antidetect_key?: string | null
+          bot_id: string
+          proxy_password?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          antidetect_key?: string | null
+          bot_id?: string
+          proxy_password?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bot_secrets_bot_id_fkey"
+            columns: ["bot_id"]
+            isOneToOne: true
+            referencedRelation: "bots"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bot_sessions: {
         Row: {
           bot_id: string
@@ -199,12 +231,16 @@ export type Database = {
         Row: {
           active_from: string
           active_to: string
+          antidetect: Json | null
           autopilot: boolean
+          behavior: Json | null
+          browser_mode: string
           cap_comments: number
           cap_dms: number
           cap_likes: number
           created_at: string
           fb_profile_name: string | null
+          fingerprint: Json | null
           id: string
           jitter_minutes: number
           last_seen_at: string | null
@@ -217,6 +253,15 @@ export type Database = {
           persona_role: string
           profile_url: string | null
           proxy: string | null
+          proxy_check: Json | null
+          proxy_checked_at: string | null
+          proxy_country: string | null
+          proxy_host: string | null
+          proxy_port: number | null
+          proxy_protocol: string
+          proxy_rotate_url: string | null
+          proxy_type: string
+          proxy_user: string | null
           require_approval: boolean
           session_status: string
           session_updated_at: string | null
@@ -238,12 +283,16 @@ export type Database = {
         Insert: {
           active_from?: string
           active_to?: string
+          antidetect?: Json | null
           autopilot?: boolean
+          behavior?: Json | null
+          browser_mode?: string
           cap_comments?: number
           cap_dms?: number
           cap_likes?: number
           created_at?: string
           fb_profile_name?: string | null
+          fingerprint?: Json | null
           id?: string
           jitter_minutes?: number
           last_seen_at?: string | null
@@ -256,6 +305,15 @@ export type Database = {
           persona_role?: string
           profile_url?: string | null
           proxy?: string | null
+          proxy_check?: Json | null
+          proxy_checked_at?: string | null
+          proxy_country?: string | null
+          proxy_host?: string | null
+          proxy_port?: number | null
+          proxy_protocol?: string
+          proxy_rotate_url?: string | null
+          proxy_type?: string
+          proxy_user?: string | null
           require_approval?: boolean
           session_status?: string
           session_updated_at?: string | null
@@ -277,12 +335,16 @@ export type Database = {
         Update: {
           active_from?: string
           active_to?: string
+          antidetect?: Json | null
           autopilot?: boolean
+          behavior?: Json | null
+          browser_mode?: string
           cap_comments?: number
           cap_dms?: number
           cap_likes?: number
           created_at?: string
           fb_profile_name?: string | null
+          fingerprint?: Json | null
           id?: string
           jitter_minutes?: number
           last_seen_at?: string | null
@@ -295,6 +357,15 @@ export type Database = {
           persona_role?: string
           profile_url?: string | null
           proxy?: string | null
+          proxy_check?: Json | null
+          proxy_checked_at?: string | null
+          proxy_country?: string | null
+          proxy_host?: string | null
+          proxy_port?: number | null
+          proxy_protocol?: string
+          proxy_rotate_url?: string | null
+          proxy_type?: string
+          proxy_user?: string | null
           require_approval?: boolean
           session_status?: string
           session_updated_at?: string | null
