@@ -139,6 +139,18 @@ function BotsPage() {
             <div className="mt-3 flex items-center justify-between">
               <span className="flex items-center gap-2 text-xs text-muted-foreground">
                 Session <StatusBadge value={b.session_status} />
+                <span
+                  title={stealthScore(b).reasons.join(" · ") || "Proxy und Fingerprint sind stimmig"}
+                  className={
+                    stealthScore(b).level === "kritisch"
+                      ? "text-destructive"
+                      : stealthScore(b).level === "mittel"
+                        ? "text-amber-500"
+                        : "text-emerald-500"
+                  }
+                >
+                  Tarnung: {stealthScore(b).level}
+                </span>
               </span>
               <span className="text-xs text-muted-foreground">{fmt(b.last_seen_at)}</span>
             </div>
