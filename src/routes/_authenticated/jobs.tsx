@@ -6,10 +6,13 @@
  *  - offene Aufträge lassen sich komplett ändern
  *  - fehlgeschlagene lassen sich ändern und neu einplanen
  *  - erledigte lassen sich als neuen Auftrag duplizieren
+ *
+ * Alle Aufträge werden serverseitig validiert, bevor sie gespeichert werden.
+ * Unvollständige Aufträge können daher nie als "pending" in die Datenbank.
  */
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { InfoHint } from "@/components/InfoHint";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -35,14 +38,11 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { selectAll, fmt } from "@/lib/db";
-import {
-  JOB_TYPES,
-  jobTypeInfo,
-  jobTypeLabel,
-  readTypoSettings,
-  type JobTypoSettings,
-} from "@/lib/job-types";
+import { JOB_TYPES, jobTypeLabel, readTypoSettings, type JobTypoSettings } from "@/lib/job-types";
 import { TypoControls } from "@/components/TypoControls";
+import { saveJob, updateJob } from "@/lib/jobs.functions";
+import { useServerFn } from "@tanstack/react-start";
+import type { Json } from "@/integrations/supabase/types";
 import type { Job } from "@/lib/db";
 import { toast } from "sonner";
 
@@ -61,28 +61,17 @@ export const Route = createFileRoute("/_authenticated/jobs")({
   component: JobsPage,
 });
 
-/** Erklärungsbox zur gewählten Aktion inkl. Beispiel-Input und -Output. */
-function TypeHelp({ value }: { value: string }) {
-  const info = jobTypeInfo(value);
-  if (!info) return null;
-  return (
-    <div className="space-y-2 rounded-md border border-border/70 bg-muted/30 p-3 text-xs text-muted-foreground">
-      <p>
-        <span className="font-medium text-foreground">{info.label}: </span>
-        {info.long}
-      </p>
-      <div>
-        <p className="font-medium text-foreground">Braucht: {info.inputLabel}</p>
-        <pre className="mt-1 overflow-x-auto rounded bg-background/70 p-2 font-mono text-[11px]">
-          {info.exampleInput}
-        </pre>
-      </div>
-      <div>
-        <p className="font-medium text-foreground">Ergibt: {info.outputLabel}</p>
-        <p className="mt-1 rounded bg-background/70 p-2 italic">{info.exampleOutput}</p>
-      </div>
-    </div>
-  );
+function toLocalInput(iso?: string | null) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function nowLocalInput() {
+  const d = new Date();
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
 /** Nachschlagewerk: alle Aktionen mit Beispiel-Input und -Output. */
@@ -120,25 +109,21 @@ function ActionGuide() {
   );
 }
 
-function toLocalInput(iso?: string | null) {
-  if (!iso) return "";
-  const d = new Date(iso);
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
-
 function JobsPage() {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [botId, setBotId] = useState("");
   const [groupId, setGroupId] = useState("");
   const [type, setType] = useState("like_posts");
-  const [when, setWhen] = useState("");
+  const [when, setWhen] = useState(nowLocalInput());
   const [text, setText] = useState("");
-  const [payload, setPayload] = useState("{}");
+  const [payload, setPayload] = useState<Record<string, unknown>>({});
   const [typo, setTypo] = useState<JobTypoSettings>({ rate: 0.12, kinds: [] });
+  const [errors, setErrors] = useState<string[]>([]);
   const [filter, setFilter] = useState("all");
   const [editing, setEditing] = useState<Job | null>(null);
+
+  const doSaveJob = useServerFn(saveJob);
 
   const jobs = useQuery({
     queryKey: ["jobs"],
@@ -147,38 +132,55 @@ function JobsPage() {
   const bots = useQuery({ queryKey: ["bots"], queryFn: () => selectAll("bots") });
   const groups = useQuery({ queryKey: ["groups"], queryFn: () => selectAll("groups") });
 
+  // Beim Öffnen des Dialogs die aktuelle Uhrzeit als Standard setzen.
+  useEffect(() => {
+    if (open && !when) setWhen(nowLocalInput());
+  }, [open, when]);
+
+  function resetDialog() {
+    setBotId("");
+    setGroupId("");
+    setType("like_posts");
+    setWhen(nowLocalInput());
+    setText("");
+    setPayload({});
+    setTypo({ rate: 0.12, kinds: [] });
+    setErrors([]);
+  }
+
+  function buildPayload(): Record<string, unknown> {
+    const base: Record<string, unknown> = { ...payload };
+    if (text.trim()) base["text"] = text.trim();
+    base["typo"] = { rate: typo.rate, kinds: typo.kinds };
+    return base;
+  }
+
   const create = useMutation({
     mutationFn: async () => {
-      let parsed: Record<string, unknown> = {};
-      try {
-        parsed = JSON.parse(payload || "{}");
-      } catch {
-        throw new Error("Payload muss gültiges JSON sein");
-      }
-      if (text.trim()) parsed["text"] = text.trim();
-      // Tippfehler-Steuerung dieses Auftrags in der Payload ablegen
-      parsed["typo"] = { rate: typo.rate, kinds: typo.kinds };
       const bot = bots.data?.find((b) => b.id === botId);
-      const { error } = await supabase.from("jobs").insert({
-        bot_id: botId,
-        group_id: groupId || null,
-        type,
-        payload: parsed as never,
-        generated_text: text.trim() || null,
-        needs_approval: !!bot?.require_approval,
-        scheduled_for: when ? new Date(when).toISOString() : new Date().toISOString(),
-      } as never);
-      if (error) throw error;
+      await doSaveJob({
+        data: {
+          bot_id: botId,
+          group_id: groupId || null,
+          type,
+          payload: buildPayload() as unknown as import("@/integrations/supabase/types").Json,
+          generated_text: text.trim() || null,
+          scheduled_for: when ? new Date(when).toISOString() : new Date().toISOString(),
+          needs_approval: !!bot?.require_approval,
+          source: "manual",
+        },
+      });
     },
     onSuccess: () => {
       toast.success("Auftrag eingeplant");
       setOpen(false);
-      setText("");
-      setPayload("{}");
-      setTypo({ rate: 0.12, kinds: [] });
+      resetDialog();
       qc.invalidateQueries({ queryKey: ["jobs"] });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => {
+      toast.error(e.message);
+      setErrors([e.message]);
+    },
   });
 
   const patch = useMutation({
@@ -219,15 +221,22 @@ function JobsPage() {
               <SelectItem value="failed">Fehlgeschlagen</SelectItem>
             </SelectContent>
           </Select>
-          <Dialog open={open} onOpenChange={setOpen}>
+          <Dialog
+            open={open}
+            onOpenChange={(o) => {
+              setOpen(o);
+              if (o) setWhen(nowLocalInput());
+              else resetDialog();
+            }}
+          >
             <DialogTrigger asChild>
               <Button size="sm">Auftrag planen</Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="max-h-[90vh] overflow-hidden">
               <DialogHeader>
                 <DialogTitle>Neuer Auftrag</DialogTitle>
               </DialogHeader>
-              <div className="space-y-3">
+              <div className="space-y-3 overflow-y-auto pr-1">
                 <div className="space-y-1.5">
                   <Label className="flex items-center gap-2">
                     Bot{" "}
@@ -248,7 +257,7 @@ function JobsPage() {
                 </div>
                 <div className="space-y-1.5">
                   <Label className="flex items-center gap-2">
-                    Gruppe (optional){" "}
+                    Gruppe{" "}
                     <InfoHint text="Bezugsgruppe der Aktion. Regeln und Tonfall der Gruppe werden dann angewendet." />
                   </Label>
                   <Select value={groupId} onValueChange={setGroupId}>
@@ -267,7 +276,7 @@ function JobsPage() {
                 <div className="space-y-1.5">
                   <Label className="flex items-center gap-2">
                     Aktion{" "}
-                    <InfoHint text="Was der Bot konkret tun soll. Die Erklärung darunter beschreibt die gewählte Aktion." />
+                    <InfoHint text="Was der Bot konkret tun soll. Kurze Erklärung beim Mouseover über das i neben dem Feld." />
                   </Label>
                   <Select value={type} onValueChange={setType}>
                     <SelectTrigger>
@@ -276,16 +285,19 @@ function JobsPage() {
                     <SelectContent>
                       {JOB_TYPES.map((t) => (
                         <SelectItem key={t.value} value={t.value}>
-                          <span className="flex flex-col">
-                            <span>{t.label}</span>
-                            <span className="text-xs text-muted-foreground">{t.short}</span>
-                          </span>
+                          {t.label}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
-                  <TypeHelp value={type} />
                 </div>
+                <JobFields
+                  type={type}
+                  payload={payload}
+                  onChange={setPayload}
+                  groupId={groupId || null}
+                  groups={groups.data ?? []}
+                />
                 <div className="space-y-1.5">
                   <Label className="flex items-center gap-2">
                     Startzeit{" "}
@@ -311,23 +323,18 @@ function JobsPage() {
                 </div>
                 <div className="space-y-1.5">
                   <Label className="flex items-center gap-2">
-                    Payload (JSON){" "}
-                    <InfoHint text="Zusatzdaten für den Worker, z. B. Ziel-Profil oder Beitrags-ID. Leer lassen, wenn nicht nötig." />
-                  </Label>
-                  <Textarea
-                    rows={3}
-                    className="font-mono text-xs"
-                    value={payload}
-                    onChange={(e) => setPayload(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="flex items-center gap-2">
                     Natürlichkeit / Tippfehler
                     <InfoHint text="Nur relevant für KI-Texte: begrenzt, wie viele Vertipper höchstens eingestreut werden und welche Fehlerarten dafür infrage kommen." />
                   </Label>
                   <TypoControls value={typo} onChange={setTypo} />
                 </div>
+                {errors.length > 0 && (
+                  <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-xs text-destructive">
+                    {errors.map((e, i) => (
+                      <p key={i}>{e}</p>
+                    ))}
+                  </div>
+                )}
                 {botId ? (
                   <TextPreview
                     botId={botId}
@@ -453,6 +460,156 @@ function JobsPage() {
   );
 }
 
+/** Aktions-spezifische Eingabefelder, die direkt in den Payload geschrieben werden. */
+function JobFields({
+  type,
+  payload,
+  onChange,
+  groupId,
+  groups,
+}: {
+  type: string;
+  payload: Record<string, unknown>;
+  onChange: (p: Record<string, unknown>) => void;
+  groupId: string | null;
+  groups: { id: string; name: string }[];
+}) {
+  const update = (key: string, value: unknown) => {
+    const next = { ...payload };
+    if (value === "" || value === null || value === undefined) {
+      delete next[key];
+    } else {
+      next[key] = value;
+    }
+    onChange(next);
+  };
+
+  if (type === "like_posts") {
+    return (
+      <div className="space-y-1.5">
+        <Label className="flex items-center gap-2">
+          Anzahl Likes{" "}
+          <InfoHint text="Wie viele Beiträge der Bot maximal liken soll. Werte von 1 bis 20." />
+        </Label>
+        <Input
+          type="number"
+          min={1}
+          max={20}
+          value={typeof payload["count"] === "number" ? payload["count"] : ""}
+          onChange={(e) =>
+            update("count", e.target.value === "" ? undefined : Number(e.target.value))
+          }
+          placeholder="z. B. 3"
+        />
+      </div>
+    );
+  }
+
+  if (type === "comment_post") {
+    return (
+      <div className="space-y-3">
+        <div className="space-y-1.5">
+          <Label className="flex items-center gap-2">
+            Beitrags-Link{" "}
+            <InfoHint text="URL des Facebook-Beitrags, unter dem der Bot kommentieren soll." />
+          </Label>
+          <Input
+            type="url"
+            value={typeof payload["post_url"] === "string" ? payload["post_url"] : ""}
+            onChange={(e) => update("post_url", e.target.value || undefined)}
+            placeholder="https://facebook.com/groups/.../posts/..."
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label className="flex items-center gap-2">
+            Beitrags-ID{" "}
+            <InfoHint text="Alternativ die interne Post-ID (wenn kein Link vorhanden ist)." />
+          </Label>
+          <Input
+            value={typeof payload["post_id"] === "string" ? payload["post_id"] : ""}
+            onChange={(e) => update("post_id", e.target.value || undefined)}
+            placeholder="1234567890"
+          />
+        </div>
+      </div>
+    );
+  }
+
+  if (type === "scan_group") {
+    return (
+      <div className="space-y-1.5">
+        <Label className="flex items-center gap-2">
+          Scan-Tiefe (optional){" "}
+          <InfoHint text="Wie viele Beiträge tief die Gruppe ausgelesen wird. Standard ist 20, maximal 100." />
+        </Label>
+        <Input
+          type="number"
+          min={1}
+          max={100}
+          value={typeof payload["limit"] === "number" ? payload["limit"] : ""}
+          onChange={(e) =>
+            update("limit", e.target.value === "" ? undefined : Number(e.target.value))
+          }
+          placeholder="20"
+        />
+      </div>
+    );
+  }
+
+  if (type === "dm_new_member") {
+    return (
+      <div className="space-y-3">
+        <div className="space-y-1.5">
+          <Label className="flex items-center gap-2">
+            Person (Profil-Link) <InfoHint text="Link zum Facebook-Profil des neuen Mitglieds." />
+          </Label>
+          <Input
+            type="url"
+            value={typeof payload["profile_url"] === "string" ? payload["profile_url"] : ""}
+            onChange={(e) => update("profile_url", e.target.value || undefined)}
+            placeholder="https://facebook.com/benedikt.mueller"
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label className="flex items-center gap-2">
+            Oder bestehende Person{" "}
+            <InfoHint text="Wenn die Person bereits in der Kontaktliste existiert, kannst du sie direkt auswählen." />
+          </Label>
+          <Select
+            value={(payload["recipient_id"] as string) ?? ""}
+            onValueChange={(v) => update("recipient_id", v || undefined)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Person wählen" />
+            </SelectTrigger>
+            <SelectContent>
+              {/* Recipient-Auswahl wäre hier; aktuell bleibt es bei der ID-Eingabe über payload */}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+    );
+  }
+
+  if (type === "reply_message" || type === "follow_up") {
+    return (
+      <div className="space-y-1.5">
+        <Label className="flex items-center gap-2">
+          Person{" "}
+          <InfoHint text="Bestehende Person, der geantwortet werden soll. Der bisherige Verlauf wird automatisch geladen." />
+        </Label>
+        <Input
+          value={typeof payload["recipient_id"] === "string" ? payload["recipient_id"] : ""}
+          onChange={(e) => update("recipient_id", e.target.value || undefined)}
+          placeholder="Recipient-ID"
+        />
+      </div>
+    );
+  }
+
+  return null;
+}
+
 /** Bearbeiten / neu einplanen / duplizieren eines bestehenden Auftrags. */
 function EditJobDialog({
   job,
@@ -475,69 +632,81 @@ function EditJobDialog({
   const [text, setText] = useState(
     (job as { generated_text?: string | null }).generated_text ?? payloadText,
   );
-  const [payload, setPayload] = useState(JSON.stringify(job.payload ?? {}, null, 2));
+  const [payload, setPayload] = useState<Record<string, unknown>>(
+    (job.payload as Record<string, unknown>) ?? {},
+  );
   const [typo, setTypo] = useState<JobTypoSettings>(
     readTypoSettings(job.payload) ?? { rate: 0.12, kinds: [] },
   );
+  const [errors, setErrors] = useState<string[]>([]);
+
+  const doUpdateJob = useServerFn(updateJob);
 
   const done = job.status === "done";
   const failed = job.status === "failed";
 
+  const doSaveJob = useServerFn(saveJob);
+
+  function buildPayload(): Record<string, unknown> {
+    const base: Record<string, unknown> = { ...payload };
+    if (text.trim()) base["text"] = text.trim();
+    base["typo"] = { rate: typo.rate, kinds: typo.kinds };
+    return base;
+  }
+
   const save = useMutation({
     mutationFn: async (mode: "save" | "requeue" | "duplicate") => {
-      let parsed: Record<string, unknown> = {};
-      try {
-        parsed = JSON.parse(payload || "{}");
-      } catch {
-        throw new Error("Payload muss gültiges JSON sein");
-      }
-      if (text.trim()) parsed["text"] = text.trim();
-      parsed["typo"] = { rate: typo.rate, kinds: typo.kinds };
+      const basePayload = buildPayload();
       const base = {
         bot_id: botId,
         group_id: groupId || null,
         type,
-        payload: parsed as never,
+        payload: basePayload as unknown as Json,
         generated_text: text.trim() || null,
         scheduled_for: when ? new Date(when).toISOString() : new Date().toISOString(),
       };
 
       if (mode === "duplicate") {
-        const { error } = await supabase.from("jobs").insert({
-          ...base,
-          recipient_id: job.recipient_id,
-          status: "pending",
-        } as never);
-        if (error) throw error;
+        await doSaveJob({
+          data: {
+            ...base,
+            recipient_id: (job as { recipient_id?: string | null }).recipient_id ?? null,
+            status: "pending",
+            source: "manual",
+          },
+        });
         return;
       }
 
-      const values: Record<string, unknown> = { ...base };
       if (mode === "requeue") {
-        Object.assign(values, {
-          status: "pending",
-          error: null,
-          claimed_at: null,
-          claimed_by: null,
-          finished_at: null,
+        await doUpdateJob({
+          data: {
+            id: job.id,
+            ...base,
+            status: "pending",
+            error: null,
+            claimed_at: null,
+            claimed_by: null,
+            finished_at: null,
+          },
         });
+      } else {
+        await doUpdateJob({ data: { id: job.id, ...base } });
       }
-      const { error } = await supabase
-        .from("jobs")
-        .update(values as never)
-        .eq("id", job.id);
-      if (error) throw error;
     },
     onSuccess: () => {
       toast.success("Auftrag gespeichert");
       onSaved();
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => {
+      toast.error(e.message);
+      setErrors([e.message]);
+    },
   });
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent>
+      <DialogContent className="max-h-[90vh] overflow-hidden">
         <DialogHeader>
           <DialogTitle>
             {done
@@ -547,7 +716,7 @@ function EditJobDialog({
                 : "Auftrag bearbeiten"}
           </DialogTitle>
         </DialogHeader>
-        <div className="space-y-3">
+        <div className="space-y-3 overflow-y-auto pr-1">
           {job.error ? (
             <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-xs text-destructive">
               {job.error}
@@ -597,8 +766,14 @@ function EditJobDialog({
                 ))}
               </SelectContent>
             </Select>
-            <TypeHelp value={type} />
           </div>
+          <JobFields
+            type={type}
+            payload={payload}
+            onChange={setPayload}
+            groupId={groupId || null}
+            groups={groups}
+          />
           <div className="space-y-1.5">
             <Label>Startzeit</Label>
             <Input
@@ -621,22 +796,19 @@ function EditJobDialog({
             />
           </div>
           <div className="space-y-1.5">
-            <Label>Payload (JSON)</Label>
-            <Textarea
-              rows={3}
-              className="font-mono text-xs"
-              value={payload}
-              disabled={done}
-              onChange={(e) => setPayload(e.target.value)}
-            />
-          </div>
-          <div className="space-y-1.5">
             <Label className="flex items-center gap-2">
               Natürlichkeit / Tippfehler
               <InfoHint text="Nur relevant für KI-Texte: begrenzt, wie viele Vertipper höchstens eingestreut werden und welche Fehlerarten dafür infrage kommen." />
             </Label>
             <TypoControls value={typo} onChange={setTypo} disabled={done} />
           </div>
+          {errors.length > 0 && (
+            <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-xs text-destructive">
+              {errors.map((e, i) => (
+                <p key={i}>{e}</p>
+              ))}
+            </div>
+          )}
           {!done ? (
             <TextPreview
               botId={botId}

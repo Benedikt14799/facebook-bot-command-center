@@ -1,5 +1,8 @@
 /**
  * Worker-Verwaltung: Tokens erzeugen, Status pruefen, Anbindung dokumentieren.
+ *
+ * Der angezeigte Status wird aus dem letzten Heartbeat berechnet und ist
+ * deshalb identisch mit der Worker-Health-Seite.
  */
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -12,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { selectAll, fmt } from "@/lib/db";
 import { workerScript } from "@/lib/worker-script";
+import { effectiveWorkerStatus } from "@/lib/worker-status";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/workers")({
@@ -37,7 +41,11 @@ function WorkersPage() {
   const [name, setName] = useState("");
   const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
 
-  const workers = useQuery({ queryKey: ["workers"], queryFn: () => selectAll("workers") });
+  const workers = useQuery({
+    queryKey: ["workers"],
+    queryFn: () => selectAll("workers"),
+    refetchInterval: 30_000,
+  });
 
   const create = useMutation({
     mutationFn: async () => {
@@ -89,7 +97,7 @@ function WorkersPage() {
                   {w.version ?? "unbekannte Version"} · zuletzt {fmt(w.last_seen_at)}
                 </p>
               </div>
-              <StatusBadge value={w.status} />
+              <StatusBadge value={effectiveWorkerStatus(w.status, w.last_seen_at)} />
             </div>
             <div className="mt-3 flex flex-wrap items-center gap-2">
               <code className="max-w-full truncate rounded bg-secondary px-2 py-1 font-mono text-xs text-foreground">
