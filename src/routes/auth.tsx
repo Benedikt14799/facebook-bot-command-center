@@ -24,11 +24,15 @@ export const Route = createFileRoute("/auth")({
       },
     ],
   }),
+  validateSearch: (search: Record<string, unknown>) => ({
+    demo: search['demo'] === true || search['demo'] === "true" ? true : undefined,
+  }),
   component: AuthPage,
 });
 
 function AuthPage() {
   const navigate = useNavigate();
+  const { demo: autoDemo } = Route.useSearch();
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -82,6 +86,11 @@ function AuthPage() {
       setBusy(false);
     }
   }
+
+  useEffect(() => {
+    if (autoDemo) void demo();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoDemo]);
 
   async function google() {
     try {
