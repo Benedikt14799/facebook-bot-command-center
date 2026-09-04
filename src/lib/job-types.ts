@@ -92,3 +92,41 @@ export function jobTypeLabel(value: string) {
   if (value === "follow_up") return "Follow-up-Nachricht";
   return jobTypeInfo(value)?.label ?? value;
 }
+
+/* ------------------------------------------------------------------ */
+/* Tippfehler-Steuerung je Auftrag                                     */
+/* ------------------------------------------------------------------ */
+
+/** Moegliche Fehlerarten, die in einen generierten Text eingestreut werden. */
+export type TypoKind = "swap" | "drop" | "double" | "neighbor" | "umlaut" | "grammar";
+
+export const TYPO_KINDS: { value: TypoKind; label: string; example: string }[] = [
+  { value: "swap", label: "Buchstabendreher", example: "Nachricht → Nachricth" },
+  { value: "drop", label: "Fehlender Buchstabe", example: "Training → Traning" },
+  { value: "double", label: "Doppelter Buchstabe", example: "Gruppe → Grupppe" },
+  { value: "neighbor", label: "Nachbartaste", example: "Kommentar → Kimmentar" },
+  { value: "umlaut", label: "Falsche Umlaute", example: "schön → schon" },
+  { value: "grammar", label: "Kleine Grammatikfehler", example: "dass → das" },
+];
+
+/** Einstellungen, die pro Auftrag in der Payload unter `typo` liegen. */
+export type JobTypoSettings = {
+  /** Maximale Tippfehlerquote (0 = aus, 1 = maximal). */
+  rate: number;
+  /** Bevorzugte Fehlerarten; leer = alle erlaubt. */
+  kinds: TypoKind[];
+};
+
+/** Liest die Tippfehler-Einstellungen aus einer Auftrags-Payload. */
+export function readTypoSettings(payload: unknown): JobTypoSettings | null {
+  const t = (payload as { typo?: unknown } | null)?.typo as
+    | { rate?: unknown; kinds?: unknown }
+    | undefined;
+  if (!t || typeof t !== "object") return null;
+  const rate = typeof t.rate === "number" ? Math.min(Math.max(t.rate, 0), 1) : 0.12;
+  const allowed = TYPO_KINDS.map((k) => k.value);
+  const kinds = Array.isArray(t.kinds)
+    ? (t.kinds.filter((k): k is TypoKind => allowed.includes(k as TypoKind)) as TypoKind[])
+    : [];
+  return { rate, kinds };
+}
