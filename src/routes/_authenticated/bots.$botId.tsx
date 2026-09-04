@@ -335,6 +335,20 @@ function BotDetail() {
                 onChange={(e) => set({ tone: e.target.value })}
               />
             </Field>
+            <Field
+              label={`Tippfehler-Rate: ${Math.round(((f as { typo_rate?: number | null }).typo_rate ?? 0.12) * 100)} %`}
+              hint="Wie oft sich ab und zu ein kleiner Rechtschreibfehler einschleicht. Perfekte Texte wirken maschinell — ein Vertipper hier und da wirkt menschlich. 0 % = aus."
+            >
+              <input
+                type="range"
+                min={0}
+                max={40}
+                step={2}
+                className="w-full accent-primary"
+                value={Math.round(((f as { typo_rate?: number | null }).typo_rate ?? 0.12) * 100)}
+                onChange={(e) => set({ typo_rate: Number(e.target.value) / 100 } as never)}
+              />
+            </Field>
             <Field label="Notizen">
               <Textarea
                 rows={3}
