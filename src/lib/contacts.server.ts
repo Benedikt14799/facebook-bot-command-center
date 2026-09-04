@@ -16,11 +16,133 @@ export { STAGES, STAGE_LABEL, KIND_LABEL } from "@/lib/contact-labels";
 import { STAGES, type Stage } from "@/lib/contact-labels";
 export type { Stage };
 
+/** Titel/Zusaetze, die nie ein Vorname sind. */
+const TITLES = new Set([
+  "dr",
+  "dr.",
+  "prof",
+  "prof.",
+  "med",
+  "dipl",
+  "ing",
+  "herr",
+  "frau",
+  "mr",
+  "mrs",
+  "ms",
+]);
+
+/** Namensteile, die nur Beiwerk sind. */
+const PARTICLES = new Set(["von", "van", "de", "del", "di", "der", "den", "zu", "la", "le"]);
+
+/** Grossschreibung normalisieren: "benedikt" -> "Benedikt", "anna-lena" -> "Anna-Lena". */
+function capitalize(word: string) {
+  return word
+    .split(/([-'’])/)
+    .map((p) => (/^[-'’]$/.test(p) ? p : p.charAt(0).toUpperCase() + p.slice(1).toLowerCase()))
+    .join("");
+}
+
+/** Emojis, Klammerzusaetze, Rollen-Suffixe und Satzzeichen entfernen. */
+function cleanName(raw: string) {
+  return raw
+    .replace(/\p{Extended_Pictographic}/gu, " ")
+    .replace(/\([^)]*\)|\[[^\]]*\]/g, " ")
+    .replace(/[·|•]/g, " ")
+    .replace(/\s*[-–—]\s*(Admin|Moderator|Gruppenadmin|Autor)\b.*$/i, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
+export type ParsedName = {
+  /** Aufgeraeumter voller Name */
+  name: string | null;
+  /** Vorname fuer die Anrede */
+  firstName: string | null;
+  /** Woraus der Name stammt: name | reversed | profile_url | text */
+  source: string | null;
+};
+
+/**
+ * Robustes Namens-Parsing aus dem, was der Worker meldet.
+ * Beruecksichtigt: "Müller, Benedikt", Titel ("Dr. Anna-Lena Schmidt"),
+ * Emojis/Zusaetze, Kleinschreibung, Satzeinleitungen ("Kommentar von …")
+ * und als letzten Ausweg den Slug der Profil-URL.
+ */
+export function parseName(input: {
+  name?: string | null;
+  profileUrl?: string | null;
+  text?: string | null;
+}): ParsedName {
+  let source: string | null = null;
+  let full: string | null = null;
+
+  const raw = input.name ? cleanName(input.name) : "";
+  if (raw) {
+    source = "name";
+    // "Müller, Benedikt" -> "Benedikt Müller"
+    if (raw.includes(",")) {
+      const [last, first] = raw.split(",").map((s) => s.trim());
+      if (first && last) {
+        full = `${first} ${last}`;
+        source = "reversed";
+      }
+    }
+    // "Kommentar von Benedikt Müller" / "Nachricht von …"
+    const via = raw.match(/\bvon\s+([\p{L}][\p{L}'’-]+(?:\s+[\p{L}][\p{L}'’-]+){0,2})$/u);
+    if (!full && via?.[1] && /^(kommentar|nachricht|beitrag|antwort)/i.test(raw)) {
+      full = via[1];
+      source = "text";
+    }
+    full = full ?? raw;
+  }
+
+  // Fallback: Slug der Profil-URL, z. B. /benedikt.mueller oder /profile.php?id=…
+  if (!full && input.profileUrl) {
+    const slug = input.profileUrl
+      .split("?")[0]!
+      .replace(/\/+$/, "")
+      .split("/")
+      .pop();
+    if (slug && !/^profile\.php$/i.test(slug) && /[a-zA-Z]/.test(slug)) {
+      const parts = slug
+        .replace(/-\d+$/, "")
+        .split(/[._-]/)
+        .filter((p) => p.length > 1 && !/^\d+$/.test(p));
+      if (parts.length) {
+        full = parts.map(capitalize).join(" ");
+        source = "profile_url";
+      }
+    }
+  }
+
+  if (!full) return { name: null, firstName: null, source: null };
+
+  const tokens = full
+    .split(/\s+/)
+    .map((t) => t.replace(/^[^\p{L}]+|[^\p{L}.'’-]+$/gu, ""))
+    .filter(Boolean);
+
+  const nameTokens = tokens.map((t) => (t === t.toUpperCase() || t === t.toLowerCase() ? capitalize(t) : t));
+
+  const firstToken = nameTokens.find(
+    (t) =>
+      !TITLES.has(t.toLowerCase().replace(/\.$/, "")) &&
+      !PARTICLES.has(t.toLowerCase()) &&
+      t.replace(/[^\p{L}]/gu, "").length > 1,
+  );
+
+  return {
+    name: nameTokens.join(" ") || null,
+    firstName: firstToken ? firstToken.replace(/[.,]$/, "") : null,
+    source,
+  };
+}
+
 /** Vorname aus einem vollen Namen ableiten. */
 export function firstNameOf(name?: string | null) {
   if (!name) return null;
-  const part = name.trim().split(/\s+/)[0] ?? "";
-  return part.length > 1 ? part : null;
+  return parseName({ name }).firstName;
 }
 
 export type PersonInput = {
@@ -33,6 +155,8 @@ export type PersonInput = {
   /** Zuletzt erkannter Text (Kommentar/Beitrag/Nachricht) */
   context?: string | null;
   source?: string;
+  /** Unveraenderte Rohdaten des Worker-Events (zur Nachvollziehbarkeit) */
+  rawEvent?: Record<string, unknown> | null;
 };
 
 /**
