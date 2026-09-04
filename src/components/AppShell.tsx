@@ -17,7 +17,7 @@ import {
   Server,
   LogOut,
 } from "lucide-react";
-import { Flame } from "lucide-react";
+import { Flame, HeartPulse } from "lucide-react";
 import type { ReactNode } from "react";
 
 const nav = [
