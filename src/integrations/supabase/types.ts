@@ -270,6 +270,7 @@ export type Database = {
           text_mode: string
           timezone: string
           tone: string | null
+          typo_rate: number
           updated_at: string
           user_id: string
           warmup_extra_days: number
@@ -322,6 +323,7 @@ export type Database = {
           text_mode?: string
           timezone?: string
           tone?: string | null
+          typo_rate?: number
           updated_at?: string
           user_id?: string
           warmup_extra_days?: number
@@ -374,6 +376,7 @@ export type Database = {
           text_mode?: string
           timezone?: string
           tone?: string | null
+          typo_rate?: number
           updated_at?: string
           user_id?: string
           warmup_extra_days?: number
@@ -797,8 +800,10 @@ export type Database = {
           last_contacted_at: string | null
           last_context: string | null
           name: string | null
+          name_source: string | null
           offer_sent_at: string | null
           profile_url: string | null
+          raw_event: Json
           replied_at: string | null
           reply_count: number
           score: number
@@ -820,8 +825,10 @@ export type Database = {
           last_contacted_at?: string | null
           last_context?: string | null
           name?: string | null
+          name_source?: string | null
           offer_sent_at?: string | null
           profile_url?: string | null
+          raw_event?: Json
           replied_at?: string | null
           reply_count?: number
           score?: number
@@ -843,8 +850,10 @@ export type Database = {
           last_contacted_at?: string | null
           last_context?: string | null
           name?: string | null
+          name_source?: string | null
           offer_sent_at?: string | null
           profile_url?: string | null
+          raw_event?: Json
           replied_at?: string | null
           reply_count?: number
           score?: number
