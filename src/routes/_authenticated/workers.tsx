@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { AppShell } from "@/components/AppShell";
+import { InfoHint } from "@/components/InfoHint";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -52,6 +53,7 @@ function WorkersPage() {
   return (
     <AppShell
       title="Worker"
+      hint="Worker sind deine eigenen Ausführungsprogramme (z. B. Python/Playwright auf PC oder VPS). Sie melden sich mit dem Token an, holen Aufträge ab und führen sie auf Facebook aus."
       subtitle="Deine Ausführungs-Clients"
       actions={
         <div className="flex gap-2">
@@ -105,7 +107,7 @@ function WorkersPage() {
       </div>
 
       <section className="mt-6 rounded-lg border border-border bg-card p-4">
-        <h2 className="text-sm font-medium text-foreground">Anbindung</h2>
+        <h2 className="flex items-center gap-2 text-sm font-medium text-foreground">Anbindung <InfoHint text="So verbindest du deinen Worker: Token als Header mitschicken und die gezeigten Endpunkte abfragen. Details stehen in WORKER_INTEGRATION.md." /></h2>
         <p className="mt-1 text-xs text-muted-foreground">
           Dein lokaler Worker spricht die API mit dem Header{" "}
           <code className="font-mono">x-worker-token</code> an.

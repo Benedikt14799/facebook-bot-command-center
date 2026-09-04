@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { AppShell } from "@/components/AppShell";
+import { InfoHint } from "@/components/InfoHint";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -107,6 +108,7 @@ function GroupsPage() {
   return (
     <AppShell
       title="Gruppen"
+      hint="Verwalte alle Facebook-Gruppen: erlaubte Aktionen, eigene Tageslimits, Cooldown, Arbeitszeiten, Mindest-Score der Empfänger sowie welche Bots in der Gruppe aktiv sind."
       subtitle="Regeln, Caps und Empfänger je Gruppe"
       actions={
         <Dialog open={open} onOpenChange={setOpen}>
@@ -222,7 +224,7 @@ function GroupsPage() {
                   onChange={(e) => setSelected({ ...selected, name: e.target.value })}
                 />
               </Row>
-              <Row label="FB-Gruppen-ID">
+              <Row label="FB-Gruppen-ID" hint="Die Zahl aus der Gruppen-URL. Der Worker nutzt sie, um die Gruppe eindeutig anzusteuern.">
                 <Input
                   value={selected.fb_group_id ?? ""}
                   onChange={(e) => setSelected({ ...selected, fb_group_id: e.target.value })}
@@ -234,13 +236,13 @@ function GroupsPage() {
                   onChange={(e) => setSelected({ ...selected, url: e.target.value })}
                 />
               </Row>
-              <Row label="Sprache">
+              <Row label="Sprache" hint="Sprache der Gruppe — bestimmt, in welcher Sprache Texte erzeugt werden.">
                 <Input
                   value={selected.language ?? ""}
                   onChange={(e) => setSelected({ ...selected, language: e.target.value })}
                 />
               </Row>
-              <Row label="Mitglieder">
+              <Row label="Mitglieder" hint="Ungefähre Gruppengröße, nur zur Einschätzung des Potenzials.">
                 <Input
                   type="number"
                   value={selected.member_count ?? 0}
@@ -249,7 +251,7 @@ function GroupsPage() {
                   }
                 />
               </Row>
-              <Row label="Status">
+              <Row label="Status" hint="active = Aktionen erlaubt, pending = Beitritt läuft, paused/blocked = keine Aktionen.">
                 <Select
                   value={selected.status}
                   onValueChange={(v) => setSelected({ ...selected, status: v })}
@@ -266,7 +268,7 @@ function GroupsPage() {
                   </SelectContent>
                 </Select>
               </Row>
-              <Row label="Erlaubte Aktionen" full>
+              <Row label="Erlaubte Aktionen" full hint="Welche Aktionstypen in dieser Gruppe überhaupt erlaubt sind — z. B. nur Likes und Kommentare, keine DMs.">
                 <div className="flex gap-2">
                   {ACTIONS.map((a) => {
                     const on = selected.allowed_actions.includes(a);
@@ -294,14 +296,14 @@ function GroupsPage() {
                   })}
                 </div>
               </Row>
-              <Row label="Cap Likes">
+              <Row label="Cap Likes" hint="Tageslimit für Likes speziell in dieser Gruppe (zusätzlich zum Bot-Limit).">
                 <Input
                   type="number"
                   value={selected.cap_likes ?? 0}
                   onChange={(e) => setSelected({ ...selected, cap_likes: Number(e.target.value) })}
                 />
               </Row>
-              <Row label="Cap Kommentare">
+              <Row label="Cap Kommentare" hint="Tageslimit für Kommentare in dieser Gruppe.">
                 <Input
                   type="number"
                   value={selected.cap_comments ?? 0}
@@ -310,14 +312,14 @@ function GroupsPage() {
                   }
                 />
               </Row>
-              <Row label="Cap DMs">
+              <Row label="Cap DMs" hint="Tageslimit für Direktnachrichten an Mitglieder dieser Gruppe.">
                 <Input
                   type="number"
                   value={selected.cap_dms ?? 0}
                   onChange={(e) => setSelected({ ...selected, cap_dms: Number(e.target.value) })}
                 />
               </Row>
-              <Row label="Cooldown (min)">
+              <Row label="Cooldown (min)" hint="Mindestpause zwischen zwei Aktionen in dieser Gruppe.">
                 <Input
                   type="number"
                   value={selected.cooldown_minutes}
@@ -326,7 +328,7 @@ function GroupsPage() {
                   }
                 />
               </Row>
-              <Row label="Aktiv von">
+              <Row label="Aktiv von" hint="Frühester Zeitpunkt, zu dem in dieser Gruppe gearbeitet wird.">
                 <Input
                   type="time"
                   value={(selected.active_from ?? "").slice(0, 5)}
@@ -335,28 +337,28 @@ function GroupsPage() {
                   }
                 />
               </Row>
-              <Row label="Aktiv bis">
+              <Row label="Aktiv bis" hint="Spätester Zeitpunkt für Aktionen in dieser Gruppe.">
                 <Input
                   type="time"
                   value={(selected.active_to ?? "").slice(0, 5)}
                   onChange={(e) => setSelected({ ...selected, active_to: `${e.target.value}:00` })}
                 />
               </Row>
-              <Row label="Min-Score">
+              <Row label="Min-Score" hint="Mindestbewertung eines Empfängers, damit er angeschrieben wird — filtert uninteressante Profile heraus.">
                 <Input
                   type="number"
                   value={selected.min_score}
                   onChange={(e) => setSelected({ ...selected, min_score: Number(e.target.value) })}
                 />
               </Row>
-              <Row label="Tonfall" full>
+              <Row label="Tonfall" full hint="Schreibstil speziell für diese Gruppe, überschreibt den Bot-Tonfall.">
                 <Textarea
                   rows={3}
                   value={selected.tone ?? ""}
                   onChange={(e) => setSelected({ ...selected, tone: e.target.value })}
                 />
               </Row>
-              <Row label="Notizen" full>
+              <Row label="Notizen" full hint="Freie Notizen, z. B. Gruppenregeln oder was in dieser Gruppe gut funktioniert.">
                 <Textarea
                   rows={2}
                   value={selected.notes ?? ""}
@@ -380,14 +382,19 @@ function Row({
   label,
   children,
   full,
+  hint,
 }: {
   label: string;
   children: React.ReactNode;
   full?: boolean;
+  hint?: string;
 }) {
   return (
     <div className={`space-y-1.5 ${full ? "sm:col-span-2" : ""}`}>
-      <Label className="text-xs text-muted-foreground">{label}</Label>
+      <Label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+        {label}
+        {hint ? <InfoHint text={hint} /> : null}
+      </Label>
       {children}
     </div>
   );

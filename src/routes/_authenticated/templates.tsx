@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { AppShell } from "@/components/AppShell";
+import { InfoHint } from "@/components/InfoHint";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -104,6 +105,7 @@ function TemplatesPage() {
   return (
     <AppShell
       title="Vorlagen"
+      hint="Textbausteine für DMs, Antworten und Kommentare. Mit Variationen (eine pro Zeile) wirken Nachrichten weniger automatisiert."
       subtitle="Snippets mit Variationen — Platzhalter: {name}, {gruppe}"
       actions={
         <Dialog open={open} onOpenChange={setOpen}>
@@ -116,11 +118,11 @@ function TemplatesPage() {
             </DialogHeader>
             <div className="space-y-3">
               <div className="space-y-1.5">
-                <Label>Name</Label>
+                <Label className="flex items-center gap-2">Name <InfoHint text="Interne Bezeichnung der Vorlage, z. B. „Begrüßung neue Mitglieder“." /></Label>
                 <Input value={name} onChange={(e) => setName(e.target.value)} />
               </div>
               <div className="space-y-1.5">
-                <Label>Typ</Label>
+                <Label className="flex items-center gap-2">Typ <InfoHint text="Wofür die Vorlage genutzt wird: DM, Antwort auf Nachrichten oder Gruppen-Kommentar." /></Label>
                 <Select value={kind} onValueChange={setKind}>
                   <SelectTrigger>
                     <SelectValue />
@@ -135,11 +137,11 @@ function TemplatesPage() {
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label>Text</Label>
+                <Label className="flex items-center gap-2">Text <InfoHint text="Grundtext. Platzhalter wie {name} werden vom Worker ersetzt." /></Label>
                 <Textarea rows={4} value={body} onChange={(e) => setBody(e.target.value)} />
               </div>
               <div className="space-y-1.5">
-                <Label>Variationen (eine pro Zeile)</Label>
+                <Label className="flex items-center gap-2">Variationen (eine pro Zeile) <InfoHint text="Alternative Formulierungen. Pro Aktion wird zufällig eine gewählt, damit nicht immer derselbe Text rausgeht." /></Label>
                 <Textarea
                   rows={4}
                   value={variations}
@@ -148,7 +150,7 @@ function TemplatesPage() {
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="space-y-1.5">
-                  <Label>Nur für Bot</Label>
+                  <Label className="flex items-center gap-2">Nur für Bot <InfoHint text="Vorlage auf ein Profil beschränken, z. B. wenn ein Bot einen eigenen Tonfall hat." /></Label>
                   <Select value={botId} onValueChange={setBotId}>
                     <SelectTrigger>
                       <SelectValue placeholder="alle" />
@@ -163,7 +165,7 @@ function TemplatesPage() {
                   </Select>
                 </div>
                 <div className="space-y-1.5">
-                  <Label>Nur für Gruppe</Label>
+                  <Label className="flex items-center gap-2">Nur für Gruppe <InfoHint text="Vorlage nur in dieser Gruppe verwenden — passend zu Thema und Zielgruppe." /></Label>
                   <Select value={groupId} onValueChange={setGroupId}>
                     <SelectTrigger>
                       <SelectValue placeholder="alle" />
