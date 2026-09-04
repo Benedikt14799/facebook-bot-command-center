@@ -300,13 +300,11 @@ export async function conversationHistory(
     .eq("recipient_id", recipientId)
     .order("created_at", { ascending: false })
     .limit(limit);
-  return (data ?? [])
-    .reverse()
-    .map((m) => ({
-      direction: m.direction === "in" ? "in" : "out",
-      body: m.body,
-      at: m.created_at,
-    }));
+  return (data ?? []).reverse().map((m) => ({
+    direction: m.direction === "in" ? "in" : "out",
+    body: m.body,
+    at: m.created_at,
+  }));
 }
 
 /**
