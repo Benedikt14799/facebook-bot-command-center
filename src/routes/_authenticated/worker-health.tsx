@@ -10,6 +10,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { selectAll, fmt, type Job } from "@/lib/db";
+import { PROXY_TYPES, stealthScore, type ProxyCheck } from "@/lib/stealth";
 import { toast } from "sonner";
 import { RefreshCw } from "lucide-react";
 
