@@ -94,3 +94,51 @@ der Liste, ob sie `auto` oder `manuell` sind.
 
 Auf der Worker-Seite lädst du mit **Worker-Skript herunterladen** ein fertiges
 Python-Startskript inklusive Token und Basis-URL herunter.
+
+## Personen erkennen und Kontaktakte füllen
+
+Damit Nachrichten persönlich klingen, meldet der Worker erkannte Personen zurück.
+Alles landet in `recipients` (Person) und `contact_events` (Zeitleiste).
+
+### `POST /api/public/worker/recipients`
+
+Neue oder aktualisierte Personen melden (z. B. nach `scan_group`):
+
+```json
+{
+  "group_id": "…",
+  "bot_id": "…",
+  "people": [
+    {
+      "fb_user_id": "100001234",
+      "name": "Benedikt Meier",
+      "profile_url": "https://facebook.com/…",
+      "context": "Kommentar über Knieschmerzen nach dem Laufen",
+      "kind": "scan"
+    }
+  ]
+}
+```
+
+Der Vorname wird automatisch abgeleitet und in Texten als Anrede genutzt.
+
+### `POST /api/public/worker/messages` — zusätzliche Felder
+
+`recipient_name`, `recipient_fb_id`, `recipient_profile_url`, `kind`.
+Ohne `recipient_id` wird die Person darüber angelegt bzw. gefunden.
+Eingehende Nachrichten erhöhen `reply_count`, setzen `replied_at` und
+schalten die Stufe auf „Hat geantwortet“.
+
+### `POST /api/public/worker/result` — zusätzliche Felder
+
+`recipient_name`, `recipient_fb_id`, `recipient_profile_url`, `context`, `sent_text`.
+Bei `status: "done"` wird automatisch ein Eintrag in der Kontaktakte erzeugt
+(Like, Kommentar, Welcome-Nachricht, Follow-up, Antwort).
+
+## KI-Anbieter
+
+Unter „KI-Einstellungen“ lässt sich statt der eingebauten KI ein eigener
+Anbieter hinterlegen (OpenAI, OpenRouter, Anthropic oder ein beliebiger
+OpenAI-kompatibler Endpunkt). Der Schlüssel wird nur serverseitig gelesen.
+Die KI bekommt Vorname, erkannten Text, Gesprächsverlauf, Rolle des Bots und
+optional das Angebot als Kontext — und schreibt daraus kurze, natürliche Texte.
