@@ -43,16 +43,39 @@ export const Route = createFileRoute("/api/public/worker/result")({
         } | null;
 
         if (!body?.job_id) return json({ error: "job_id required" }, 400);
-        const status = ["done", "failed", "skipped"].includes(body.status ?? "")
+        const requested = ["done", "failed", "skipped"].includes(body.status ?? "")
           ? body.status!
           : "done";
+
+        // Vollstaendigen Auftrag laden, um ihn validieren zu koennen.
+        const { data: fullJob, error: loadErr } = await ctx.admin
+          .from("jobs")
+          .select("*")
+          .eq("id", body.job_id)
+          .eq("user_id", ctx.userId)
+          .maybeSingle();
+        if (loadErr) return json({ error: loadErr.message }, 500);
+        if (!fullJob) return json({ error: "job not found" }, 404);
+
+        // Ungueltige Auftraege duerfen nie als done gemeldet werden.
+        const validation = validateJob(
+          fullJob.type,
+          fullJob.group_id,
+          fullJob.recipient_id,
+          fullJob.payload,
+        );
+        const status = requested === "done" && !validation.valid ? "failed" : requested;
+        const errorText =
+          requested === "done" && !validation.valid
+            ? validation.errors.join("; ")
+            : (body.error ?? null);
 
         const { data: job, error } = await ctx.admin
           .from("jobs")
           .update({
             status,
             result: (body.result ?? null) as never,
-            error: body.error ?? null,
+            error: errorText,
             finished_at: new Date().toISOString(),
           })
           .eq("id", body.job_id)
