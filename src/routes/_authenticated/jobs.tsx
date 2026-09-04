@@ -388,6 +388,15 @@ function JobsPage() {
                   >
                     {j.source === "auto" ? "auto" : "manuell"}
                   </span>
+                  {(j as { retried_from_job_id?: string | null }).retried_from_job_id ? (
+                    <span
+                      className="ml-2 rounded border border-border/60 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-muted-foreground"
+                      title="Wiederholung eines fehlgeschlagenen Auftrags"
+                    >
+                      Wiederholung
+                    </span>
+                  ) : null}
+
                 </td>
                 <td className="px-4 py-2 text-muted-foreground">
                   {bots.data?.find((b) => b.id === j.bot_id)?.name ?? "—"}
