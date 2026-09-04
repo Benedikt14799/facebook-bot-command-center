@@ -48,3 +48,27 @@ Ziel: Nachrichten wie „Hallo Benedikt, dein Kommentar zu …“.
 - Worker-Endpunkte `messages` und `events` nehmen zusätzlich Personendaten entgegen und legen Empfänger an bzw. aktualisieren sie; `WORKER_INTEGRATION.md` und das Worker-Skript werden entsprechend ergänzt.
 - `jobs.tsx` erhält Dialog zum Bearbeiten, Server-Aktionen für Update/Neu-Einplanen/Duplizieren.
 - Scheduler nutzt Empfängerkontext und Gesprächsverlauf beim Erzeugen der Texte.
+
+## 6. Personen-Historie (Kontaktakte)
+
+Jede Person bekommt eine eigene Detailseite mit vollständiger Zeitleiste:
+
+- **Alle Aktionen und Nachrichten** chronologisch: Like vergeben, Kommentar geschrieben, Welcome-DM, Follow-up, eingehende Antwort der Person – jeweils mit Zeitpunkt, Bot, Gruppe und Text.
+- Kopfbereich: Name, Profil-Link, Gruppe(n), Status/Stufe, letzte Aktivität, Anzahl Kontakte, ob die Person schon geantwortet hat.
+- Alles, was Worker und Planer tun, schreibt automatisch einen Eintrag in diese Akte.
+- Die KI bekommt bei jeder neuen Nachricht die komplette Akte als Kontext, damit die Antwort logisch an alles Vorherige anschließt und nichts doppelt kommt.
+
+## 7. Bot-Rolle und Angebots-Stufe
+
+- **Rolle je Bot**: Jeder Bot bekommt eine Persona/Rolle (z. B. „Gruppenbetreuer/Admin“, „normales Mitglied“, „Experte für X“) plus Tonfall. Die KI schreibt konsequent aus dieser Rolle heraus – die Welcome-Nachricht klingt dann z. B. wie vom Gruppenbetreuer.
+- **Antwort-Erkennung**: Antwortet eine Person, wird das erkannt, in der Akte vermerkt und ein Antwort-Auftrag erzeugt.
+- **Angebots-Platzierung**: Pro Bot einstellbar, ob das Angebot/der Referral-Link in der **ersten** oder **zweiten** Antwort nach der Rückmeldung platziert wird. Dafür gibt es je Bot ein Angebotsfeld (kurze Beschreibung + Link), das die KI natürlich in den Text einbaut – kein Werbeblock, sondern passend zum Gesprächsverlauf.
+- **Stufe je Person** wird gespeichert (z. B. neu → angeschrieben → hat geantwortet → Angebot gesendet), damit später Auswertung und weitere Monetarisierungsschritte darauf aufbauen können. Die dazugehörige Auswertungs-Oberfläche besprechen wir in einem eigenen Schritt.
+
+### Ergänzende technische Details
+
+- `recipients` erhält zusätzlich: `stage`, `replied_at`, `offer_sent_at`, `reply_count`.
+- Neue Tabelle `contact_events` (Person, Bot, Gruppe, Art der Aktion, Text, Zeitpunkt) mit RLS und Grants – speist die Zeitleiste.
+- `bots` erhält: `persona_role`, `offer_text`, `offer_link`, `offer_step` (1 oder 2).
+- Neue Route `/recipients` (Liste) und `/recipients/$id` (Akte).
+- Scheduler und Antwort-Logik lesen Akte + Stufe und entscheiden, ob das Angebot in diese Nachricht gehört.
