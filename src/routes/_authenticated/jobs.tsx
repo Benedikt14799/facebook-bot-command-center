@@ -92,7 +92,7 @@ function JobsPage() {
 
   const patch = useMutation({
     mutationFn: async ({ id, values }: { id: string; values: Record<string, unknown> }) => {
-      const { error } = await supabase.from("jobs").update(values).eq("id", id);
+      const { error } = await supabase.from("jobs").update(values as never).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["jobs"] }),
