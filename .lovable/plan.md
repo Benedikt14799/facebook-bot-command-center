@@ -38,7 +38,35 @@ Die Regel wird in `WORKER_INTEGRATION.md` dokumentiert.
 - `updateJob` bleibt für echtes Bearbeiten offener Aufträge; der Zurücksetz-Pfad (`requeue`) entfällt.
 - Gemeinsamer Parser als `readJsonBody()` in `src/lib/worker-auth.server.ts`.
 
+## Abnahmekriterien
+
+F-03:
+
+- Ursprünglicher Auftrag bleibt mit gleicher ID „fehlgeschlagen“, ursprünglicher Fehlertext bleibt erhalten.
+- Neue Wiederholung erhält eine neue ID und ist „offen“; Fehler- und Laufzeitfelder sind leer.
+- `retried_from_job_id` verweist auf den Ursprungsauftrag.
+- Fachliche Validierung läuft über `saveJob`.
+- Parallele oder wiederholte Klicks erzeugen keine Duplikate.
+- Oberfläche zeigt Ursprung und Wiederholungsbeziehung an.
+- Einzel- und Sammelwiederholung nutzen dieselbe Serverlogik.
+
+F-05:
+
+- Kaputtes JSON wird auf allen relevanten Worker-Endpunkten mit HTTP 400 abgelehnt.
+- Listen, Zahlen, Texte und `null` werden mit HTTP 400 abgelehnt.
+- Leerer Body wird als `{}` behandelt.
+- Pflichtfeldprüfungen bleiben davon unabhängig aktiv.
+- Fehlerformat und Dokumentation sind einheitlich.
+
+F-06:
+
+- Standardwert ohne Angabe ist 5; gültig sind nur ganze Zahlen von 1 bis 25.
+- Ungültige Werte werden mit HTTP 400 abgelehnt; der Server liefert nie mehr als 25 Aufträge.
+- Antwort enthält `limit` und `max_limit`.
+- Automatisierter Test mit mindestens 26 Testaufträgen ist erfolgreich.
+
 ## Prüfung
+
 
 - Wiederholung: alter Auftrag bleibt „fehlgeschlagen“, neuer ist „offen“ ohne Fehlertext, Referenz sichtbar, keine Duplikate bei mehrfachem Klick.
 - Kaputter JSON-Inhalt → 400 auf allen Worker-Endpunkten; leerer Body weiterhin 200.
