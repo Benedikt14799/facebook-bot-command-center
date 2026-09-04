@@ -50,15 +50,62 @@ export const Route = createFileRoute("/_authenticated/jobs")({
   component: JobsPage,
 });
 
-/** Erklärungsbox zur gewählten Aktion. */
+/** Erklärungsbox zur gewählten Aktion inkl. Beispiel-Input und -Output. */
 function TypeHelp({ value }: { value: string }) {
   const info = jobTypeInfo(value);
   if (!info) return null;
   return (
-    <div className="rounded-md border border-border/70 bg-muted/30 p-3 text-xs text-muted-foreground">
-      <span className="font-medium text-foreground">{info.label}: </span>
-      {info.long}
+    <div className="space-y-2 rounded-md border border-border/70 bg-muted/30 p-3 text-xs text-muted-foreground">
+      <p>
+        <span className="font-medium text-foreground">{info.label}: </span>
+        {info.long}
+      </p>
+      <div>
+        <p className="font-medium text-foreground">Braucht: {info.inputLabel}</p>
+        <pre className="mt-1 overflow-x-auto rounded bg-background/70 p-2 font-mono text-[11px]">
+          {info.exampleInput}
+        </pre>
+      </div>
+      <div>
+        <p className="font-medium text-foreground">Ergibt: {info.outputLabel}</p>
+        <p className="mt-1 rounded bg-background/70 p-2 italic">{info.exampleOutput}</p>
+      </div>
     </div>
+  );
+}
+
+/** Nachschlagewerk: alle Aktionen mit Beispiel-Input und -Output. */
+function ActionGuide() {
+  const [open, setOpen] = useState(false);
+  return (
+    <section className="mb-4 rounded-lg border border-border bg-card">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium text-foreground"
+      >
+        Was machen die einzelnen Aktionen?
+        <span className="text-xs text-muted-foreground">{open ? "einklappen" : "anzeigen"}</span>
+      </button>
+      {open ? (
+        <div className="grid gap-3 border-t border-border p-4 md:grid-cols-2">
+          {JOB_TYPES.map((t) => (
+            <div key={t.value} className="space-y-1 rounded-md border border-border/60 p-3">
+              <p className="text-sm font-medium text-foreground">{t.label}</p>
+              <p className="text-xs text-muted-foreground">{t.long}</p>
+              <p className="text-[11px] text-muted-foreground">
+                <span className="font-medium text-foreground">Beispiel-Input: </span>
+                <code className="font-mono">{t.exampleInput}</code>
+              </p>
+              <p className="text-[11px] text-muted-foreground">
+                <span className="font-medium text-foreground">Beispiel-Output: </span>
+                {t.exampleOutput}
+              </p>
+            </div>
+          ))}
+        </div>
+      ) : null}
+    </section>
   );
 }
 
