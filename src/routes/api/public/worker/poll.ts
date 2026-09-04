@@ -19,9 +19,23 @@ export const Route = createFileRoute("/api/public/worker/poll")({
         if (parsedBody instanceof Response) return parsedBody;
         const body = parsedBody as {
           bot_id?: string;
-          limit?: number;
+          limit?: unknown;
         };
-        const limit = Math.min(Math.max(body.limit ?? 5, 1), 25);
+
+        // Nur ganze Zahlen von 1 bis MAX_LIMIT; ungueltige Werte -> 400.
+        const MAX_LIMIT = 25;
+        let limit = 5;
+        if (body.limit !== undefined && body.limit !== null) {
+          const n = body.limit;
+          if (typeof n !== "number" || !Number.isInteger(n) || n < 1 || n > MAX_LIMIT) {
+            return json(
+              { error: `Ungültiges limit. Erlaubt ist eine ganze Zahl von 1 bis ${MAX_LIMIT}.` },
+              400,
+            );
+          }
+          limit = n;
+        }
+
 
         let query = ctx.admin
           .from("jobs")
