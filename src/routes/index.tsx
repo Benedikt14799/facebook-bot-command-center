@@ -1,24 +1,68 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { Button } from "@/components/ui/button";
+import { Activity, Bot, Clock, ShieldCheck } from "lucide-react";
 
-// No head() here: the home route inherits title/description/og/twitter from
-// __root.tsx, and ships no og:image so serve-time hosting can inject the
-// project's social preview (explicit og:image or latest screenshot).
 export const Route = createFileRoute("/")({
-  component: Index,
+  head: () => ({
+    meta: [
+      { title: "FB/Control — Kommandozentrale für Facebook-Bots" },
+      {
+        name: "description",
+        content:
+          "Steuere Facebook-Profile zentral: Warmup, Arbeitszeiten, Gruppen, DMs, Likes, Kommentare, Nachrichten-Backlog und Worker-Anbindung.",
+      },
+      { property: "og:title", content: "FB/Control — Kommandozentrale für Facebook-Bots" },
+      {
+        property: "og:description",
+        content:
+          "Cockpit für Bot-Verwaltung, Warmup-Phasen, Gruppenregeln, Auftragsplanung und Nachrichtenprotokoll.",
+      },
+    ],
+  }),
+  component: Landing,
 });
 
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
-function Index() {
+const features = [
+  { icon: Bot, title: "Bot-Verwaltung", text: "Profile, Cookie-Session, Status und Not-Aus je Bot." },
+  { icon: Clock, title: "Warmup & Zeitfenster", text: "Tages-Caps, Jitter, Wochenendfaktor, Arbeitszeiten." },
+  { icon: Activity, title: "Aufträge & Protokoll", text: "Geplante Jobs, Freigabe-Queue, Nachrichten-Backlog." },
+  { icon: ShieldCheck, title: "Worker-API", text: "Dein lokaler Playwright-Worker holt Jobs per Token." },
+];
+
+function Landing() {
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
+    <div className="min-h-screen bg-background">
+      <header className="flex items-center justify-between px-6 py-5">
+        <span className="font-mono text-sm text-foreground">
+          FB<span className="text-primary">/</span>CONTROL
+        </span>
+        <Link to="/auth">
+          <Button size="sm">Anmelden</Button>
+        </Link>
+      </header>
+      <main className="mx-auto max-w-4xl px-6 py-20">
+        <h1 className="text-4xl font-semibold tracking-tight text-foreground sm:text-5xl">
+          Kommandozentrale für deine Facebook-Automation
+        </h1>
+        <p className="mt-4 max-w-2xl text-muted-foreground">
+          Plane Aktionen, verwalte Gruppen und Profile, überwache jede Nachricht — die
+          eigentliche Ausführung übernimmt dein eigener Worker.
+        </p>
+        <div className="mt-8">
+          <Link to="/auth">
+            <Button size="lg">Cockpit öffnen</Button>
+          </Link>
+        </div>
+        <div className="mt-16 grid gap-4 sm:grid-cols-2">
+          {features.map((f) => (
+            <div key={f.title} className="rounded-lg border border-border bg-card p-5">
+              <f.icon className="size-5 text-primary" />
+              <h2 className="mt-3 font-medium text-foreground">{f.title}</h2>
+              <p className="mt-1 text-sm text-muted-foreground">{f.text}</p>
+            </div>
+          ))}
+        </div>
+      </main>
     </div>
   );
 }
