@@ -267,6 +267,51 @@ function BotDetail() {
         </section>
 
         <section className="rounded-lg border border-border bg-card p-4">
+          <h2 className="mb-3 flex items-center gap-2 text-sm font-medium text-foreground">
+            Rolle & Angebot
+            <InfoHint text="Als wen tritt der Bot in der Gruppe auf und wann platziert er dein Angebot? Beides fließt in die KI-Texte ein." />
+          </h2>
+          <div className="grid gap-3">
+            <Field label="Rolle / Persona" hint="Wie sich der Bot in der Gruppe versteht, z. B. „Gruppenbetreuer“ oder „langjähriges Mitglied“. Neue Mitglieder halten ihn dann für genau das.">
+              <Input
+                value={(f as { persona_role?: string | null }).persona_role ?? ""}
+                placeholder="Gruppenbetreuer, hilft neuen Mitgliedern"
+                onChange={(e) => set({ persona_role: e.target.value } as never)}
+              />
+            </Field>
+            <Field label="Angebot / Referral" hint="Was der Bot irgendwann platzieren soll — als hilfreicher Tipp formuliert, nicht als Werbung. Leer lassen, wenn nichts platziert werden soll.">
+              <Textarea
+                rows={3}
+                value={(f as { offer_text?: string | null }).offer_text ?? ""}
+                placeholder="Kurzer Hinweis auf dein Angebot…"
+                onChange={(e) => set({ offer_text: e.target.value } as never)}
+              />
+            </Field>
+            <Field label="Link zum Angebot" hint="Optionaler Link, der zum Angebot mitgeschickt wird.">
+              <Input
+                value={(f as { offer_link?: string | null }).offer_link ?? ""}
+                placeholder="https://…"
+                onChange={(e) => set({ offer_link: e.target.value } as never)}
+              />
+            </Field>
+            <Field label="Angebot platzieren" hint="Nach wie vielen Antworten der Person das Angebot eingebaut wird. Zweite Antwort wirkt natürlicher.">
+              <Select
+                value={String((f as { offer_step?: number | null }).offer_step ?? 2)}
+                onValueChange={(v) => set({ offer_step: Number(v) } as never)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">Schon in der ersten Antwort</SelectItem>
+                  <SelectItem value="2">Erst in der zweiten Antwort</SelectItem>
+                </SelectContent>
+              </Select>
+            </Field>
+          </div>
+        </section>
+
+        <section className="rounded-lg border border-border bg-card p-4">
           <h2 className="mb-3 flex items-center gap-2 text-sm font-medium text-foreground">Textgenerierung <InfoHint text="Vorlagen, KI oder beides. Der Tonfall steuert, wie die Texte klingen — damit sie nicht nach KI wirken." /></h2>
           <div className="grid gap-3">
             <Field label="Modus" hint="Vorlagen = feste Textbausteine, KI = generierte Texte, beides = Vorlage als Grundlage, KI variiert sie.">
