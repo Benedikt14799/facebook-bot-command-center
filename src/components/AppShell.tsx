@@ -17,12 +17,13 @@ import {
   Server,
   LogOut,
 } from "lucide-react";
-import { Flame, HeartPulse, Contact, Sparkles, KeyRound } from "lucide-react";
+import { Flame, HeartPulse, Contact, Sparkles, KeyRound, Rocket } from "lucide-react";
 import { NotificationBell } from "@/components/NotificationBell";
 import type { ReactNode } from "react";
 
 const nav = [
   { to: "/dashboard", label: "Cockpit", icon: Activity },
+  { to: "/inbetriebnahme", label: "Inbetriebnahme", icon: Rocket },
   { to: "/bots", label: "Bots", icon: Bot },
   { to: "/warmup", label: "Aufwärmphase", icon: Flame },
   { to: "/groups", label: "Gruppen", icon: Users },

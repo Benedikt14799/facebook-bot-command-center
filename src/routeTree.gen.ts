@@ -15,6 +15,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedAiSettingsRouteImport } from './routes/_authenticated/ai-settings'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedGroupsRouteImport } from './routes/_authenticated/groups'
+import { Route as AuthenticatedInbetriebnahmeRouteImport } from './routes/_authenticated/inbetriebnahme'
 import { Route as AuthenticatedJobsRouteImport } from './routes/_authenticated/jobs'
 import { Route as AuthenticatedLogsRouteImport } from './routes/_authenticated/logs'
 import { Route as AuthenticatedMessagesRouteImport } from './routes/_authenticated/messages'
@@ -68,6 +69,12 @@ const AuthenticatedGroupsRoute = AuthenticatedGroupsRouteImport.update({
   path: '/groups',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedInbetriebnahmeRoute =
+  AuthenticatedInbetriebnahmeRouteImport.update({
+    id: '/inbetriebnahme',
+    path: '/inbetriebnahme',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedJobsRoute = AuthenticatedJobsRouteImport.update({
   id: '/jobs',
   path: '/jobs',
@@ -196,6 +203,7 @@ export interface FileRoutesByFullPath {
   '/ai-settings': typeof AuthenticatedAiSettingsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/groups': typeof AuthenticatedGroupsRoute
+  '/inbetriebnahme': typeof AuthenticatedInbetriebnahmeRoute
   '/jobs': typeof AuthenticatedJobsRoute
   '/logs': typeof AuthenticatedLogsRoute
   '/messages': typeof AuthenticatedMessagesRoute
@@ -226,6 +234,7 @@ export interface FileRoutesByTo {
   '/ai-settings': typeof AuthenticatedAiSettingsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/groups': typeof AuthenticatedGroupsRoute
+  '/inbetriebnahme': typeof AuthenticatedInbetriebnahmeRoute
   '/jobs': typeof AuthenticatedJobsRoute
   '/logs': typeof AuthenticatedLogsRoute
   '/messages': typeof AuthenticatedMessagesRoute
@@ -258,6 +267,7 @@ export interface FileRoutesById {
   '/_authenticated/ai-settings': typeof AuthenticatedAiSettingsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/groups': typeof AuthenticatedGroupsRoute
+  '/_authenticated/inbetriebnahme': typeof AuthenticatedInbetriebnahmeRoute
   '/_authenticated/jobs': typeof AuthenticatedJobsRoute
   '/_authenticated/logs': typeof AuthenticatedLogsRoute
   '/_authenticated/messages': typeof AuthenticatedMessagesRoute
@@ -290,6 +300,7 @@ export interface FileRouteTypes {
     | '/ai-settings'
     | '/dashboard'
     | '/groups'
+    | '/inbetriebnahme'
     | '/jobs'
     | '/logs'
     | '/messages'
@@ -320,6 +331,7 @@ export interface FileRouteTypes {
     | '/ai-settings'
     | '/dashboard'
     | '/groups'
+    | '/inbetriebnahme'
     | '/jobs'
     | '/logs'
     | '/messages'
@@ -351,6 +363,7 @@ export interface FileRouteTypes {
     | '/_authenticated/ai-settings'
     | '/_authenticated/dashboard'
     | '/_authenticated/groups'
+    | '/_authenticated/inbetriebnahme'
     | '/_authenticated/jobs'
     | '/_authenticated/logs'
     | '/_authenticated/messages'
@@ -435,6 +448,13 @@ declare module '@tanstack/react-router' {
       path: '/groups'
       fullPath: '/groups'
       preLoaderRoute: typeof AuthenticatedGroupsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/inbetriebnahme': {
+      id: '/_authenticated/inbetriebnahme'
+      path: '/inbetriebnahme'
+      fullPath: '/inbetriebnahme'
+      preLoaderRoute: typeof AuthenticatedInbetriebnahmeRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/jobs': {
@@ -605,6 +625,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAiSettingsRoute: typeof AuthenticatedAiSettingsRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedGroupsRoute: typeof AuthenticatedGroupsRoute
+  AuthenticatedInbetriebnahmeRoute: typeof AuthenticatedInbetriebnahmeRoute
   AuthenticatedJobsRoute: typeof AuthenticatedJobsRoute
   AuthenticatedLogsRoute: typeof AuthenticatedLogsRoute
   AuthenticatedMessagesRoute: typeof AuthenticatedMessagesRoute
@@ -623,6 +644,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAiSettingsRoute: AuthenticatedAiSettingsRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedGroupsRoute: AuthenticatedGroupsRoute,
+  AuthenticatedInbetriebnahmeRoute: AuthenticatedInbetriebnahmeRoute,
   AuthenticatedJobsRoute: AuthenticatedJobsRoute,
   AuthenticatedLogsRoute: AuthenticatedLogsRoute,
   AuthenticatedMessagesRoute: AuthenticatedMessagesRoute,
