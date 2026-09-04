@@ -1,4 +1,4 @@
-# Erstanmeldung des Workers reparieren
+# Review: Erstanmeldung des Workers
 
 Heute liefert die Session-Abfrage für einen Bot, der noch nie angemeldet war, einen Fehler ("keine Sitzung"). Dadurch bricht der allererste Login ab, obwohl genau dann noch keine Cookies existieren können.
 
