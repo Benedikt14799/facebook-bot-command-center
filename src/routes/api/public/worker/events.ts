@@ -1,9 +1,13 @@
 /**
- * Worker-API: Ereignisse protokollieren; bei einem blocked-Fehler wird der
- * betroffene Bot automatisch gesperrt und pausiert.
+ * Worker-API: Ereignisse protokollieren.
+ *
+ * Meldet der Worker einen Checkpoint, ein CAPTCHA, eine abgelaufene Sitzung
+ * oder eine Sperre, wird der Bot sofort in den manuellen Modus gesetzt und
+ * eine Benachrichtigung erzeugt.
  */
 import { createFileRoute } from "@tanstack/react-router";
 import { authenticateWorker, json } from "@/lib/worker-auth.server";
+import { enterManualMode, isManualTrigger } from "@/lib/alerts.server";
 
 export const Route = createFileRoute("/api/public/worker/events")({
   server: {
