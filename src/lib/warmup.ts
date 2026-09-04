@@ -153,3 +153,52 @@ export const WARMUP_LABEL: Record<string, string> = {
   comments: "Kommentare",
   dms: "Nachrichten",
 };
+
+/**
+ * Warmup-Profil-Gewichte je Bot.
+ * like/comment/dm steuern, welche Aktionsart bevorzugt geplant wird,
+ * ai steuert den Anteil KI-generierter Texte (0-100 Prozent).
+ */
+export type WarmupWeights = {
+  like: number;
+  comment: number;
+  dm: number;
+  ai: number;
+};
+
+export const DEFAULT_WEIGHTS: WarmupWeights = { like: 5, comment: 2, dm: 1, ai: 50 };
+
+/** Liest die Gewichte robust ein und begrenzt sie auf sinnvolle Bereiche. */
+export function parseWeights(raw: unknown): WarmupWeights {
+  const o = (raw ?? {}) as Record<string, unknown>;
+  const num = (v: unknown, fallback: number, max: number) => {
+    const n = Number(v);
+    return Number.isFinite(n) ? Math.min(max, Math.max(0, Math.round(n))) : fallback;
+  };
+  return {
+    like: num(o["like"], DEFAULT_WEIGHTS.like, 10),
+    comment: num(o["comment"], DEFAULT_WEIGHTS.comment, 10),
+    dm: num(o["dm"], DEFAULT_WEIGHTS.dm, 10),
+    ai: num(o["ai"], DEFAULT_WEIGHTS.ai, 100),
+  };
+}
+
+/**
+ * Reihenfolge der Aktionsarten nach Gewicht (hoeher = zuerst geplant).
+ * Aktionsarten mit Gewicht 0 werden ausgelassen.
+ */
+export function weightedActionOrder(
+  weights: WarmupWeights,
+): ("like" | "comment" | "dm_new_member")[] {
+  const entries: { type: "like" | "comment" | "dm_new_member"; weight: number }[] = [
+    { type: "like", weight: weights.like },
+    { type: "comment", weight: weights.comment },
+    { type: "dm_new_member", weight: weights.dm },
+  ];
+  return entries
+    .filter((e) => e.weight > 0)
+    // Zufaellige Gewichtung: hohes Gewicht landet meist vorne, bleibt aber variabel.
+    .map((e) => ({ ...e, roll: Math.random() * e.weight }))
+    .sort((a, b) => b.roll - a.roll)
+    .map((e) => e.type);
+}
