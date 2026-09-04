@@ -19,8 +19,10 @@ export type ContactEvent = Tables["contact_events"]["Row"];
 
 export async function selectAll<T extends keyof Tables & string>(
   table: T,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   build?: (q: any) => any,
 ) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let q: any = supabase.from(table).select("*");
   q = build ? build(q) : q.order("created_at", { ascending: false });
   const { data, error } = await q;
