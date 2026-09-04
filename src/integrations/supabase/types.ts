@@ -646,6 +646,7 @@ export type Database = {
           payload: Json
           recipient_id: string | null
           result: Json | null
+          retried_from_job_id: string | null
           scheduled_for: string
           source: string
           status: string
@@ -668,6 +669,7 @@ export type Database = {
           payload?: Json
           recipient_id?: string | null
           result?: Json | null
+          retried_from_job_id?: string | null
           scheduled_for?: string
           source?: string
           status?: string
@@ -690,6 +692,7 @@ export type Database = {
           payload?: Json
           recipient_id?: string | null
           result?: Json | null
+          retried_from_job_id?: string | null
           scheduled_for?: string
           source?: string
           status?: string
@@ -724,6 +727,13 @@ export type Database = {
             columns: ["recipient_id"]
             isOneToOne: false
             referencedRelation: "recipients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "jobs_retried_from_job_id_fkey"
+            columns: ["retried_from_job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
             referencedColumns: ["id"]
           },
         ]
