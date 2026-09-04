@@ -36,6 +36,13 @@ eine gesicherte HTTP-API mit dem Cockpit verbindet.
   Sperr-Erkennung (Bot wird bei `blocked`-Event pausiert).
 - **Worker**: Tokens erzeugen, Online-Status und Version einsehen.
 
+## Inbetriebnahme
+
+Eine vollständige, granulare Schritt-für-Schritt-Anleitung von der Installation
+bis zum ersten echten Auftrag findest du in [BETRIEB.md](./BETRIEB.md).
+Dieselbe Anleitung gibt es interaktiv im Cockpit unter **Inbetriebnahme**
+(`/inbetriebnahme`) — dort mit Live-Status je Schritt.
+
 ## Setup
 
 ### 1. Lokal starten
