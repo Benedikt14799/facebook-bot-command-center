@@ -9,7 +9,13 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import { warmupInfo, parseWeights, weightedActionOrder } from "@/lib/warmup";
-import { AiBlockedError, generateText } from "@/lib/ai.server";
+import { AiBlockedError, generateText, loadAiConfig, type AiConfig } from "@/lib/ai.server";
+import {
+  advanceStage,
+  conversationHistory,
+  logContact,
+  shouldPlaceOffer,
+} from "@/lib/contacts.server";
 
 type Admin = SupabaseClient<Database>;
 
@@ -96,6 +102,12 @@ export type PlanResult = {
 
 export async function runPlanner(admin: Admin, now = new Date()): Promise<PlanResult> {
   const result: PlanResult = { botsChecked: 0, jobsCreated: 0, skipped: [], paused: [] };
+  // KI-Konfiguration je Nutzer nur einmal laden (eingebaute KI oder eigener Anbieter).
+  const aiConfigs = new Map<string, AiConfig>();
+  const aiConfigFor = async (userId: string) => {
+    if (!aiConfigs.has(userId)) aiConfigs.set(userId, await loadAiConfig(admin, userId));
+    return aiConfigs.get(userId)!;
+  };
 
   const { data: bots } = await admin
     .from("bots")
@@ -190,10 +202,13 @@ export async function runPlanner(admin: Admin, now = new Date()): Promise<PlanRe
 
       let recipientId: string | null = null;
       let recipientName: string | null = null;
+      let recipientFirstName: string | null = null;
+      let recipientContext: string | null = null;
+      let placeOffer = false;
       if (type === "dm_new_member" && groupId) {
         const { data: recipients } = await admin
           .from("recipients")
-          .select("id, name, score")
+          .select("id, name, first_name, last_context, score, reply_count, offer_sent_at")
           .eq("group_id", groupId)
           .eq("blacklisted", false)
           .eq("state", "new")
@@ -203,6 +218,9 @@ export async function runPlanner(admin: Admin, now = new Date()): Promise<PlanRe
         if (!pick) continue;
         recipientId = pick.id;
         recipientName = pick.name;
+        recipientFirstName = pick.first_name ?? null;
+        recipientContext = pick.last_context ?? null;
+        placeOffer = shouldPlaceOffer(bot as never, pick as never);
       }
 
       // Text vorbereiten: KI oder Vorlage
@@ -213,15 +231,29 @@ export async function runPlanner(admin: Admin, now = new Date()): Promise<PlanRe
           : null;
         if (useAi) {
           try {
-            text = await generateText({
-              kind: type === "comment" ? "comment" : "dm_new_member",
-              tone: bot.tone,
-              botName: bot.name,
-              groupName: group?.name ?? null,
-              groupTopic: group?.topic ?? null,
-              recipientName,
-              context: group?.topic ?? null,
-            });
+            // Gespraechsverlauf der Person als Kontext mitgeben
+            const history = recipientId ? await conversationHistory(admin, recipientId) : [];
+            text = await generateText(
+              {
+                kind: type === "comment" ? "comment" : "dm_new_member",
+                tone: bot.tone,
+                botName: bot.name,
+                personaRole: (bot as { persona_role?: string | null }).persona_role ?? null,
+                groupName: group?.name ?? null,
+                groupTopic: group?.topic ?? null,
+                recipientName,
+                firstName: recipientFirstName,
+                context: recipientContext ?? group?.topic ?? null,
+                history,
+                offer: placeOffer
+                  ? {
+                      text: (bot as { offer_text?: string | null }).offer_text ?? "",
+                      link: (bot as { offer_link?: string | null }).offer_link ?? null,
+                    }
+                  : null,
+              },
+              await aiConfigFor(bot.user_id),
+            );
           } catch (err) {
             if (err instanceof AiBlockedError) {
               await pauseAutomation(admin, bot.user_id, err.message);
@@ -244,6 +276,14 @@ export async function runPlanner(admin: Admin, now = new Date()): Promise<PlanRe
           text = variants.length
             ? variants[Math.floor(Math.random() * variants.length)]!
             : (chosen?.body ?? null);
+          // Vorname in Vorlagen einsetzen
+          if (text) {
+            text = text
+              .replace(/\{\{\s*(vorname|first_name)\s*\}\}/gi, recipientFirstName ?? "")
+              .replace(/\{\{\s*name\s*\}\}/gi, recipientName ?? "")
+              .replace(/\s{2,}/g, " ")
+              .trim();
+          }
         }
         if (!text) continue;
       }
@@ -262,8 +302,9 @@ export async function runPlanner(admin: Admin, now = new Date()): Promise<PlanRe
         source: "auto",
         needs_approval: bot.require_approval,
         scheduled_for: scheduledFor,
-        payload: { text, generated_by: useAi ? "ai" : "template" } as never,
-      });
+        generated_text: text,
+        payload: { text, generated_by: useAi ? "ai" : "template", offer: placeOffer } as never,
+      } as never);
       if (!error) {
         created += 1;
         result.jobsCreated += 1;
@@ -386,6 +427,28 @@ export async function runMaintenance(admin: Admin, now = new Date()): Promise<Ma
           body: payload.text,
           source: "simulation",
         });
+      }
+      // Simulierte Aktionen ebenfalls in die Kontaktakte schreiben
+      if (job.recipient_id) {
+        await logContact(admin, {
+          userId: bot.user_id,
+          recipientId: job.recipient_id,
+          botId: bot.id,
+          groupId: job.group_id,
+          jobId: job.id,
+          kind:
+            job.type === "like" || job.type === "like_posts"
+              ? "like"
+              : job.type === "dm_new_member"
+                ? "welcome"
+                : job.type.startsWith("comment")
+                  ? "comment"
+                  : "reply_out",
+          direction: "out",
+          body: (job.payload as { text?: string } | null)?.text ?? null,
+          meta: { simulated: true },
+        });
+        await advanceStage(admin, job.recipient_id, "contacted");
       }
       res.simulated += 1;
     }

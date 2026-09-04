@@ -1,12 +1,20 @@
 /**
- * Textgenerierung ueber das Lovable-AI-Gateway (nur serverseitig!).
+ * Textgenerierung (nur serverseitig!).
+ *
+ * Unterstuetzt zwei Wege:
+ *  1. die eingebaute KI ueber das Lovable-AI-Gateway (kein eigener Schluessel noetig)
+ *  2. einen eigenen Anbieter (OpenAI, OpenRouter, beliebiger OpenAI-kompatibler
+ *     Endpunkt oder Anthropic) mit hinterlegtem Schluessel aus ai_settings.
  *
  * Erzeugt kurze, natuerlich klingende deutsche Nachrichten bzw. Kommentare
- * im Tonfall des jeweiligen Bots und entfernt typische KI-Floskeln.
+ * im Tonfall und in der Rolle des jeweiligen Bots, nutzt Vorname, erkannten
+ * Text und den bisherigen Gespraechsverlauf und entfernt KI-Floskeln.
  */
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/integrations/supabase/types";
 
-const GATEWAY = "https://ai.gateway.lovable.dev/v1/chat/completions";
-const MODEL = "google/gemini-3.7-flash";
+const LOVABLE_GATEWAY = "https://ai.gateway.lovable.dev/v1/chat/completions";
+const LOVABLE_MODEL = "google/gemini-3.7-flash";
 
 export class AiBlockedError extends Error {
   constructor(
@@ -27,6 +35,8 @@ const BANNED = [
   /\bes ist wichtig zu beachten\b/gi,
   /\bzusammenfassend\b/gi,
   /\bdarüber hinaus\b/gi,
+  /\bgerne helfe ich\b/gi,
+  /\bals dein\b/gi,
 ];
 
 /** Nachbearbeitung: Anfuehrungszeichen weg, Floskeln raus, Laenge begrenzen. */
@@ -35,12 +45,9 @@ export function humanize(text: string, maxChars = 320) {
   out = out.replace(/\s*\n{2,}\s*/g, "\n");
   for (const re of BANNED) out = out.replace(re, "");
   out = out.replace(/[ \t]{2,}/g, " ").trim();
-  // Emoji-Schwemme eindaemmen: maximal eines behalten.
+  // Emoji-Schwemme eindaemmen: alle entfernen, wenn es mehr als eines ist.
   const emojis = out.match(/\p{Extended_Pictographic}/gu) ?? [];
-  if (emojis.length > 1) {
-    let seen = 0;
-    out = out.replace(/\p{Extended_Pictographic}/gu, () => (seen++ === 0 ? "" : ""));
-  }
+  if (emojis.length > 1) out = out.replace(/\p{Extended_Pictographic}/gu, "");
   if (out.length > maxChars) {
     const cut = out.slice(0, maxChars);
     const stop = Math.max(cut.lastIndexOf("."), cut.lastIndexOf("!"), cut.lastIndexOf("?"));
@@ -49,70 +56,202 @@ export function humanize(text: string, maxChars = 320) {
   return out;
 }
 
+/** Ein Eintrag aus dem bisherigen Gespraechsverlauf mit einer Person. */
+export type HistoryEntry = {
+  direction: "in" | "out";
+  body: string;
+  at?: string | null;
+};
+
 export type TextRequest = {
   kind: "dm_new_member" | "reply_message" | "comment";
   tone?: string | null;
   botName: string;
+  /** Rolle/Persona des Bots, z. B. "Gruppenbetreuer" */
+  personaRole?: string | null;
   groupName?: string | null;
   groupTopic?: string | null;
+  /** Vollstaendiger Name der Person */
   recipientName?: string | null;
+  /** Vorname, wird bevorzugt in der Anrede benutzt */
+  firstName?: string | null;
+  /** Erkannter Text: Kommentar, Beitrag oder eingehende Nachricht */
   context?: string | null;
+  /** Bisheriger Verlauf mit dieser Person (aelteste zuerst) */
+  history?: HistoryEntry[];
+  /** Angebot/Referral, falls es in genau dieser Nachricht platziert werden soll */
+  offer?: { text: string; link?: string | null } | null;
 };
 
+/** Baut System- und Nutzer-Prompt aus dem gesamten Kontext. */
 function prompt(req: TextRequest) {
-  const base = [
-    `Du schreibst als "${req.botName}", eine echte Privatperson in einer Facebook-Gruppe.`,
-    req.tone ? `Tonfall: ${req.tone}.` : "Tonfall: locker, freundlich, direkt.",
-    req.groupName ? `Gruppe: "${req.groupName}"${req.groupTopic ? ` (Thema: ${req.groupTopic})` : ""}.` : "",
-    "Regeln: Deutsch, maximal 2 kurze Sätze, keine Werbung, keine Emojis-Häufung,",
-    "keine Floskeln, kein förmlicher Ton, keine Anführungszeichen, keine Signatur.",
-    "Antworte nur mit dem fertigen Text.",
+  const name = req.firstName || req.recipientName?.split(" ")[0] || null;
+
+  const system = [
+    `Du schreibst als "${req.botName}", eine echte Person in einer Facebook-Gruppe.`,
+    req.personaRole ? `Deine Rolle dort: ${req.personaRole}.` : "",
+    req.tone ? `Tonfall: ${req.tone}.` : "Tonfall: locker, freundlich, direkt, Du-Form.",
+    req.groupName
+      ? `Gruppe: "${req.groupName}"${req.groupTopic ? ` (Thema: ${req.groupTopic})` : ""}.`
+      : "",
+    "Regeln: Deutsch, maximal 2 bis 3 kurze Sätze, kein förmlicher Ton, keine Floskeln,",
+    "höchstens ein Emoji, keine Anführungszeichen um den Text, keine Signatur,",
+    "nichts wiederholen, was du der Person schon geschrieben hast.",
+    name ? `Sprich die Person mit "${name}" an, aber nur einmal am Anfang.` : "",
+    "Antworte ausschließlich mit dem fertigen Nachrichtentext.",
   ]
     .filter(Boolean)
     .join(" ");
 
-  const task = {
-    dm_new_member: `Begrüße ${req.recipientName ?? "das neue Mitglied"} kurz persönlich und stelle eine einfache offene Frage.`,
-    reply_message: `Antworte natürlich auf diese Nachricht: "${req.context ?? ""}"`,
-    comment: `Schreibe einen sinnvollen, kurzen Kommentar zu diesem Beitrag: "${req.context ?? ""}"`,
-  }[req.kind];
+  const parts: string[] = [];
 
-  return { system: base, user: task };
+  if (req.history?.length) {
+    const lines = req.history
+      .slice(-12)
+      .map((h) => `${h.direction === "in" ? name || "Person" : req.botName}: ${h.body}`)
+      .join("\n");
+    parts.push(`Bisheriger Verlauf mit dieser Person:\n${lines}`);
+  }
+
+  if (req.kind === "dm_new_member") {
+    parts.push(
+      `Aufgabe: Begrüße ${name ?? "das neue Mitglied"} kurz und persönlich als ${
+        req.personaRole ?? "Mitglied der Gruppe"
+      } und stelle eine einfache offene Frage.`,
+    );
+  } else if (req.kind === "reply_message") {
+    parts.push(
+      `Aufgabe: Antworte natürlich auf die letzte Nachricht der Person: "${req.context ?? ""}". Geh konkret auf ihr Anliegen ein.`,
+    );
+  } else {
+    parts.push(
+      `Aufgabe: Schreibe einen kurzen, inhaltlich passenden Kommentar zu diesem Beitrag: "${req.context ?? ""}". Greife das konkrete Thema auf, keine allgemeine Floskel.`,
+    );
+  }
+
+  if (req.offer?.text) {
+    parts.push(
+      `Baue außerdem beiläufig und natürlich diesen Hinweis ein (nicht wie Werbung, sondern als hilfreicher Tipp): ${req.offer.text}${
+        req.offer.link ? ` Link: ${req.offer.link}` : ""
+      }`,
+    );
+  }
+
+  return { system, user: parts.join("\n\n") };
 }
 
-/**
- * Generiert einen Text. Wirft AiBlockedError bei 402/403 (Guthaben/Limit),
- * damit der Planer die Automatik pausieren kann.
- */
-export async function generateText(req: TextRequest): Promise<string> {
-  const key = process.env["LOVABLE_API_KEY"];
-  if (!key) throw new Error("LOVABLE_API_KEY fehlt");
+export type AiConfig = {
+  provider: string;
+  model: string;
+  baseUrl?: string | null;
+  apiKey?: string | null;
+};
 
-  const { system, user } = prompt(req);
-  const res = await fetch(GATEWAY, {
+/** KI-Konfiguration eines Nutzers laden (Fallback: eingebaute KI). */
+export async function loadAiConfig(
+  admin: SupabaseClient<Database>,
+  userId: string,
+): Promise<AiConfig> {
+  const { data } = await admin
+    .from("ai_settings")
+    .select("provider, model, base_url, api_key")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (!data || data.provider === "lovable" || !data.api_key) {
+    return { provider: "lovable", model: LOVABLE_MODEL };
+  }
+  return {
+    provider: data.provider,
+    model: data.model,
+    baseUrl: data.base_url,
+    apiKey: data.api_key,
+  };
+}
+
+/** Standard-Endpunkt je Anbieter. */
+export function endpointFor(config: AiConfig) {
+  if (config.baseUrl) return `${config.baseUrl.replace(/\/$/, "")}/chat/completions`;
+  switch (config.provider) {
+    case "openai":
+      return "https://api.openai.com/v1/chat/completions";
+    case "openrouter":
+      return "https://openrouter.ai/api/v1/chat/completions";
+    case "anthropic":
+      return "https://api.anthropic.com/v1/messages";
+    default:
+      return LOVABLE_GATEWAY;
+  }
+}
+
+/** Rohaufruf: ein System- und ein Nutzer-Prompt, Rueckgabe ist der reine Text. */
+export async function callModel(
+  config: AiConfig,
+  system: string,
+  user: string,
+): Promise<string> {
+  if (config.provider === "anthropic") {
+    const res = await fetch(endpointFor(config), {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-api-key": config.apiKey ?? "",
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model: config.model,
+        max_tokens: 400,
+        system,
+        messages: [{ role: "user", content: user }],
+      }),
+    });
+    if (!res.ok) throw await toError(res);
+    const data = (await res.json()) as { content?: { text?: string }[] };
+    return data.content?.[0]?.text ?? "";
+  }
+
+  const isLovable = config.provider === "lovable";
+  const key = isLovable ? process.env["LOVABLE_API_KEY"] : config.apiKey;
+  if (!key) throw new Error(isLovable ? "LOVABLE_API_KEY fehlt" : "Kein API-Schlüssel hinterlegt");
+
+  const res = await fetch(endpointFor(config), {
     method: "POST",
-    headers: { "content-type": "application/json", authorization: `Bearer ${key}` },
+    headers: {
+      "content-type": "application/json",
+      ...(isLovable ? { "Lovable-API-Key": key } : {}),
+      authorization: `Bearer ${key}`,
+    },
     body: JSON.stringify({
-      model: MODEL,
+      model: config.model,
       messages: [
         { role: "system", content: system },
         { role: "user", content: user },
       ],
     }),
   });
+  if (!res.ok) throw await toError(res);
+  const data = (await res.json()) as { choices?: { message?: { content?: string } }[] };
+  return data.choices?.[0]?.message?.content ?? "";
+}
 
-  if (!res.ok) {
-    const body = await res.text();
-    if (res.status === 402 || res.status === 403) {
-      throw new AiBlockedError(res.status, `KI blockiert [${res.status}]: ${body}`);
-    }
-    throw new Error(`KI-Fehler [${res.status}]: ${body}`);
+async function toError(res: Response) {
+  const body = await res.text();
+  if (res.status === 402 || res.status === 403) {
+    return new AiBlockedError(res.status, `KI blockiert [${res.status}]: ${body}`);
   }
+  return new Error(`KI-Fehler [${res.status}]: ${body}`);
+}
 
-  const data = (await res.json()) as {
-    choices?: { message?: { content?: string } }[];
-  };
-  const text = data.choices?.[0]?.message?.content ?? "";
+/**
+ * Generiert einen Text. Wirft AiBlockedError bei 402/403 (Guthaben/Limit),
+ * damit der Planer die Automatik pausieren kann.
+ */
+export async function generateText(
+  req: TextRequest,
+  config: AiConfig = { provider: "lovable", model: LOVABLE_MODEL },
+): Promise<string> {
+  const { system, user } = prompt(req);
+  const text = await callModel(config, system, user);
   if (!text.trim()) throw new Error("KI lieferte keinen Text");
   return humanize(text);
 }

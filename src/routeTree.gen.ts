@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedAiSettingsRouteImport } from './routes/_authenticated/ai-settings'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedGroupsRouteImport } from './routes/_authenticated/groups'
 import { Route as AuthenticatedJobsRouteImport } from './routes/_authenticated/jobs'
@@ -23,12 +24,15 @@ import { Route as AuthenticatedWorkerHealthRouteImport } from './routes/_authent
 import { Route as AuthenticatedWorkersRouteImport } from './routes/_authenticated/workers'
 import { Route as AuthenticatedBotsIndexRouteImport } from './routes/_authenticated/bots.index'
 import { Route as AuthenticatedBotsBotIdRouteImport } from './routes/_authenticated/bots.$botId'
+import { Route as AuthenticatedRecipientsIndexRouteImport } from './routes/_authenticated/recipients.index'
+import { Route as AuthenticatedRecipientsRecipientIdRouteImport } from './routes/_authenticated/recipients.$recipientId'
 import { Route as ApiPublicCronMaintenanceRouteImport } from './routes/api/public/cron/maintenance'
 import { Route as ApiPublicCronPlanRouteImport } from './routes/api/public/cron/plan'
 import { Route as ApiPublicWorkerEventsRouteImport } from './routes/api/public/worker/events'
 import { Route as ApiPublicWorkerHeartbeatRouteImport } from './routes/api/public/worker/heartbeat'
 import { Route as ApiPublicWorkerMessagesRouteImport } from './routes/api/public/worker/messages'
 import { Route as ApiPublicWorkerPollRouteImport } from './routes/api/public/worker/poll'
+import { Route as ApiPublicWorkerRecipientsRouteImport } from './routes/api/public/worker/recipients'
 import { Route as ApiPublicWorkerResultRouteImport } from './routes/api/public/worker/result'
 import { Route as ApiPublicWorkerSessionRouteImport } from './routes/api/public/worker/session'
 
@@ -45,6 +49,11 @@ const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedAiSettingsRoute = AuthenticatedAiSettingsRouteImport.update({
+  id: '/ai-settings',
+  path: '/ai-settings',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
@@ -102,6 +111,18 @@ const AuthenticatedBotsBotIdRoute = AuthenticatedBotsBotIdRouteImport.update({
   path: '/bots/$botId',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedRecipientsIndexRoute =
+  AuthenticatedRecipientsIndexRouteImport.update({
+    id: '/recipients/',
+    path: '/recipients/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedRecipientsRecipientIdRoute =
+  AuthenticatedRecipientsRecipientIdRouteImport.update({
+    id: '/recipients/$recipientId',
+    path: '/recipients/$recipientId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const ApiPublicCronMaintenanceRoute =
   ApiPublicCronMaintenanceRouteImport.update({
     id: '/api/public/cron/maintenance',
@@ -134,6 +155,12 @@ const ApiPublicWorkerPollRoute = ApiPublicWorkerPollRouteImport.update({
   path: '/api/public/worker/poll',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicWorkerRecipientsRoute =
+  ApiPublicWorkerRecipientsRouteImport.update({
+    id: '/api/public/worker/recipients',
+    path: '/api/public/worker/recipients',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicWorkerResultRoute = ApiPublicWorkerResultRouteImport.update({
   id: '/api/public/worker/result',
   path: '/api/public/worker/result',
@@ -148,6 +175,7 @@ const ApiPublicWorkerSessionRoute = ApiPublicWorkerSessionRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/ai-settings': typeof AuthenticatedAiSettingsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/groups': typeof AuthenticatedGroupsRoute
   '/jobs': typeof AuthenticatedJobsRoute
@@ -158,19 +186,23 @@ export interface FileRoutesByFullPath {
   '/worker-health': typeof AuthenticatedWorkerHealthRoute
   '/workers': typeof AuthenticatedWorkersRoute
   '/bots/$botId': typeof AuthenticatedBotsBotIdRoute
+  '/recipients/$recipientId': typeof AuthenticatedRecipientsRecipientIdRoute
   '/bots/': typeof AuthenticatedBotsIndexRoute
+  '/recipients/': typeof AuthenticatedRecipientsIndexRoute
   '/api/public/cron/maintenance': typeof ApiPublicCronMaintenanceRoute
   '/api/public/cron/plan': typeof ApiPublicCronPlanRoute
   '/api/public/worker/events': typeof ApiPublicWorkerEventsRoute
   '/api/public/worker/heartbeat': typeof ApiPublicWorkerHeartbeatRoute
   '/api/public/worker/messages': typeof ApiPublicWorkerMessagesRoute
   '/api/public/worker/poll': typeof ApiPublicWorkerPollRoute
+  '/api/public/worker/recipients': typeof ApiPublicWorkerRecipientsRoute
   '/api/public/worker/result': typeof ApiPublicWorkerResultRoute
   '/api/public/worker/session': typeof ApiPublicWorkerSessionRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/ai-settings': typeof AuthenticatedAiSettingsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/groups': typeof AuthenticatedGroupsRoute
   '/jobs': typeof AuthenticatedJobsRoute
@@ -181,13 +213,16 @@ export interface FileRoutesByTo {
   '/worker-health': typeof AuthenticatedWorkerHealthRoute
   '/workers': typeof AuthenticatedWorkersRoute
   '/bots/$botId': typeof AuthenticatedBotsBotIdRoute
+  '/recipients/$recipientId': typeof AuthenticatedRecipientsRecipientIdRoute
   '/bots': typeof AuthenticatedBotsIndexRoute
+  '/recipients': typeof AuthenticatedRecipientsIndexRoute
   '/api/public/cron/maintenance': typeof ApiPublicCronMaintenanceRoute
   '/api/public/cron/plan': typeof ApiPublicCronPlanRoute
   '/api/public/worker/events': typeof ApiPublicWorkerEventsRoute
   '/api/public/worker/heartbeat': typeof ApiPublicWorkerHeartbeatRoute
   '/api/public/worker/messages': typeof ApiPublicWorkerMessagesRoute
   '/api/public/worker/poll': typeof ApiPublicWorkerPollRoute
+  '/api/public/worker/recipients': typeof ApiPublicWorkerRecipientsRoute
   '/api/public/worker/result': typeof ApiPublicWorkerResultRoute
   '/api/public/worker/session': typeof ApiPublicWorkerSessionRoute
 }
@@ -196,6 +231,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/ai-settings': typeof AuthenticatedAiSettingsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/groups': typeof AuthenticatedGroupsRoute
   '/_authenticated/jobs': typeof AuthenticatedJobsRoute
@@ -206,13 +242,16 @@ export interface FileRoutesById {
   '/_authenticated/worker-health': typeof AuthenticatedWorkerHealthRoute
   '/_authenticated/workers': typeof AuthenticatedWorkersRoute
   '/_authenticated/bots/$botId': typeof AuthenticatedBotsBotIdRoute
+  '/_authenticated/recipients/$recipientId': typeof AuthenticatedRecipientsRecipientIdRoute
   '/_authenticated/bots/': typeof AuthenticatedBotsIndexRoute
+  '/_authenticated/recipients/': typeof AuthenticatedRecipientsIndexRoute
   '/api/public/cron/maintenance': typeof ApiPublicCronMaintenanceRoute
   '/api/public/cron/plan': typeof ApiPublicCronPlanRoute
   '/api/public/worker/events': typeof ApiPublicWorkerEventsRoute
   '/api/public/worker/heartbeat': typeof ApiPublicWorkerHeartbeatRoute
   '/api/public/worker/messages': typeof ApiPublicWorkerMessagesRoute
   '/api/public/worker/poll': typeof ApiPublicWorkerPollRoute
+  '/api/public/worker/recipients': typeof ApiPublicWorkerRecipientsRoute
   '/api/public/worker/result': typeof ApiPublicWorkerResultRoute
   '/api/public/worker/session': typeof ApiPublicWorkerSessionRoute
 }
@@ -221,6 +260,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/ai-settings'
     | '/dashboard'
     | '/groups'
     | '/jobs'
@@ -231,19 +271,23 @@ export interface FileRouteTypes {
     | '/worker-health'
     | '/workers'
     | '/bots/$botId'
+    | '/recipients/$recipientId'
     | '/bots/'
+    | '/recipients/'
     | '/api/public/cron/maintenance'
     | '/api/public/cron/plan'
     | '/api/public/worker/events'
     | '/api/public/worker/heartbeat'
     | '/api/public/worker/messages'
     | '/api/public/worker/poll'
+    | '/api/public/worker/recipients'
     | '/api/public/worker/result'
     | '/api/public/worker/session'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
+    | '/ai-settings'
     | '/dashboard'
     | '/groups'
     | '/jobs'
@@ -254,13 +298,16 @@ export interface FileRouteTypes {
     | '/worker-health'
     | '/workers'
     | '/bots/$botId'
+    | '/recipients/$recipientId'
     | '/bots'
+    | '/recipients'
     | '/api/public/cron/maintenance'
     | '/api/public/cron/plan'
     | '/api/public/worker/events'
     | '/api/public/worker/heartbeat'
     | '/api/public/worker/messages'
     | '/api/public/worker/poll'
+    | '/api/public/worker/recipients'
     | '/api/public/worker/result'
     | '/api/public/worker/session'
   id:
@@ -268,6 +315,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/_authenticated/ai-settings'
     | '/_authenticated/dashboard'
     | '/_authenticated/groups'
     | '/_authenticated/jobs'
@@ -278,13 +326,16 @@ export interface FileRouteTypes {
     | '/_authenticated/worker-health'
     | '/_authenticated/workers'
     | '/_authenticated/bots/$botId'
+    | '/_authenticated/recipients/$recipientId'
     | '/_authenticated/bots/'
+    | '/_authenticated/recipients/'
     | '/api/public/cron/maintenance'
     | '/api/public/cron/plan'
     | '/api/public/worker/events'
     | '/api/public/worker/heartbeat'
     | '/api/public/worker/messages'
     | '/api/public/worker/poll'
+    | '/api/public/worker/recipients'
     | '/api/public/worker/result'
     | '/api/public/worker/session'
   fileRoutesById: FileRoutesById
@@ -299,6 +350,7 @@ export interface RootRouteChildren {
   ApiPublicWorkerHeartbeatRoute: typeof ApiPublicWorkerHeartbeatRoute
   ApiPublicWorkerMessagesRoute: typeof ApiPublicWorkerMessagesRoute
   ApiPublicWorkerPollRoute: typeof ApiPublicWorkerPollRoute
+  ApiPublicWorkerRecipientsRoute: typeof ApiPublicWorkerRecipientsRoute
   ApiPublicWorkerResultRoute: typeof ApiPublicWorkerResultRoute
   ApiPublicWorkerSessionRoute: typeof ApiPublicWorkerSessionRoute
 }
@@ -325,6 +377,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/ai-settings': {
+      id: '/_authenticated/ai-settings'
+      path: '/ai-settings'
+      fullPath: '/ai-settings'
+      preLoaderRoute: typeof AuthenticatedAiSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
@@ -403,6 +462,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBotsBotIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/recipients/': {
+      id: '/_authenticated/recipients/'
+      path: '/recipients'
+      fullPath: '/recipients/'
+      preLoaderRoute: typeof AuthenticatedRecipientsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/recipients/$recipientId': {
+      id: '/_authenticated/recipients/$recipientId'
+      path: '/recipients/$recipientId'
+      fullPath: '/recipients/$recipientId'
+      preLoaderRoute: typeof AuthenticatedRecipientsRecipientIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/api/public/cron/maintenance': {
       id: '/api/public/cron/maintenance'
       path: '/api/public/cron/maintenance'
@@ -445,6 +518,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicWorkerPollRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/worker/recipients': {
+      id: '/api/public/worker/recipients'
+      path: '/api/public/worker/recipients'
+      fullPath: '/api/public/worker/recipients'
+      preLoaderRoute: typeof ApiPublicWorkerRecipientsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/worker/result': {
       id: '/api/public/worker/result'
       path: '/api/public/worker/result'
@@ -463,6 +543,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAiSettingsRoute: typeof AuthenticatedAiSettingsRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedGroupsRoute: typeof AuthenticatedGroupsRoute
   AuthenticatedJobsRoute: typeof AuthenticatedJobsRoute
@@ -473,10 +554,13 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedWorkerHealthRoute: typeof AuthenticatedWorkerHealthRoute
   AuthenticatedWorkersRoute: typeof AuthenticatedWorkersRoute
   AuthenticatedBotsBotIdRoute: typeof AuthenticatedBotsBotIdRoute
+  AuthenticatedRecipientsRecipientIdRoute: typeof AuthenticatedRecipientsRecipientIdRoute
   AuthenticatedBotsIndexRoute: typeof AuthenticatedBotsIndexRoute
+  AuthenticatedRecipientsIndexRoute: typeof AuthenticatedRecipientsIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAiSettingsRoute: AuthenticatedAiSettingsRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedGroupsRoute: AuthenticatedGroupsRoute,
   AuthenticatedJobsRoute: AuthenticatedJobsRoute,
@@ -487,7 +571,10 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedWorkerHealthRoute: AuthenticatedWorkerHealthRoute,
   AuthenticatedWorkersRoute: AuthenticatedWorkersRoute,
   AuthenticatedBotsBotIdRoute: AuthenticatedBotsBotIdRoute,
+  AuthenticatedRecipientsRecipientIdRoute:
+    AuthenticatedRecipientsRecipientIdRoute,
   AuthenticatedBotsIndexRoute: AuthenticatedBotsIndexRoute,
+  AuthenticatedRecipientsIndexRoute: AuthenticatedRecipientsIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -503,6 +590,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicWorkerHeartbeatRoute: ApiPublicWorkerHeartbeatRoute,
   ApiPublicWorkerMessagesRoute: ApiPublicWorkerMessagesRoute,
   ApiPublicWorkerPollRoute: ApiPublicWorkerPollRoute,
+  ApiPublicWorkerRecipientsRoute: ApiPublicWorkerRecipientsRoute,
   ApiPublicWorkerResultRoute: ApiPublicWorkerResultRoute,
   ApiPublicWorkerSessionRoute: ApiPublicWorkerSessionRoute,
 }

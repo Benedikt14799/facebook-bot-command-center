@@ -17,7 +17,7 @@ import {
   Server,
   LogOut,
 } from "lucide-react";
-import { Flame, HeartPulse } from "lucide-react";
+import { Flame, HeartPulse, Contact, Sparkles } from "lucide-react";
 import type { ReactNode } from "react";
 
 const nav = [
@@ -25,9 +25,11 @@ const nav = [
   { to: "/bots", label: "Bots", icon: Bot },
   { to: "/warmup", label: "Aufwärmphase", icon: Flame },
   { to: "/groups", label: "Gruppen", icon: Users },
+  { to: "/recipients", label: "Kontakte", icon: Contact },
   { to: "/jobs", label: "Aufträge", icon: ListChecks },
   { to: "/messages", label: "Nachrichten", icon: MessagesSquare },
   { to: "/templates", label: "Vorlagen", icon: FileText },
+  { to: "/ai-settings", label: "KI-Einstellungen", icon: Sparkles },
   { to: "/logs", label: "Protokoll", icon: ScrollText },
   { to: "/workers", label: "Worker", icon: Server },
   { to: "/worker-health", label: "Worker-Health", icon: HeartPulse },
