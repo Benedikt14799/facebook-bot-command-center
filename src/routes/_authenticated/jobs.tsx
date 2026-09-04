@@ -1,6 +1,11 @@
 /**
  * Auftragsverwaltung: geplante Aktionen der Bots inkl. Freigabe-Queue,
- * Filtern, Abbrechen und erneutem Versuch.
+ * Filtern, Abbrechen, erneutem Versuch — und Bearbeiten bestehender Aufträge.
+ *
+ * Ein Klick auf eine Zeile öffnet den Bearbeiten-Dialog:
+ *  - offene Aufträge lassen sich komplett ändern
+ *  - fehlgeschlagene lassen sich ändern und neu einplanen
+ *  - erledigte lassen sich als neuen Auftrag duplizieren
  */
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -29,6 +34,8 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { selectAll, fmt } from "@/lib/db";
+import { JOB_TYPES, jobTypeInfo, jobTypeLabel } from "@/lib/job-types";
+import type { Job } from "@/lib/db";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/jobs")({
@@ -43,13 +50,24 @@ export const Route = createFileRoute("/_authenticated/jobs")({
   component: JobsPage,
 });
 
-const JOB_TYPES = [
-  { value: "dm_new_member", label: "Neues Gruppenmitglied anschreiben" },
-  { value: "reply_message", label: "Auf Nachricht antworten" },
-  { value: "like_posts", label: "Beiträge liken" },
-  { value: "comment_post", label: "Beitrag kommentieren" },
-  { value: "scan_group", label: "Gruppe scannen" },
-];
+/** Erklärungsbox zur gewählten Aktion. */
+function TypeHelp({ value }: { value: string }) {
+  const info = jobTypeInfo(value);
+  if (!info) return null;
+  return (
+    <div className="rounded-md border border-border/70 bg-muted/30 p-3 text-xs text-muted-foreground">
+      <span className="font-medium text-foreground">{info.label}: </span>
+      {info.long}
+    </div>
+  );
+}
+
+function toLocalInput(iso?: string | null) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
 
 function JobsPage() {
   const qc = useQueryClient();
@@ -58,8 +76,10 @@ function JobsPage() {
   const [groupId, setGroupId] = useState("");
   const [type, setType] = useState("like_posts");
   const [when, setWhen] = useState("");
+  const [text, setText] = useState("");
   const [payload, setPayload] = useState("{}");
   const [filter, setFilter] = useState("all");
+  const [editing, setEditing] = useState<Job | null>(null);
 
   const jobs = useQuery({
     queryKey: ["jobs"],
@@ -76,20 +96,24 @@ function JobsPage() {
       } catch {
         throw new Error("Payload muss gültiges JSON sein");
       }
+      if (text.trim()) parsed["text"] = text.trim();
       const bot = bots.data?.find((b) => b.id === botId);
       const { error } = await supabase.from("jobs").insert({
         bot_id: botId,
         group_id: groupId || null,
         type,
         payload: parsed as never,
+        generated_text: text.trim() || null,
         needs_approval: !!bot?.require_approval,
         scheduled_for: when ? new Date(when).toISOString() : new Date().toISOString(),
-      });
+      } as never);
       if (error) throw error;
     },
     onSuccess: () => {
       toast.success("Auftrag eingeplant");
       setOpen(false);
+      setText("");
+      setPayload("{}");
       qc.invalidateQueries({ queryKey: ["jobs"] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -113,7 +137,7 @@ function JobsPage() {
   return (
     <AppShell
       title="Aufträge"
-      hint="Die Warteschlange: jeder Auftrag ist eine Aktion für einen Bot zu einer geplanten Zeit. Der Worker holt sich fällige Aufträge ab, führt sie aus und meldet das Ergebnis zurück."
+      hint="Die Warteschlange: jeder Auftrag ist eine Aktion für einen Bot zu einer geplanten Zeit. Der Worker holt sich fällige Aufträge ab, führt sie aus und meldet das Ergebnis zurück. Klick auf eine Zeile, um einen Auftrag zu bearbeiten."
       subtitle="Warteschlange, Freigaben und Ergebnisse"
       actions={
         <>
@@ -170,7 +194,7 @@ function JobsPage() {
                   </Select>
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="flex items-center gap-2">Typ <InfoHint text="Art der Aktion: neue Mitglieder anschreiben, auf Nachrichten antworten, Likes verteilen, Kommentare beantworten oder eine Gruppe scannen." /></Label>
+                  <Label className="flex items-center gap-2">Aktion <InfoHint text="Was der Bot konkret tun soll. Die Erklärung darunter beschreibt die gewählte Aktion." /></Label>
                   <Select value={type} onValueChange={setType}>
                     <SelectTrigger>
                       <SelectValue />
@@ -178,11 +202,15 @@ function JobsPage() {
                     <SelectContent>
                       {JOB_TYPES.map((t) => (
                         <SelectItem key={t.value} value={t.value}>
-                          {t.label}
+                          <span className="flex flex-col">
+                            <span>{t.label}</span>
+                            <span className="text-xs text-muted-foreground">{t.short}</span>
+                          </span>
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
+                  <TypeHelp value={type} />
                 </div>
                 <div className="space-y-1.5">
                   <Label className="flex items-center gap-2">Startzeit <InfoHint text="Frühester Ausführungszeitpunkt. Der Worker verschiebt zusätzlich zufällig (Jitter), damit es natürlich wirkt." /></Label>
@@ -193,7 +221,16 @@ function JobsPage() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="flex items-center gap-2">Payload (JSON) <InfoHint text="Zusatzdaten für den Worker, z. B. Ziel-Profil, Beitrags-ID oder ein fertiger Text. Leer lassen, wenn nicht nötig." /></Label>
+                  <Label className="flex items-center gap-2">Text (optional) <InfoHint text="Fester Text für diese Aktion. Leer lassen, damit die KI den Text anhand von Person, Kommentar und Verlauf schreibt. {{vorname}} wird ersetzt." /></Label>
+                  <Textarea
+                    rows={3}
+                    value={text}
+                    placeholder="Hallo {{vorname}}, …"
+                    onChange={(e) => setText(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="flex items-center gap-2">Payload (JSON) <InfoHint text="Zusatzdaten für den Worker, z. B. Ziel-Profil oder Beitrags-ID. Leer lassen, wenn nicht nötig." /></Label>
                   <Textarea
                     rows={3}
                     className="font-mono text-xs"
@@ -216,7 +253,7 @@ function JobsPage() {
         <table className="w-full text-sm">
           <thead className="border-b border-border text-left text-xs uppercase text-muted-foreground">
             <tr>
-              <th className="px-4 py-2">Typ</th>
+              <th className="px-4 py-2">Aktion</th>
               <th className="px-4 py-2">Bot</th>
               <th className="px-4 py-2">Gruppe</th>
               <th className="px-4 py-2">Geplant</th>
@@ -226,9 +263,13 @@ function JobsPage() {
           </thead>
           <tbody>
             {list.map((j) => (
-              <tr key={j.id} className="border-b border-border/50">
-                <td className="px-4 py-2 font-mono text-xs text-foreground">
-                  {j.type}
+              <tr
+                key={j.id}
+                onClick={() => setEditing(j)}
+                className="cursor-pointer border-b border-border/50 hover:bg-muted/40"
+              >
+                <td className="px-4 py-2 text-xs text-foreground">
+                  {jobTypeLabel(j.type)}
                   <span
                     className="ml-2 rounded border border-border/60 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-muted-foreground"
                     title={
@@ -255,7 +296,7 @@ function JobsPage() {
                     ) : null}
                   </span>
                 </td>
-                <td className="px-4 py-2">
+                <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
                   <div className="flex gap-1">
                     {j.needs_approval && j.status === "pending" && (
                       <Button
@@ -266,6 +307,9 @@ function JobsPage() {
                         Freigeben
                       </Button>
                     )}
+                    <Button size="sm" variant="ghost" onClick={() => setEditing(j)}>
+                      Bearbeiten
+                    </Button>
                     {j.status !== "cancelled" && j.status !== "done" && (
                       <Button
                         size="sm"
@@ -273,20 +317,6 @@ function JobsPage() {
                         onClick={() => patch.mutate({ id: j.id, values: { status: "cancelled" } })}
                       >
                         Abbrechen
-                      </Button>
-                    )}
-                    {j.status === "failed" && (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() =>
-                          patch.mutate({
-                            id: j.id,
-                            values: { status: "pending", error: null, claimed_by: null },
-                          })
-                        }
-                      >
-                        Erneut
                       </Button>
                     )}
                   </div>
@@ -303,6 +333,201 @@ function JobsPage() {
           </tbody>
         </table>
       </div>
+
+      {editing ? (
+        <EditJobDialog
+          job={editing}
+          bots={bots.data ?? []}
+          groups={groups.data ?? []}
+          onClose={() => setEditing(null)}
+          onSaved={() => {
+            setEditing(null);
+            qc.invalidateQueries({ queryKey: ["jobs"] });
+          }}
+        />
+      ) : null}
     </AppShell>
+  );
+}
+
+/** Bearbeiten / neu einplanen / duplizieren eines bestehenden Auftrags. */
+function EditJobDialog({
+  job,
+  bots,
+  groups,
+  onClose,
+  onSaved,
+}: {
+  job: Job;
+  bots: { id: string; name: string }[];
+  groups: { id: string; name: string }[];
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const payloadText = (job.payload as { text?: string } | null)?.text ?? "";
+  const [type, setType] = useState(job.type);
+  const [groupId, setGroupId] = useState(job.group_id ?? "");
+  const [botId, setBotId] = useState(job.bot_id);
+  const [when, setWhen] = useState(toLocalInput(job.scheduled_for));
+  const [text, setText] = useState(
+    (job as { generated_text?: string | null }).generated_text ?? payloadText,
+  );
+  const [payload, setPayload] = useState(JSON.stringify(job.payload ?? {}, null, 2));
+
+  const done = job.status === "done";
+  const failed = job.status === "failed";
+
+  const save = useMutation({
+    mutationFn: async (mode: "save" | "requeue" | "duplicate") => {
+      let parsed: Record<string, unknown> = {};
+      try {
+        parsed = JSON.parse(payload || "{}");
+      } catch {
+        throw new Error("Payload muss gültiges JSON sein");
+      }
+      if (text.trim()) parsed["text"] = text.trim();
+      const base = {
+        bot_id: botId,
+        group_id: groupId || null,
+        type,
+        payload: parsed as never,
+        generated_text: text.trim() || null,
+        scheduled_for: when ? new Date(when).toISOString() : new Date().toISOString(),
+      };
+
+      if (mode === "duplicate") {
+        const { error } = await supabase.from("jobs").insert({
+          ...base,
+          recipient_id: job.recipient_id,
+          status: "pending",
+        } as never);
+        if (error) throw error;
+        return;
+      }
+
+      const values: Record<string, unknown> = { ...base };
+      if (mode === "requeue") {
+        Object.assign(values, {
+          status: "pending",
+          error: null,
+          claimed_at: null,
+          claimed_by: null,
+          finished_at: null,
+        });
+      }
+      const { error } = await supabase.from("jobs").update(values as never).eq("id", job.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Auftrag gespeichert");
+      onSaved();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>
+            {done ? "Erledigter Auftrag" : failed ? "Fehlgeschlagener Auftrag" : "Auftrag bearbeiten"}
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          {job.error ? (
+            <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-xs text-destructive">
+              {job.error}
+            </div>
+          ) : null}
+          <div className="space-y-1.5">
+            <Label>Bot</Label>
+            <Select value={botId} onValueChange={setBotId} disabled={done}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {bots.map((b) => (
+                  <SelectItem key={b.id} value={b.id}>
+                    {b.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Gruppe</Label>
+            <Select value={groupId} onValueChange={setGroupId} disabled={done}>
+              <SelectTrigger>
+                <SelectValue placeholder="Gruppe wählen" />
+              </SelectTrigger>
+              <SelectContent>
+                {groups.map((g) => (
+                  <SelectItem key={g.id} value={g.id}>
+                    {g.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Aktion</Label>
+            <Select value={type} onValueChange={setType} disabled={done}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {JOB_TYPES.map((t) => (
+                  <SelectItem key={t.value} value={t.value}>
+                    {t.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <TypeHelp value={type} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Startzeit</Label>
+            <Input
+              type="datetime-local"
+              value={when}
+              disabled={done}
+              onChange={(e) => setWhen(e.target.value)}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="flex items-center gap-2">Text <InfoHint text="Der Text, den der Worker sendet. Leer lassen = die KI schreibt ihn beim Ausführen anhand von Person und Verlauf." /></Label>
+            <Textarea rows={3} value={text} disabled={done} onChange={(e) => setText(e.target.value)} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Payload (JSON)</Label>
+            <Textarea
+              rows={3}
+              className="font-mono text-xs"
+              value={payload}
+              disabled={done}
+              onChange={(e) => setPayload(e.target.value)}
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          {done ? (
+            <Button onClick={() => save.mutate("duplicate")} disabled={save.isPending}>
+              Als neuen Auftrag duplizieren
+            </Button>
+          ) : (
+            <>
+              {failed ? (
+                <Button variant="outline" onClick={() => save.mutate("requeue")} disabled={save.isPending}>
+                  Speichern & neu einplanen
+                </Button>
+              ) : null}
+              <Button onClick={() => save.mutate("save")} disabled={save.isPending}>
+                Speichern
+              </Button>
+            </>
+          )}
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
