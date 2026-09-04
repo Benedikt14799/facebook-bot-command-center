@@ -46,6 +46,22 @@ export const Route = createFileRoute("/api/public/worker/poll")({
 
         const claimed = [];
         for (const job of (candidates ?? []).filter((j) => !blocked.has(j.bot_id))) {
+          // Vor dem Claim pruefen: ungueltige Auftraege sofort als failed
+          // markieren und niemals an den Worker geben.
+          const validation = validateJob(job.type, job.group_id, job.recipient_id, job.payload);
+          if (!validation.valid) {
+            await ctx.admin
+              .from("jobs")
+              .update({
+                status: "failed",
+                error: validation.errors.join("; "),
+                finished_at: new Date().toISOString(),
+              })
+              .eq("id", job.id)
+              .eq("status", "pending");
+            continue;
+          }
+
           const { data, error: claimErr } = await ctx.admin
             .from("jobs")
             .update({
