@@ -9,7 +9,16 @@ import { AppShell } from "@/components/AppShell";
 import { StatusBadge } from "@/components/StatusBadge";
 import { supabase } from "@/integrations/supabase/client";
 import { fmt } from "@/lib/db";
-import { KIND_LABEL, STAGE_LABEL } from "@/lib/contact-labels";
+import { STAGE_LABEL } from "@/lib/contact-labels";
+import { Button } from "@/components/ui/button";
+import { Download, Printer } from "lucide-react";
+import {
+  buildTimeline,
+  downloadTimelineCsv,
+  printTimeline,
+  TIMELINE_LABEL,
+  type TimelineItem,
+} from "@/lib/timeline";
 
 export const Route = createFileRoute("/_authenticated/recipients/$recipientId")({
   head: () => ({
