@@ -496,7 +496,7 @@ function JobFields({
           type="number"
           min={1}
           max={20}
-          value={payload["count"] ?? ""}
+          value={typeof payload["count"] === "number" ? payload["count"] : ""}
           onChange={(e) => update("count", e.target.value === "" ? undefined : Number(e.target.value))}
           placeholder="z. B. 3"
         />
