@@ -86,7 +86,6 @@ export const Route = createFileRoute("/api/public/worker/result")({
             ? validation.errors.join("; ")
             : (body.error ?? null);
 
-
         // Zusaetzlicher Rennschutz: nur veraendern, solange nicht abgeschlossen.
         const { data: job, error } = await ctx.admin
           .from("jobs")
@@ -103,7 +102,6 @@ export const Route = createFileRoute("/api/public/worker/result")({
           .maybeSingle();
         if (error) return json({ error: error.message }, 500);
         if (!job) return json({ error: "job already finished" }, 409);
-
 
         if (status === "done" && job) {
           let recipientId = job.recipient_id;
