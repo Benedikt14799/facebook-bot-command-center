@@ -30,11 +30,13 @@ export function AppShell({
   title,
   subtitle,
   actions,
+  hint,
   children,
 }: {
   title: string;
   subtitle?: string;
   actions?: ReactNode;
+  hint?: string;
   children: ReactNode;
 }) {
   const navigate = useNavigate();
