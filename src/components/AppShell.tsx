@@ -1,3 +1,4 @@
+import { InfoHint } from "@/components/InfoHint";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -82,7 +83,10 @@ export function AppShell({
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-card/50 px-6 py-4 backdrop-blur">
           <div>
-            <h1 className="text-xl font-semibold text-foreground">{title}</h1>
+            <h1 className="flex items-center gap-2 text-xl font-semibold text-foreground">
+              {title}
+              {hint ? <InfoHint text={hint} side="bottom" /> : null}
+            </h1>
             {subtitle ? (
               <p className="mt-0.5 text-sm text-muted-foreground">{subtitle}</p>
             ) : null}
