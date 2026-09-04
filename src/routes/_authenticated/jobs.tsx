@@ -563,7 +563,7 @@ function JobFields({
           </Label>
           <Input
             type="url"
-            value={payload["profile_url"] ?? ""}
+            value={typeof payload["profile_url"] === "string" ? payload["profile_url"] : ""}
             onChange={(e) => update("profile_url", e.target.value || undefined)}
             placeholder="https://facebook.com/benedikt.mueller"
           />
