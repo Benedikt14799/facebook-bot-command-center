@@ -13,6 +13,7 @@ import { useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { InfoHint } from "@/components/InfoHint";
 import { StatusBadge } from "@/components/StatusBadge";
+import { TextPreview } from "@/components/TextPreview";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
