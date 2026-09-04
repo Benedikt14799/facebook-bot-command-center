@@ -285,6 +285,14 @@ function JobsPage() {
                     onChange={(e) => setPayload(e.target.value)}
                   />
                 </div>
+                {botId ? (
+                  <TextPreview
+                    botId={botId}
+                    type={type}
+                    groupId={groupId || null}
+                    onUse={(t) => setText(t)}
+                  />
+                ) : null}
               </div>
               <DialogFooter>
                 <Button onClick={() => create.mutate()} disabled={!botId || create.isPending}>
@@ -296,6 +304,7 @@ function JobsPage() {
         </>
       }
     >
+      <ActionGuide />
       <div className="overflow-x-auto rounded-lg border border-border bg-card">
         <table className="w-full text-sm">
           <thead className="border-b border-border text-left text-xs uppercase text-muted-foreground">
