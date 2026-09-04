@@ -146,21 +146,40 @@ function RecipientDetail() {
         </section>
 
         <section className="rounded-lg border border-border bg-card p-4">
-          <h2 className="mb-3 text-sm font-medium text-foreground">Verlauf</h2>
+          <header className="mb-3 flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-sm font-medium text-foreground">Verlauf</h2>
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={!items.length}
+                onClick={() => downloadTimelineCsv(p.name ?? "kontakt", items)}
+              >
+                <Download className="size-3.5" /> CSV
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={!items.length}
+                onClick={() => printTimeline(p.name ?? "Kontakt", items)}
+              >
+                <Printer className="size-3.5" /> PDF
+              </Button>
+            </div>
+          </header>
           <ol className="space-y-3">
-            {(timeline.data ?? []).map((e) => (
-              <li key={e.id} className="border-l-2 border-border pl-3">
-                <div className="flex items-center gap-2 text-xs">
-                  <span className="text-foreground">{KIND_LABEL[e.kind] ?? e.kind}</span>
-                  <span className="text-muted-foreground">
-                    {e.direction === "in" ? "eingehend" : "ausgehend"}
-                  </span>
-                  <span className="text-muted-foreground">{fmt(e.created_at)}</span>
+            {items.map((e: TimelineItem) => (
+              <li key={e.id} className={`border-l-2 pl-3 ${BORDER[e.kind]}`}>
+                <div className="flex flex-wrap items-center gap-2 text-xs">
+                  <span className="text-foreground">{e.label}</span>
+                  <span className="text-muted-foreground">{TIMELINE_LABEL[e.kind]}</span>
+                  <span className="text-muted-foreground">{e.source}</span>
+                  <span className="text-muted-foreground">{fmt(e.at)}</span>
                 </div>
                 {e.body ? <p className="mt-1 text-sm text-muted-foreground">{e.body}</p> : null}
               </li>
             ))}
-            {(timeline.data ?? []).length === 0 && (
+            {items.length === 0 && (
               <li className="text-sm text-muted-foreground">Noch keine Ereignisse.</li>
             )}
           </ol>
