@@ -24,9 +24,8 @@ export const Route = createFileRoute("/auth")({
       },
     ],
   }),
-  validateSearch: (search: Record<string, unknown>) => ({
-    demo: search['demo'] === true || search['demo'] === "true" ? true : undefined,
-  }),
+  validateSearch: (search: Record<string, unknown>): { demo?: boolean } =>
+    search['demo'] === true || search['demo'] === "true" ? { demo: true } : {},
   component: AuthPage,
 });
 
