@@ -345,5 +345,6 @@ export async function generateText(
   const { system, user } = prompt(req);
   const text = await callModel(config, system, user);
   if (!text.trim()) throw new Error("KI lieferte keinen Text");
-  return humanize(text);
+  // Erst Floskeln/Länge bereinigen, danach gelegentliche Tippfehler einstreuen.
+  return sprinkleTypos(humanize(text), req.typoRate ?? 0.12);
 }
