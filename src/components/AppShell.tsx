@@ -17,7 +17,7 @@ import {
   Server,
   LogOut,
 } from "lucide-react";
-import { Flame } from "lucide-react";
+import { Flame, HeartPulse } from "lucide-react";
 import type { ReactNode } from "react";
 
 const nav = [
@@ -30,6 +30,7 @@ const nav = [
   { to: "/templates", label: "Vorlagen", icon: FileText },
   { to: "/logs", label: "Protokoll", icon: ScrollText },
   { to: "/workers", label: "Worker", icon: Server },
+  { to: "/worker-health", label: "Worker-Health", icon: HeartPulse },
 ] as const;
 
 export function AppShell({
