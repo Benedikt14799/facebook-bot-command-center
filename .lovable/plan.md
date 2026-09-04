@@ -25,7 +25,7 @@ Cockpit (Lovable)  <->  Lovable Cloud DB  <->  Worker (dein Python-Repo, lokal/V
 
 **3. Aktionen & Kampagnen**
 - Auftragstypen: neue Gruppenmitglieder anschreiben, auf eingehende Nachrichten antworten, Likes verteilen, auf Gruppen-Kommentare antworten.
-- Zielgruppen: Gruppen-IDs, Empfängerlisten, Score-Schwellen.
+- Komplette Gruppenverwaltung: Gruppen anlegen/importieren (Gruppen-ID, Name, Link, Thema, Sprache, Größe), Gruppen einzelnen Bots zuweisen, Status (aktiv/pausiert/beobachten), Beitritts-Status je Bot, pro Gruppe eigene Regeln (Tages-Caps für Likes/Kommentare/DMs, erlaubte Aktionen, Arbeitszeiten-Override, Cooldown), gruppen-spezifische Vorlagen und Tonfall, Mitglieder-/Empfängerlisten je Gruppe mit Score-Schwellen und Blacklist, sowie Gruppen-KPIs (Antwortquote, Reaktionen, Fehler) und Aktivitätsverlauf.
 - Freigabe-Queue: optional müssen Texte vor dem Senden bestätigt werden.
 
 **4. Textgenerierung (pro Bot umschaltbar)**
