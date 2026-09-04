@@ -45,7 +45,7 @@ export const Route = createFileRoute("/_authenticated/unlock")({
       },
     ],
   }),
-  component: UnlockPage;
+  component: UnlockPage,
 });
 
 const UNLOCK_LABEL: Record<string, string> = {
