@@ -583,12 +583,21 @@ function EditJobDialog({
               onChange={(e) => setPayload(e.target.value)}
             />
           </div>
+          <div className="space-y-1.5">
+            <Label className="flex items-center gap-2">
+              Natürlichkeit / Tippfehler
+              <InfoHint text="Nur relevant für KI-Texte: begrenzt, wie viele Vertipper höchstens eingestreut werden und welche Fehlerarten dafür infrage kommen." />
+            </Label>
+            <TypoControls value={typo} onChange={setTypo} disabled={done} />
+          </div>
           {!done ? (
             <TextPreview
               botId={botId}
               type={type}
               groupId={groupId || null}
               recipientId={(job as { recipient_id?: string | null }).recipient_id ?? null}
+              typoRate={typo.rate}
+              typoKinds={typo.kinds}
               onUse={(t: string) => setText(t)}
             />
           ) : null}
