@@ -26,8 +26,7 @@ export const Route = createFileRoute("/api/public/worker/recipients")({
 
         const parsedBody = await readJsonBody(request);
         if (parsedBody instanceof Response) return parsedBody;
-        const body = parsedBody as
-          (Person & { people?: Person[] }) | null;
+        const body = parsedBody as (Person & { people?: Person[] }) | null;
         if (!body) return json({ error: "body required" }, 400);
 
         const people = Array.isArray(body.people) ? body.people : [body];

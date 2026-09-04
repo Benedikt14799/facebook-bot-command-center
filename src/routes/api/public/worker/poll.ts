@@ -36,7 +36,6 @@ export const Route = createFileRoute("/api/public/worker/poll")({
           limit = n;
         }
 
-
         let query = ctx.admin
           .from("jobs")
           .select("*")
@@ -105,7 +104,6 @@ export const Route = createFileRoute("/api/public/worker/poll")({
           limit,
           max_limit: MAX_LIMIT,
         });
-
       },
     },
   },

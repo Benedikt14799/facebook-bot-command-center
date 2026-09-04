@@ -396,7 +396,6 @@ function JobsPage() {
                       Wiederholung
                     </span>
                   ) : null}
-
                 </td>
                 <td className="px-4 py-2 text-muted-foreground">
                   {bots.data?.find((b) => b.id === j.bot_id)?.name ?? "—"}
@@ -652,7 +651,6 @@ function EditJobDialog({
   const doUpdateJob = useServerFn(updateJob);
   const doRetryJobs = useServerFn(retryJobs);
 
-
   const done = job.status === "done";
   const retriedFrom = (job as { retried_from_job_id?: string | null }).retried_from_job_id ?? null;
 
@@ -740,7 +738,6 @@ function EditJobDialog({
             </div>
           ) : null}
           {job.error && job.status !== "pending" ? (
-
             <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-xs text-destructive">
               {job.error}
             </div>
@@ -859,7 +856,6 @@ function EditJobDialog({
                 Speichern
               </Button>
             </>
-
           )}
         </DialogFooter>
       </DialogContent>

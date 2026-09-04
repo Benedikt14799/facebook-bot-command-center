@@ -95,7 +95,6 @@ function WorkerHealthPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
-
   const online = (workers.data ?? []).filter((w) => !isWorkerOffline(w.last_seen_at));
 
   return (
