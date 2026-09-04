@@ -48,6 +48,8 @@ export const Route = createFileRoute("/api/public/worker/messages")({
             name: body.recipient_name ?? null,
             profileUrl: body.recipient_profile_url ?? null,
             context: direction === "in" ? body.body : null,
+            // Kompletten Meldungs-Payload als Roh-Event sichern
+            rawEvent: body as unknown as Record<string, unknown>,
           });
         } else if (recipientId && direction === "in") {
           await ctx.admin
