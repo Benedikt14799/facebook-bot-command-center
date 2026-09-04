@@ -18,7 +18,7 @@ Basis-URL: die Preview- bzw. Published-URL des Projekts.
 | Methode | Pfad                                  | Zweck                                                                     |
 | ------- | ------------------------------------- | ------------------------------------------------------------------------- |
 | POST    | `/api/public/worker/heartbeat`        | `{ "version": "1.0.0" }` — meldet den Worker online                       |
-| POST    | `/api/public/worker/poll`             | `{ "bot_id"?, "limit"? }` — holt fällige Jobs und setzt sie auf `running` |
+| POST    | `/api/public/worker/poll`             | `{ "bot_id"?, "limit"? }` — holt fällige Jobs und setzt sie auf `running`. `limit`: ganze Zahl 1–25, Standard 5; ungültige Werte → HTTP 400. Antwort enthält `limit` und `max_limit`. |
 | POST    | `/api/public/worker/result`           | `{ "job_id", "status": "done\|failed\|skipped", "result"?, "error"? }`    |
 | POST    | `/api/public/worker/messages`         | Nachricht ins Backlog schreiben (`direction: in\|out`)                    |
 | POST    | `/api/public/worker/events`           | Log-Ereignis (`level: info\|warn\|error`)                                 |
@@ -207,3 +207,9 @@ Ablauf: Im Cockpit unter **Freischaltung** auf „Fenster öffnen“ klicken. De
 Proxy und Fingerprint. Nach der manuellen Anmeldung speichert er die Cookies über
 `/worker/session` und meldet `state: "done"` — der manuelle Modus wird aufgehoben.
 Alternativ lassen sich die Cookies im Cockpit als JSON einfügen.
+
+## Einheitliche Fehlerbehandlung
+
+- Alle Worker-Endpunkte erwarten als Body ein JSON-Objekt. Ungültiges JSON sowie Arrays, Zahlen, Strings und `null` werden mit HTTP 400 und `{ "error": "Ungültiger JSON-Body." }` abgelehnt. Ein leerer Body gilt als `{}`; Pflichtfeldprüfungen greifen weiterhin.
+- `poll` liefert nie mehr als 25 Aufträge, unabhängig vom gewünschten `limit`.
+- Wiederholung fehlgeschlagener Aufträge: Der ursprüngliche Auftrag bleibt mit seiner ID, dem Status `failed` und dem Fehlertext erhalten. Es entsteht ein neuer Auftrag im Status `pending` mit `retried_from_job_id` als Verweis auf den Ursprung.
