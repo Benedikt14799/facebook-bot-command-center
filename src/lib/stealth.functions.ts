@@ -56,7 +56,7 @@ async function lookupHost(host: string): Promise<ProxyCheck> {
     const r = await fetch(
       `http://ip-api.com/json/${encodeURIComponent(host)}?fields=status,message,country,countryCode,isp,org,as,hosting,proxy,mobile,query`,
     );
-    const j = (await r.json()) as Record<string, any>;
+    const j = (await r.json()) as Record<string, unknown>;
     if (j["status"] === "success") {
       return {
         ok: true,
