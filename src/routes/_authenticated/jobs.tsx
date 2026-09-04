@@ -40,7 +40,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { selectAll, fmt } from "@/lib/db";
 import { JOB_TYPES, jobTypeLabel, readTypoSettings, type JobTypoSettings } from "@/lib/job-types";
 import { TypoControls } from "@/components/TypoControls";
-import { saveJob, updateJob } from "@/lib/jobs.functions";
+import { retryJobs, saveJob, updateJob } from "@/lib/jobs.functions";
 import { useServerFn } from "@tanstack/react-start";
 import type { Json } from "@/integrations/supabase/types";
 import type { Job } from "@/lib/db";
