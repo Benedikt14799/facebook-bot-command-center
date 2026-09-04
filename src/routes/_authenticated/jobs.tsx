@@ -722,7 +722,14 @@ function EditJobDialog({
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-3 overflow-y-auto pr-1">
-          {job.error ? (
+          {retriedFrom ? (
+            <div className="rounded-md border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
+              Wiederholung eines fehlgeschlagenen Auftrags (Ursprung:{" "}
+              <code className="font-mono">{retriedFrom.slice(0, 8)}</code>)
+            </div>
+          ) : null}
+          {job.error && job.status !== "pending" ? (
+
             <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-xs text-destructive">
               {job.error}
             </div>
