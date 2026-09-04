@@ -597,7 +597,7 @@ function JobFields({
           <InfoHint text="Bestehende Person, der geantwortet werden soll. Der bisherige Verlauf wird automatisch geladen." />
         </Label>
         <Input
-          value={payload["recipient_id"] ?? ""}
+          value={typeof payload["recipient_id"] === "string" ? payload["recipient_id"] : ""}
           onChange={(e) => update("recipient_id", e.target.value || undefined)}
           placeholder="Recipient-ID"
         />
