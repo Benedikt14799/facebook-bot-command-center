@@ -641,6 +641,8 @@ function EditJobDialog({
   const [errors, setErrors] = useState<string[]>([]);
 
   const doUpdateJob = useServerFn(updateJob);
+  const doRetryJobs = useServerFn(retryJobs);
+
 
   const done = job.status === "done";
   const failed = job.status === "failed";
