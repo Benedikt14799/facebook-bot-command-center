@@ -35,8 +35,17 @@ export const Route = createFileRoute("/api/public/worker/events")({
         });
         if (error) return json({ error: error.message }, 500);
 
-        if (body.bot_id && body.level === "error" && body.type === "blocked") {
-          await ctx.admin.from("bots").update({ status: "blocked", paused: true }).eq("id", body.bot_id);
+        // Checkpoint/CAPTCHA/Sperre/Login: sofort alles anhalten und melden.
+        if (body.bot_id && isManualTrigger(body.type)) {
+          const meta = (body.meta ?? {}) as { url?: string };
+          await enterManualMode(ctx.admin, {
+            userId: ctx.userId,
+            botId: body.bot_id,
+            trigger: body.type,
+            message: body.message,
+            url: meta.url ?? null,
+          });
+          return json({ ok: true, manual_mode: true });
         }
         return json({ ok: true });
       },
