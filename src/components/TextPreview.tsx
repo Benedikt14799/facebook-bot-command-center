@@ -12,6 +12,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { Button } from "@/components/ui/button";
 import { InfoHint } from "@/components/InfoHint";
 import { previewJobText, type PreviewResult } from "@/lib/preview.functions";
+import type { TypoKind } from "@/lib/job-types";
 import { toast } from "sonner";
 
 export function TextPreview({
@@ -20,6 +21,8 @@ export function TextPreview({
   groupId,
   recipientId,
   context,
+  typoRate,
+  typoKinds,
   onUse,
 }: {
   botId: string;
@@ -27,6 +30,10 @@ export function TextPreview({
   groupId?: string | null;
   recipientId?: string | null;
   context?: string | null;
+  /** Auftragsbezogene Obergrenze fuer Tippfehler */
+  typoRate?: number | null;
+  /** Auftragsbezogene bevorzugte Fehlerarten */
+  typoKinds?: TypoKind[] | null;
   onUse?: (text: string) => void;
 }) {
   const run = useServerFn(previewJobText);
@@ -41,6 +48,8 @@ export function TextPreview({
           groupId: groupId ?? null,
           recipientId: recipientId ?? null,
           context: context ?? null,
+          typoRate: typoRate ?? null,
+          typoKinds: typoKinds ?? null,
         },
       })) as PreviewResult,
     onSuccess: (r) => setResult(r),
@@ -91,6 +100,9 @@ export function TextPreview({
               Verlauf: {result.used.historyCount} Nachricht(en)
               {result.used.offer ? " · Angebot wird platziert" : " · kein Angebot"}
               {` · Tippfehler-Rate ${Math.round(result.used.typoRate * 100)} %`}
+              {result.used.typoKinds.length
+                ? ` (${result.used.typoKinds.join(", ")})`
+                : " (alle Fehlerarten)"}
             </li>
             {result.used.context ? <li>Bezug: „{result.used.context.slice(0, 120)}“</li> : null}
           </ul>

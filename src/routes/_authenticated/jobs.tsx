@@ -35,7 +35,8 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { selectAll, fmt } from "@/lib/db";
-import { JOB_TYPES, jobTypeInfo, jobTypeLabel } from "@/lib/job-types";
+import { JOB_TYPES, jobTypeInfo, jobTypeLabel, readTypoSettings, type JobTypoSettings } from "@/lib/job-types";
+import { TypoControls } from "@/components/TypoControls";
 import type { Job } from "@/lib/db";
 import { toast } from "sonner";
 
@@ -126,6 +127,7 @@ function JobsPage() {
   const [when, setWhen] = useState("");
   const [text, setText] = useState("");
   const [payload, setPayload] = useState("{}");
+  const [typo, setTypo] = useState<JobTypoSettings>({ rate: 0.12, kinds: [] });
   const [filter, setFilter] = useState("all");
   const [editing, setEditing] = useState<Job | null>(null);
 
@@ -145,6 +147,8 @@ function JobsPage() {
         throw new Error("Payload muss gültiges JSON sein");
       }
       if (text.trim()) parsed["text"] = text.trim();
+      // Tippfehler-Steuerung dieses Auftrags in der Payload ablegen
+      parsed["typo"] = { rate: typo.rate, kinds: typo.kinds };
       const bot = bots.data?.find((b) => b.id === botId);
       const { error } = await supabase.from("jobs").insert({
         bot_id: botId,
@@ -162,6 +166,7 @@ function JobsPage() {
       setOpen(false);
       setText("");
       setPayload("{}");
+      setTypo({ rate: 0.12, kinds: [] });
       qc.invalidateQueries({ queryKey: ["jobs"] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -286,11 +291,20 @@ function JobsPage() {
                     onChange={(e) => setPayload(e.target.value)}
                   />
                 </div>
+                <div className="space-y-1.5">
+                  <Label className="flex items-center gap-2">
+                    Natürlichkeit / Tippfehler
+                    <InfoHint text="Nur relevant für KI-Texte: begrenzt, wie viele Vertipper höchstens eingestreut werden und welche Fehlerarten dafür infrage kommen." />
+                  </Label>
+                  <TypoControls value={typo} onChange={setTypo} />
+                </div>
                 {botId ? (
                   <TextPreview
                     botId={botId}
                     type={type}
                     groupId={groupId || null}
+                    typoRate={typo.rate}
+                    typoKinds={typo.kinds}
                     onUse={(t) => setText(t)}
                   />
                 ) : null}
@@ -430,6 +444,9 @@ function EditJobDialog({
     (job as { generated_text?: string | null }).generated_text ?? payloadText,
   );
   const [payload, setPayload] = useState(JSON.stringify(job.payload ?? {}, null, 2));
+  const [typo, setTypo] = useState<JobTypoSettings>(
+    readTypoSettings(job.payload) ?? { rate: 0.12, kinds: [] },
+  );
 
   const done = job.status === "done";
   const failed = job.status === "failed";
@@ -443,6 +460,7 @@ function EditJobDialog({
         throw new Error("Payload muss gültiges JSON sein");
       }
       if (text.trim()) parsed["text"] = text.trim();
+      parsed["typo"] = { rate: typo.rate, kinds: typo.kinds };
       const base = {
         bot_id: botId,
         group_id: groupId || null,
@@ -565,12 +583,21 @@ function EditJobDialog({
               onChange={(e) => setPayload(e.target.value)}
             />
           </div>
+          <div className="space-y-1.5">
+            <Label className="flex items-center gap-2">
+              Natürlichkeit / Tippfehler
+              <InfoHint text="Nur relevant für KI-Texte: begrenzt, wie viele Vertipper höchstens eingestreut werden und welche Fehlerarten dafür infrage kommen." />
+            </Label>
+            <TypoControls value={typo} onChange={setTypo} disabled={done} />
+          </div>
           {!done ? (
             <TextPreview
               botId={botId}
               type={type}
               groupId={groupId || null}
               recipientId={(job as { recipient_id?: string | null }).recipient_id ?? null}
+              typoRate={typo.rate}
+              typoKinds={typo.kinds}
               onUse={(t: string) => setText(t)}
             />
           ) : null}

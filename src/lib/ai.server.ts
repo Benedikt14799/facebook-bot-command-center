@@ -10,6 +10,7 @@
  * im Tonfall und in der Rolle des jeweiligen Bots, nutzt Vorname, erkannten
  * Text und den bisherigen Gespraechsverlauf und entfernt KI-Floskeln.
  */
+import type { TypoKind } from "@/lib/job-types";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -68,8 +69,14 @@ export function humanize(text: string, maxChars = 320) {
  *  - typische Tippfehler: Buchstabendreher, verschluckter/doppelter Buchstabe,
  *    Nachbartaste, fehlender Umlaut, "dass" -> "das"
  */
-export function sprinkleTypos(text: string, rate = 0.12): string {
+export function sprinkleTypos(
+  text: string,
+  rate = 0.12,
+  /** Bevorzugte Fehlerarten; leer/undefiniert = alle erlaubt. */
+  kinds: TypoKind[] = [],
+): string {
   if (rate <= 0 || !text.trim()) return text;
+  const allow = (k: TypoKind) => kinds.length === 0 || kinds.includes(k);
 
   const NEIGHBOR: Record<string, string> = {
     a: "s", s: "d", d: "f", f: "g", g: "h", h: "j", j: "k", k: "l",
@@ -113,33 +120,39 @@ export function sprinkleTypos(text: string, rate = 0.12): string {
     const i = Math.min(pos + Math.floor(Math.random() * (letters.length - pos - 1)), letters.length - 2);
     const c = letters[i]!.toLowerCase();
 
-    const variants: (() => string)[] = [
+    const allVariants: { kind: TypoKind; make: () => string }[] = [
       // Buchstabendreher
-      () => {
+      { kind: "swap", make: () => {
         const copy = [...letters];
         const tmp = copy[i]!;
         copy[i] = copy[i + 1]!;
         copy[i + 1] = tmp;
         return copy.join("");
-      },
+      } },
       // Buchstabe verschluckt
-      () => letters.filter((_, k) => k !== i).join(""),
+      { kind: "drop", make: () => letters.filter((_, k) => k !== i).join("") },
       // Buchstabe doppelt
-      () => [...letters.slice(0, i), letters[i]!, ...letters.slice(i)].join(""),
+      { kind: "double", make: () => [...letters.slice(0, i), letters[i]!, ...letters.slice(i)].join("") },
       // Nachbartaste
-      () =>
+      { kind: "neighbor", make: () =>
         NEIGHBOR[c]
           ? [...letters.slice(0, i), NEIGHBOR[c]!, ...letters.slice(i + 1)].join("")
-          : word,
+          : word },
       // Umlaut vergessen
-      () =>
-        UMLAUT[c] ? [...letters.slice(0, i), UMLAUT[c]!, ...letters.slice(i + 1)].join("") : word,
+      { kind: "umlaut", make: () =>
+        UMLAUT[c] ? [...letters.slice(0, i), UMLAUT[c]!, ...letters.slice(i + 1)].join("") : word },
     ];
+    const variants = allVariants.filter((v) => allow(v.kind));
 
-    let next = word.toLowerCase().includes("dass")
-      ? word.replace("dass", "das")
-      : variants[Math.floor(Math.random() * variants.length)]!();
-    if (!next || next === word) next = variants[0]!();
+    // Grammatikfehler nur, wenn diese Fehlerart erlaubt ist.
+    if (allow("grammar") && word.toLowerCase().includes("dass")) {
+      words[idx] = word.replace("dass", "das");
+      continue;
+    }
+    if (!variants.length) continue;
+
+    let next = variants[Math.floor(Math.random() * variants.length)]!.make();
+    if (!next || next === word) next = variants[0]!.make();
     words[idx] = next;
   }
 
@@ -173,6 +186,8 @@ export type TextRequest = {
   offer?: { text: string; link?: string | null } | null;
   /** Wahrscheinlichkeit für gelegentliche Tippfehler (0 = aus, 0.12 = Standard) */
   typoRate?: number | null;
+  /** Bevorzugte Fehlerarten; leer = alle erlaubt */
+  typoKinds?: TypoKind[] | null;
 };
 
 /** Baut System- und Nutzer-Prompt aus dem gesamten Kontext. */
@@ -346,5 +361,5 @@ export async function generateText(
   const text = await callModel(config, system, user);
   if (!text.trim()) throw new Error("KI lieferte keinen Text");
   // Erst Floskeln/Länge bereinigen, danach gelegentliche Tippfehler einstreuen.
-  return sprinkleTypos(humanize(text), req.typoRate ?? 0.12);
+  return sprinkleTypos(humanize(text), req.typoRate ?? 0.12, req.typoKinds ?? []);
 }
