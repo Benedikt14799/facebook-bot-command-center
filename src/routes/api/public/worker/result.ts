@@ -1,8 +1,23 @@
 /**
  * Worker-API: Ergebnis eines Auftrags zurueckmelden (done/failed/skipped).
+ *
+ * Bei erfolgreichen Auftraegen wird zusaetzlich ein Eintrag in der Kontaktakte
+ * der betroffenen Person angelegt (Like, Kommentar, Welcome-DM, Follow-up).
  */
 import { createFileRoute } from "@tanstack/react-router";
 import { authenticateWorker, json } from "@/lib/worker-auth.server";
+import { advanceStage, logContact, upsertRecipient } from "@/lib/contacts.server";
+
+/** Auftragstyp -> Art des Eintrags in der Kontaktakte. */
+const KIND_BY_TYPE: Record<string, string> = {
+  like: "like",
+  like_posts: "like",
+  comment: "comment",
+  comment_post: "comment",
+  dm_new_member: "welcome",
+  follow_up: "follow_up",
+  reply_message: "reply_out",
+};
 
 export const Route = createFileRoute("/api/public/worker/result")({
   server: {
@@ -15,6 +30,12 @@ export const Route = createFileRoute("/api/public/worker/result")({
           status?: string;
           result?: unknown;
           error?: string;
+          // optional: vom Worker erkannte Person
+          recipient_name?: string;
+          recipient_fb_id?: string;
+          recipient_profile_url?: string;
+          context?: string;
+          sent_text?: string;
         } | null;
 
         if (!body?.job_id) return json({ error: "job_id required" }, 400);
@@ -22,7 +43,7 @@ export const Route = createFileRoute("/api/public/worker/result")({
           ? body.status!
           : "done";
 
-        const { error } = await ctx.admin
+        const { data: job, error } = await ctx.admin
           .from("jobs")
           .update({
             status,
@@ -31,10 +52,52 @@ export const Route = createFileRoute("/api/public/worker/result")({
             finished_at: new Date().toISOString(),
           })
           .eq("id", body.job_id)
-          .eq("user_id", ctx.userId);
+          .eq("user_id", ctx.userId)
+          .select("id, type, bot_id, group_id, recipient_id, generated_text")
+          .maybeSingle();
         if (error) return json({ error: error.message }, 500);
+
+        if (status === "done" && job) {
+          let recipientId = job.recipient_id;
+          if (!recipientId && (body.recipient_name || body.recipient_fb_id || body.recipient_profile_url)) {
+            recipientId = await upsertRecipient(ctx.admin, {
+              userId: ctx.userId,
+              groupId: job.group_id,
+              botId: job.bot_id,
+              fbUserId: body.recipient_fb_id ?? null,
+              name: body.recipient_name ?? null,
+              profileUrl: body.recipient_profile_url ?? null,
+              context: body.context ?? null,
+            });
+            if (recipientId) {
+              await ctx.admin.from("jobs").update({ recipient_id: recipientId } as never).eq("id", job.id);
+            }
+          }
+
+          if (recipientId) {
+            await logContact(ctx.admin, {
+              userId: ctx.userId,
+              recipientId,
+              botId: job.bot_id,
+              groupId: job.group_id,
+              jobId: job.id,
+              kind: KIND_BY_TYPE[job.type] ?? job.type,
+              direction: "out",
+              body: body.sent_text ?? job.generated_text ?? null,
+            });
+            if (["dm_new_member", "follow_up", "reply_message"].includes(job.type)) {
+              await advanceStage(ctx.admin, recipientId, "contacted");
+              await ctx.admin
+                .from("recipients")
+                .update({ last_contacted_at: new Date().toISOString() } as never)
+                .eq("id", recipientId);
+            }
+          }
+        }
+
         return json({ ok: true });
       },
     },
   },
 });
+
