@@ -43,9 +43,13 @@ export const Route = createFileRoute("/api/public/worker/result")({
         } | null;
 
         if (!body?.job_id) return json({ error: "job_id required" }, 400);
-        const requested = ["done", "failed", "skipped"].includes(body.status ?? "")
-          ? body.status!
-          : "done";
+
+        // Strikte Statuspruefung: kein Fallback auf "done".
+        const ALLOWED = ["done", "failed", "skipped"] as const;
+        const requested = body.status ?? "";
+        if (!ALLOWED.includes(requested as (typeof ALLOWED)[number])) {
+          return json({ error: "Ungültiger Status. Erlaubt sind: done, failed, skipped." }, 400);
+        }
 
         // Vollstaendigen Auftrag laden, um ihn validieren zu koennen.
         const { data: fullJob, error: loadErr } = await ctx.admin
@@ -56,6 +60,18 @@ export const Route = createFileRoute("/api/public/worker/result")({
           .maybeSingle();
         if (loadErr) return json({ error: loadErr.message }, 500);
         if (!fullJob) return json({ error: "job not found" }, 404);
+
+        // Bereits abgeschlossene Auftraege duerfen nicht mehr veraendert werden.
+        const TERMINAL = ["done", "failed", "skipped", "cancelled"];
+        if (TERMINAL.includes(fullJob.status)) {
+          if (fullJob.status === requested) return json({ ok: true, unchanged: true });
+          return json({ error: "job already finished", status: fullJob.status }, 409);
+        }
+
+        // Ergebnis nur vom Worker akzeptieren, der den Auftrag uebernommen hat.
+        if (fullJob.claimed_by && fullJob.claimed_by !== ctx.workerId) {
+          return json({ error: "job claimed by another worker" }, 409);
+        }
 
         // Ungueltige Auftraege duerfen nie als done gemeldet werden.
         const validation = validateJob(
@@ -70,6 +86,7 @@ export const Route = createFileRoute("/api/public/worker/result")({
             ? validation.errors.join("; ")
             : (body.error ?? null);
 
+        // Zusaetzlicher Rennschutz: nur veraendern, solange nicht abgeschlossen.
         const { data: job, error } = await ctx.admin
           .from("jobs")
           .update({
@@ -80,9 +97,11 @@ export const Route = createFileRoute("/api/public/worker/result")({
           })
           .eq("id", body.job_id)
           .eq("user_id", ctx.userId)
+          .not("status", "in", "(done,failed,skipped,cancelled)")
           .select("id, type, bot_id, group_id, recipient_id, generated_text")
           .maybeSingle();
         if (error) return json({ error: error.message }, 500);
+        if (!job) return json({ error: "job already finished" }, 409);
 
         if (status === "done" && job) {
           let recipientId = job.recipient_id;
