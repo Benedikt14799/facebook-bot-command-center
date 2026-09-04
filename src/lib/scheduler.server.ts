@@ -245,6 +245,7 @@ export async function runPlanner(admin: Admin, now = new Date()): Promise<PlanRe
                 firstName: recipientFirstName,
                 context: recipientContext ?? group?.topic ?? null,
                 history,
+                typoRate: (bot as { typo_rate?: number | null }).typo_rate ?? 0.12,
                 offer: placeOffer
                   ? {
                       text: (bot as { offer_text?: string | null }).offer_text ?? "",

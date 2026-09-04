@@ -43,6 +43,9 @@ export const Route = createFileRoute("/api/public/worker/recipients")({
             profileUrl: p.profile_url ?? null,
             context: p.context ?? null,
             source: "worker",
+            // Rohdaten des Worker-Events unveraendert ablegen (Nachvollziehbarkeit
+            // und spaetere Auswertung, falls das Namens-Parsing danebenliegt).
+            rawEvent: p as unknown as Record<string, unknown>,
           });
           if (!id) continue;
           ids.push(id);
