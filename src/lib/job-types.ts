@@ -45,10 +45,19 @@ export const JOB_TYPES: JobTypeInfo[] = [
   },
 ];
 
+/** Ältere/interne Typbezeichnungen des Planers auf die Anzeige mappen. */
+const ALIAS: Record<string, string> = {
+  like: "like_posts",
+  comment: "comment_post",
+  follow_up: "reply_message",
+};
+
 export function jobTypeInfo(value: string) {
-  return JOB_TYPES.find((t) => t.value === value);
+  const key = ALIAS[value] ?? value;
+  return JOB_TYPES.find((t) => t.value === key);
 }
 
 export function jobTypeLabel(value: string) {
+  if (value === "follow_up") return "Follow-up-Nachricht";
   return jobTypeInfo(value)?.label ?? value;
 }
