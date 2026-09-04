@@ -99,7 +99,13 @@ export const Route = createFileRoute("/api/public/worker/poll")({
           ? await ctx.admin.from("bots").select("*").in("id", botIds)
           : { data: [] };
 
-        return json({ jobs: claimed, bots: bots ?? [] });
+        return json({
+          jobs: claimed.slice(0, limit),
+          bots: bots ?? [],
+          limit,
+          max_limit: MAX_LIMIT,
+        });
+
       },
     },
   },
