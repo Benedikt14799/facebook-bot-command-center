@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { selectAll, fmt } from "@/lib/db";
+import { stealthScore } from "@/lib/stealth";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/bots/")({
