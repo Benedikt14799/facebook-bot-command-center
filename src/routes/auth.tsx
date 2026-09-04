@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
+import { ensureDemoUser } from "@/lib/demo.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,11 +24,14 @@ export const Route = createFileRoute("/auth")({
       },
     ],
   }),
+  validateSearch: (search: Record<string, unknown>): { demo?: boolean } =>
+    search['demo'] === true || search['demo'] === "true" ? { demo: true } : {},
   component: AuthPage,
 });
 
 function AuthPage() {
   const navigate = useNavigate();
+  const { demo: autoDemo } = Route.useSearch();
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -63,6 +67,29 @@ function AuthPage() {
       setBusy(false);
     }
   }
+
+  async function demo() {
+    setBusy(true);
+    try {
+      const creds = await ensureDemoUser();
+      const { error } = await supabase.auth.signInWithPassword({
+        email: creds.email,
+        password: creds.password,
+      });
+      if (error) throw error;
+      toast.success("Demo-Zugang aktiv");
+      navigate({ to: "/dashboard", replace: true });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Demo-Zugang fehlgeschlagen");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  useEffect(() => {
+    if (autoDemo) void demo();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoDemo]);
 
   async function google() {
     try {
@@ -114,6 +141,9 @@ function AuthPage() {
         </form>
         <Button variant="outline" className="mt-3 w-full" onClick={google}>
           Mit Google fortfahren
+        </Button>
+        <Button variant="secondary" className="mt-3 w-full" onClick={demo} disabled={busy}>
+          Ohne Anmeldung: Demo-Zugang
         </Button>
         <button
           className="mt-4 w-full text-xs text-muted-foreground hover:text-foreground"

@@ -48,11 +48,17 @@ function Landing() {
           Plane Aktionen, verwalte Gruppen und Profile, überwache jede Nachricht — die
           eigentliche Ausführung übernimmt dein eigener Worker.
         </p>
-        <div className="mt-8">
+        <div className="mt-8 flex flex-wrap gap-3">
           <Link to="/auth">
             <Button size="lg">Cockpit öffnen</Button>
           </Link>
+          <Link to="/auth" search={{ demo: true }}>
+            <Button size="lg" variant="outline">
+              Demo ohne Anmeldung
+            </Button>
+          </Link>
         </div>
+
         <div className="mt-16 grid gap-4 sm:grid-cols-2">
           {features.map((f) => (
             <div key={f.title} className="rounded-lg border border-border bg-card p-5">
