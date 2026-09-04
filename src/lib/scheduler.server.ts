@@ -211,7 +211,7 @@ export async function runPlanner(admin: Admin, now = new Date()): Promise<PlanRe
         const group = groupId
           ? (await admin.from("groups").select("name, topic").eq("id", groupId).maybeSingle()).data
           : null;
-        if (bot.text_mode === "ai") {
+        if (useAi) {
           try {
             text = await generateText({
               kind: type === "comment" ? "comment" : "dm_new_member",
@@ -262,7 +262,7 @@ export async function runPlanner(admin: Admin, now = new Date()): Promise<PlanRe
         source: "auto",
         needs_approval: bot.require_approval,
         scheduled_for: scheduledFor,
-        payload: { text, generated_by: bot.text_mode === "ai" ? "ai" : "template" } as never,
+        payload: { text, generated_by: useAi ? "ai" : "template" } as never,
       });
       if (!error) {
         created += 1;
