@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_settings: {
+        Row: {
+          api_key: string | null
+          base_url: string | null
+          created_at: string
+          model: string
+          provider: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          api_key?: string | null
+          base_url?: string | null
+          created_at?: string
+          model?: string
+          provider?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          api_key?: string | null
+          base_url?: string | null
+          created_at?: string
+          model?: string
+          provider?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       ai_usage: {
         Row: {
           bot_id: string | null
@@ -180,7 +210,11 @@ export type Database = {
           last_seen_at: string | null
           name: string
           notes: string | null
+          offer_link: string | null
+          offer_step: number
+          offer_text: string | null
           paused: boolean
+          persona_role: string
           profile_url: string | null
           proxy: string | null
           require_approval: boolean
@@ -215,7 +249,11 @@ export type Database = {
           last_seen_at?: string | null
           name: string
           notes?: string | null
+          offer_link?: string | null
+          offer_step?: number
+          offer_text?: string | null
           paused?: boolean
+          persona_role?: string
           profile_url?: string | null
           proxy?: string | null
           require_approval?: boolean
@@ -250,7 +288,11 @@ export type Database = {
           last_seen_at?: string | null
           name?: string
           notes?: string | null
+          offer_link?: string | null
+          offer_step?: number
+          offer_text?: string | null
           paused?: boolean
+          persona_role?: string
           profile_url?: string | null
           proxy?: string | null
           require_approval?: boolean
@@ -272,6 +314,77 @@ export type Database = {
           weekend_factor?: number
         }
         Relationships: []
+      }
+      contact_events: {
+        Row: {
+          body: string | null
+          bot_id: string | null
+          created_at: string
+          direction: string
+          group_id: string | null
+          id: string
+          job_id: string | null
+          kind: string
+          meta: Json
+          recipient_id: string
+          user_id: string
+        }
+        Insert: {
+          body?: string | null
+          bot_id?: string | null
+          created_at?: string
+          direction?: string
+          group_id?: string | null
+          id?: string
+          job_id?: string | null
+          kind: string
+          meta?: Json
+          recipient_id: string
+          user_id?: string
+        }
+        Update: {
+          body?: string | null
+          bot_id?: string | null
+          created_at?: string
+          direction?: string
+          group_id?: string | null
+          id?: string
+          job_id?: string | null
+          kind?: string
+          meta?: Json
+          recipient_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_events_bot_id_fkey"
+            columns: ["bot_id"]
+            isOneToOne: false
+            referencedRelation: "bots"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contact_events_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contact_events_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contact_events_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "recipients"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       cron_tokens: {
         Row: {
@@ -434,6 +547,7 @@ export type Database = {
           created_at: string
           error: string | null
           finished_at: string | null
+          generated_text: string | null
           group_id: string | null
           id: string
           needs_approval: boolean
@@ -455,6 +569,7 @@ export type Database = {
           created_at?: string
           error?: string | null
           finished_at?: string | null
+          generated_text?: string | null
           group_id?: string | null
           id?: string
           needs_approval?: boolean
@@ -476,6 +591,7 @@ export type Database = {
           created_at?: string
           error?: string | null
           finished_at?: string | null
+          generated_text?: string | null
           group_id?: string | null
           id?: string
           needs_approval?: boolean
@@ -601,14 +717,22 @@ export type Database = {
         Row: {
           blacklisted: boolean
           bot_id: string | null
+          context_updated_at: string | null
           created_at: string
           fb_user_id: string | null
+          first_name: string | null
           group_id: string | null
           id: string
           last_contacted_at: string | null
+          last_context: string | null
           name: string | null
+          offer_sent_at: string | null
           profile_url: string | null
+          replied_at: string | null
+          reply_count: number
           score: number
+          source: string
+          stage: string
           state: string
           updated_at: string
           user_id: string
@@ -616,14 +740,22 @@ export type Database = {
         Insert: {
           blacklisted?: boolean
           bot_id?: string | null
+          context_updated_at?: string | null
           created_at?: string
           fb_user_id?: string | null
+          first_name?: string | null
           group_id?: string | null
           id?: string
           last_contacted_at?: string | null
+          last_context?: string | null
           name?: string | null
+          offer_sent_at?: string | null
           profile_url?: string | null
+          replied_at?: string | null
+          reply_count?: number
           score?: number
+          source?: string
+          stage?: string
           state?: string
           updated_at?: string
           user_id?: string
@@ -631,14 +763,22 @@ export type Database = {
         Update: {
           blacklisted?: boolean
           bot_id?: string | null
+          context_updated_at?: string | null
           created_at?: string
           fb_user_id?: string | null
+          first_name?: string | null
           group_id?: string | null
           id?: string
           last_contacted_at?: string | null
+          last_context?: string | null
           name?: string | null
+          offer_sent_at?: string | null
           profile_url?: string | null
+          replied_at?: string | null
+          reply_count?: number
           score?: number
+          source?: string
+          stage?: string
           state?: string
           updated_at?: string
           user_id?: string
