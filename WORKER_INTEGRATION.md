@@ -172,3 +172,33 @@ Der Worker nutzt nur Zufallswerte innerhalb der eingestellten Bereiche: `human_t
 
 ### Checkpoint-Erkennung
 `check_blocked()` prüft URL und Seiteninhalt auf Checkpoint-/Sperrhinweise, bricht sofort ab und meldet ein `blocked`-Ereignis — das Cockpit pausiert den Bot daraufhin automatisch.
+
+## Checkpoint-Erkennung und visuelle Freischaltung
+
+Der Worker erkennt Checkpoint-, CAPTCHA-, 2FA-, Login- und Sperrseiten und meldet
+sie als Ereignis mit dem passenden Typ:
+
+| Typ | Bedeutung |
+| --- | --- |
+| `checkpoint` | Facebook verlangt eine Identitätsbestätigung |
+| `captcha` | Sicherheitsabfrage / reCAPTCHA |
+| `two_factor` | Zwei-Faktor-Code nötig |
+| `login_required` | Sitzung abgelaufen, erneuter Login nötig |
+| `blocked` | Konto gesperrt oder eingeschränkt |
+
+Bei jedem dieser Typen setzt das Cockpit den Bot sofort in den **manuellen Modus**:
+Automatik aus, keine weiteren Jobs (`/worker/poll` liefert für diesen Bot nichts mehr),
+Benachrichtigung in der Glocke oben rechts.
+
+### Freischaltung
+
+| Methode | Endpunkt | Zweck |
+| --- | --- | --- |
+| GET | `/api/public/worker/unlock` | offene Freischalt-Anfragen abholen |
+| POST | `/api/public/worker/unlock` | `{bot_id, state: "open"\|"done"\|"failed"\|"cancelled", note?}` |
+
+Ablauf: Im Cockpit unter **Freischaltung** auf „Fenster öffnen“ klicken. Der Worker
+öffnet beim nächsten Durchlauf ein sichtbares Browserfenster mit demselben Profil,
+Proxy und Fingerprint. Nach der manuellen Anmeldung speichert er die Cookies über
+`/worker/session` und meldet `state: "done"` — der manuelle Modus wird aufgehoben.
+Alternativ lassen sich die Cookies im Cockpit als JSON einfügen.

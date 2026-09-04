@@ -9,7 +9,16 @@ import { AppShell } from "@/components/AppShell";
 import { StatusBadge } from "@/components/StatusBadge";
 import { supabase } from "@/integrations/supabase/client";
 import { fmt } from "@/lib/db";
-import { KIND_LABEL, STAGE_LABEL } from "@/lib/contact-labels";
+import { STAGE_LABEL } from "@/lib/contact-labels";
+import { Button } from "@/components/ui/button";
+import { Download, Printer } from "lucide-react";
+import {
+  buildTimeline,
+  downloadTimelineCsv,
+  printTimeline,
+  TIMELINE_LABEL,
+  type TimelineItem,
+} from "@/lib/timeline";
 
 export const Route = createFileRoute("/_authenticated/recipients/$recipientId")({
   head: () => ({
@@ -22,6 +31,15 @@ export const Route = createFileRoute("/_authenticated/recipients/$recipientId")(
   }),
   component: RecipientDetail,
 });
+
+/** Farbe des Zeitleisten-Strichs je Ereignisart. */
+const BORDER: Record<string, string> = {
+  sent: "border-primary/60",
+  received: "border-success/60",
+  reaction: "border-border",
+  error: "border-destructive/60",
+  checkpoint: "border-warning/60",
+};
 
 function RecipientDetail() {
   const { recipientId } = Route.useParams();
@@ -39,16 +57,50 @@ function RecipientDetail() {
     },
   });
 
+  // Alle Quellen laden und danach zu einer Zeitleiste zusammenfuehren.
   const timeline = useQuery({
-    queryKey: ["contact_events", recipientId],
+    queryKey: ["contact-timeline", recipientId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("contact_events")
-        .select("*")
-        .eq("recipient_id", recipientId)
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return data ?? [];
+      const [ce, msgs, jobs] = await Promise.all([
+        supabase
+          .from("contact_events")
+          .select("*")
+          .eq("recipient_id", recipientId)
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("messages")
+          .select("*")
+          .eq("recipient_id", recipientId)
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("jobs")
+          .select("*")
+          .eq("recipient_id", recipientId)
+          .eq("status", "failed"),
+      ]);
+
+      // Checkpoint-/Sperr-Ereignisse des zugehoerigen Bots einblenden.
+      const botIds = [
+        ...new Set([...(ce.data ?? []), ...(msgs.data ?? [])].map((r) => r.bot_id).filter(Boolean)),
+      ] as string[];
+      const events = botIds.length
+        ? (
+            await supabase
+              .from("events")
+              .select("*")
+              .in("bot_id", botIds)
+              .in("type", ["checkpoint", "captcha", "blocked", "login_required", "session_expired", "two_factor"])
+              .order("created_at", { ascending: false })
+              .limit(50)
+          ).data ?? []
+        : [];
+
+      return buildTimeline({
+        contactEvents: ce.data ?? [],
+        messages: msgs.data ?? [],
+        jobs: jobs.data ?? [],
+        events,
+      });
     },
   });
 
@@ -61,6 +113,7 @@ function RecipientDetail() {
   }
 
   const p = person.data;
+  const items: TimelineItem[] = timeline.data ?? [];
 
   return (
     <AppShell
@@ -103,21 +156,40 @@ function RecipientDetail() {
         </section>
 
         <section className="rounded-lg border border-border bg-card p-4">
-          <h2 className="mb-3 text-sm font-medium text-foreground">Verlauf</h2>
+          <header className="mb-3 flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-sm font-medium text-foreground">Verlauf</h2>
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={!items.length}
+                onClick={() => downloadTimelineCsv(p.name ?? "kontakt", items)}
+              >
+                <Download className="size-3.5" /> CSV
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={!items.length}
+                onClick={() => printTimeline(p.name ?? "Kontakt", items)}
+              >
+                <Printer className="size-3.5" /> PDF
+              </Button>
+            </div>
+          </header>
           <ol className="space-y-3">
-            {(timeline.data ?? []).map((e) => (
-              <li key={e.id} className="border-l-2 border-border pl-3">
-                <div className="flex items-center gap-2 text-xs">
-                  <span className="text-foreground">{KIND_LABEL[e.kind] ?? e.kind}</span>
-                  <span className="text-muted-foreground">
-                    {e.direction === "in" ? "eingehend" : "ausgehend"}
-                  </span>
-                  <span className="text-muted-foreground">{fmt(e.created_at)}</span>
+            {items.map((e: TimelineItem) => (
+              <li key={e.id} className={`border-l-2 pl-3 ${BORDER[e.kind]}`}>
+                <div className="flex flex-wrap items-center gap-2 text-xs">
+                  <span className="text-foreground">{e.label}</span>
+                  <span className="text-muted-foreground">{TIMELINE_LABEL[e.kind]}</span>
+                  <span className="text-muted-foreground">{e.source}</span>
+                  <span className="text-muted-foreground">{fmt(e.at)}</span>
                 </div>
                 {e.body ? <p className="mt-1 text-sm text-muted-foreground">{e.body}</p> : null}
               </li>
             ))}
-            {(timeline.data ?? []).length === 0 && (
+            {items.length === 0 && (
               <li className="text-sm text-muted-foreground">Noch keine Ereignisse.</li>
             )}
           </ol>

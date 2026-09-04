@@ -244,6 +244,9 @@ export type Database = {
           id: string
           jitter_minutes: number
           last_seen_at: string | null
+          manual_mode: boolean
+          manual_reason: string | null
+          manual_since: string | null
           name: string
           notes: string | null
           offer_link: string | null
@@ -271,6 +274,9 @@ export type Database = {
           timezone: string
           tone: string | null
           typo_rate: number
+          unlock_note: string | null
+          unlock_requested_at: string | null
+          unlock_state: string
           updated_at: string
           user_id: string
           warmup_extra_days: number
@@ -297,6 +303,9 @@ export type Database = {
           id?: string
           jitter_minutes?: number
           last_seen_at?: string | null
+          manual_mode?: boolean
+          manual_reason?: string | null
+          manual_since?: string | null
           name: string
           notes?: string | null
           offer_link?: string | null
@@ -324,6 +333,9 @@ export type Database = {
           timezone?: string
           tone?: string | null
           typo_rate?: number
+          unlock_note?: string | null
+          unlock_requested_at?: string | null
+          unlock_state?: string
           updated_at?: string
           user_id?: string
           warmup_extra_days?: number
@@ -350,6 +362,9 @@ export type Database = {
           id?: string
           jitter_minutes?: number
           last_seen_at?: string | null
+          manual_mode?: boolean
+          manual_reason?: string | null
+          manual_since?: string | null
           name?: string
           notes?: string | null
           offer_link?: string | null
@@ -377,6 +392,9 @@ export type Database = {
           timezone?: string
           tone?: string | null
           typo_rate?: number
+          unlock_note?: string | null
+          unlock_requested_at?: string | null
+          unlock_state?: string
           updated_at?: string
           user_id?: string
           warmup_extra_days?: number
@@ -783,6 +801,53 @@ export type Database = {
             columns: ["recipient_id"]
             isOneToOne: false
             referencedRelation: "recipients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          body: string | null
+          bot_id: string | null
+          created_at: string
+          id: string
+          level: string
+          meta: Json
+          read_at: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          body?: string | null
+          bot_id?: string | null
+          created_at?: string
+          id?: string
+          level?: string
+          meta?: Json
+          read_at?: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          body?: string | null
+          bot_id?: string | null
+          created_at?: string
+          id?: string
+          level?: string
+          meta?: Json
+          read_at?: string | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_bot_id_fkey"
+            columns: ["bot_id"]
+            isOneToOne: false
+            referencedRelation: "bots"
             referencedColumns: ["id"]
           },
         ]

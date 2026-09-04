@@ -19,6 +19,7 @@ import { Route as AuthenticatedJobsRouteImport } from './routes/_authenticated/j
 import { Route as AuthenticatedLogsRouteImport } from './routes/_authenticated/logs'
 import { Route as AuthenticatedMessagesRouteImport } from './routes/_authenticated/messages'
 import { Route as AuthenticatedTemplatesRouteImport } from './routes/_authenticated/templates'
+import { Route as AuthenticatedUnlockRouteImport } from './routes/_authenticated/unlock'
 import { Route as AuthenticatedWarmupRouteImport } from './routes/_authenticated/warmup'
 import { Route as AuthenticatedWorkerHealthRouteImport } from './routes/_authenticated/worker-health'
 import { Route as AuthenticatedWorkersRouteImport } from './routes/_authenticated/workers'
@@ -36,6 +37,7 @@ import { Route as ApiPublicWorkerPollRouteImport } from './routes/api/public/wor
 import { Route as ApiPublicWorkerRecipientsRouteImport } from './routes/api/public/worker/recipients'
 import { Route as ApiPublicWorkerResultRouteImport } from './routes/api/public/worker/result'
 import { Route as ApiPublicWorkerSessionRouteImport } from './routes/api/public/worker/session'
+import { Route as ApiPublicWorkerUnlockRouteImport } from './routes/api/public/worker/unlock'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -84,6 +86,11 @@ const AuthenticatedMessagesRoute = AuthenticatedMessagesRouteImport.update({
 const AuthenticatedTemplatesRoute = AuthenticatedTemplatesRouteImport.update({
   id: '/templates',
   path: '/templates',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedUnlockRoute = AuthenticatedUnlockRouteImport.update({
+  id: '/unlock',
+  path: '/unlock',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedWarmupRoute = AuthenticatedWarmupRouteImport.update({
@@ -177,6 +184,11 @@ const ApiPublicWorkerSessionRoute = ApiPublicWorkerSessionRouteImport.update({
   path: '/api/public/worker/session',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicWorkerUnlockRoute = ApiPublicWorkerUnlockRouteImport.update({
+  id: '/api/public/worker/unlock',
+  path: '/api/public/worker/unlock',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -188,6 +200,7 @@ export interface FileRoutesByFullPath {
   '/logs': typeof AuthenticatedLogsRoute
   '/messages': typeof AuthenticatedMessagesRoute
   '/templates': typeof AuthenticatedTemplatesRoute
+  '/unlock': typeof AuthenticatedUnlockRoute
   '/warmup': typeof AuthenticatedWarmupRoute
   '/worker-health': typeof AuthenticatedWorkerHealthRoute
   '/workers': typeof AuthenticatedWorkersRoute
@@ -205,6 +218,7 @@ export interface FileRoutesByFullPath {
   '/api/public/worker/recipients': typeof ApiPublicWorkerRecipientsRoute
   '/api/public/worker/result': typeof ApiPublicWorkerResultRoute
   '/api/public/worker/session': typeof ApiPublicWorkerSessionRoute
+  '/api/public/worker/unlock': typeof ApiPublicWorkerUnlockRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -216,6 +230,7 @@ export interface FileRoutesByTo {
   '/logs': typeof AuthenticatedLogsRoute
   '/messages': typeof AuthenticatedMessagesRoute
   '/templates': typeof AuthenticatedTemplatesRoute
+  '/unlock': typeof AuthenticatedUnlockRoute
   '/warmup': typeof AuthenticatedWarmupRoute
   '/worker-health': typeof AuthenticatedWorkerHealthRoute
   '/workers': typeof AuthenticatedWorkersRoute
@@ -233,6 +248,7 @@ export interface FileRoutesByTo {
   '/api/public/worker/recipients': typeof ApiPublicWorkerRecipientsRoute
   '/api/public/worker/result': typeof ApiPublicWorkerResultRoute
   '/api/public/worker/session': typeof ApiPublicWorkerSessionRoute
+  '/api/public/worker/unlock': typeof ApiPublicWorkerUnlockRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -246,6 +262,7 @@ export interface FileRoutesById {
   '/_authenticated/logs': typeof AuthenticatedLogsRoute
   '/_authenticated/messages': typeof AuthenticatedMessagesRoute
   '/_authenticated/templates': typeof AuthenticatedTemplatesRoute
+  '/_authenticated/unlock': typeof AuthenticatedUnlockRoute
   '/_authenticated/warmup': typeof AuthenticatedWarmupRoute
   '/_authenticated/worker-health': typeof AuthenticatedWorkerHealthRoute
   '/_authenticated/workers': typeof AuthenticatedWorkersRoute
@@ -263,6 +280,7 @@ export interface FileRoutesById {
   '/api/public/worker/recipients': typeof ApiPublicWorkerRecipientsRoute
   '/api/public/worker/result': typeof ApiPublicWorkerResultRoute
   '/api/public/worker/session': typeof ApiPublicWorkerSessionRoute
+  '/api/public/worker/unlock': typeof ApiPublicWorkerUnlockRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -276,6 +294,7 @@ export interface FileRouteTypes {
     | '/logs'
     | '/messages'
     | '/templates'
+    | '/unlock'
     | '/warmup'
     | '/worker-health'
     | '/workers'
@@ -293,6 +312,7 @@ export interface FileRouteTypes {
     | '/api/public/worker/recipients'
     | '/api/public/worker/result'
     | '/api/public/worker/session'
+    | '/api/public/worker/unlock'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -304,6 +324,7 @@ export interface FileRouteTypes {
     | '/logs'
     | '/messages'
     | '/templates'
+    | '/unlock'
     | '/warmup'
     | '/worker-health'
     | '/workers'
@@ -321,6 +342,7 @@ export interface FileRouteTypes {
     | '/api/public/worker/recipients'
     | '/api/public/worker/result'
     | '/api/public/worker/session'
+    | '/api/public/worker/unlock'
   id:
     | '__root__'
     | '/'
@@ -333,6 +355,7 @@ export interface FileRouteTypes {
     | '/_authenticated/logs'
     | '/_authenticated/messages'
     | '/_authenticated/templates'
+    | '/_authenticated/unlock'
     | '/_authenticated/warmup'
     | '/_authenticated/worker-health'
     | '/_authenticated/workers'
@@ -350,6 +373,7 @@ export interface FileRouteTypes {
     | '/api/public/worker/recipients'
     | '/api/public/worker/result'
     | '/api/public/worker/session'
+    | '/api/public/worker/unlock'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -366,6 +390,7 @@ export interface RootRouteChildren {
   ApiPublicWorkerRecipientsRoute: typeof ApiPublicWorkerRecipientsRoute
   ApiPublicWorkerResultRoute: typeof ApiPublicWorkerResultRoute
   ApiPublicWorkerSessionRoute: typeof ApiPublicWorkerSessionRoute
+  ApiPublicWorkerUnlockRoute: typeof ApiPublicWorkerUnlockRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -438,6 +463,13 @@ declare module '@tanstack/react-router' {
       path: '/templates'
       fullPath: '/templates'
       preLoaderRoute: typeof AuthenticatedTemplatesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/unlock': {
+      id: '/_authenticated/unlock'
+      path: '/unlock'
+      fullPath: '/unlock'
+      preLoaderRoute: typeof AuthenticatedUnlockRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/warmup': {
@@ -559,6 +591,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicWorkerSessionRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/worker/unlock': {
+      id: '/api/public/worker/unlock'
+      path: '/api/public/worker/unlock'
+      fullPath: '/api/public/worker/unlock'
+      preLoaderRoute: typeof ApiPublicWorkerUnlockRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -570,6 +609,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedLogsRoute: typeof AuthenticatedLogsRoute
   AuthenticatedMessagesRoute: typeof AuthenticatedMessagesRoute
   AuthenticatedTemplatesRoute: typeof AuthenticatedTemplatesRoute
+  AuthenticatedUnlockRoute: typeof AuthenticatedUnlockRoute
   AuthenticatedWarmupRoute: typeof AuthenticatedWarmupRoute
   AuthenticatedWorkerHealthRoute: typeof AuthenticatedWorkerHealthRoute
   AuthenticatedWorkersRoute: typeof AuthenticatedWorkersRoute
@@ -587,6 +627,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedLogsRoute: AuthenticatedLogsRoute,
   AuthenticatedMessagesRoute: AuthenticatedMessagesRoute,
   AuthenticatedTemplatesRoute: AuthenticatedTemplatesRoute,
+  AuthenticatedUnlockRoute: AuthenticatedUnlockRoute,
   AuthenticatedWarmupRoute: AuthenticatedWarmupRoute,
   AuthenticatedWorkerHealthRoute: AuthenticatedWorkerHealthRoute,
   AuthenticatedWorkersRoute: AuthenticatedWorkersRoute,
@@ -614,6 +655,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicWorkerRecipientsRoute: ApiPublicWorkerRecipientsRoute,
   ApiPublicWorkerResultRoute: ApiPublicWorkerResultRoute,
   ApiPublicWorkerSessionRoute: ApiPublicWorkerSessionRoute,
+  ApiPublicWorkerUnlockRoute: ApiPublicWorkerUnlockRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -43,6 +43,13 @@ def api(path: str, payload: dict | None = None, method: str = "POST"):
     return resp.json() if resp.content else {}
 
 
+def api_get(path: str) -> dict:
+    """GET-Aufruf auf die Worker-API (z. B. offene Freischaltungen)."""
+    resp = session.get(f"{BASE_URL}/api/public/worker/{path}", timeout=30)
+    resp.raise_for_status()
+    return resp.json() if resp.content else {}
+
+
 def load_session(bot_id: str) -> dict:
     """Cookies, Proxy, Fingerprint, Verhalten und Antidetect-Konfig des Bots."""
     resp = session.get(f"{BASE_URL}/api/public/worker/session?bot_id={bot_id}", timeout=30)
@@ -101,7 +108,7 @@ navigator.permissions.query = (p) => p.name === 'notifications'
 """
 
 
-def build_context(p, data: dict, bot_id: str):
+def build_context(p, data: dict, bot_id: str, headless: bool = False):
     """Startet Chromium (Stealth) oder verbindet sich mit einem Antidetect-Browser."""
     fp = data.get("fingerprint") or {}
     proxy = data.get("proxy")
@@ -131,7 +138,7 @@ def build_context(p, data: dict, bot_id: str):
     os.makedirs(user_data, exist_ok=True)
     ctx = p.chromium.launch_persistent_context(
         user_data,
-        headless=False,
+        headless=headless,
         proxy=proxy_cfg,
         user_agent=data.get("user_agent") or fp.get("user_agent"),
         locale=fp.get("locale", "de-DE"),
@@ -193,22 +200,85 @@ def report_ip(page, bot_id: str):
         return {}
 
 
-CHECKPOINT_HINTS = ["/checkpoint", "confirm your identity", "we suspend", "dein konto wurde gesperrt",
-                    "bestätige deine identität", "unusual activity"]
+# Erkennungsmuster je Ereignisart. Das Cockpit setzt den Bot bei jedem
+# dieser Typen sofort in den manuellen Modus und benachrichtigt dich.
+DETECTORS = [
+    ("blocked", ["dein konto wurde gesperrt", "your account has been disabled",
+                 "we suspend", "account restricted", "/disabled"]),
+    ("captcha", ["captcha", "recaptcha", "sicherheitsabfrage", "security check",
+                 "bestätige, dass du ein mensch bist"]),
+    ("two_factor", ["two-factor", "zwei-faktor", "authentication code",
+                    "bestätigungscode", "/two_step_verification"]),
+    ("checkpoint", ["/checkpoint", "confirm your identity", "bestätige deine identität",
+                    "unusual activity", "ungewöhnliche aktivität"]),
+    ("login_required", ["/login", "log in to facebook", "bei facebook anmelden",
+                        "passwort vergessen?"]),
+]
 
 
 def check_blocked(page, bot_id: str) -> bool:
-    """Erkennt Checkpoint-/Sperrseiten und meldet sie sofort ans Cockpit."""
+    """Erkennt Checkpoint-, CAPTCHA-, 2FA-, Login- und Sperrseiten."""
     try:
         url = (page.url or "").lower()
         body = (page.content() or "").lower()
     except Exception:
         return False
-    if any(h in url or h in body for h in CHECKPOINT_HINTS):
-        api("events", {"bot_id": bot_id, "level": "error", "type": "blocked",
-                       "message": f"Checkpoint/Sperre erkannt: {page.url}"})
-        return True
+    for kind, hints in DETECTORS:
+        if any(h in url or h in body for h in hints):
+            api("events", {
+                "bot_id": bot_id,
+                "level": "error",
+                "type": kind,
+                "message": f"{kind} erkannt: {page.url}",
+                "meta": {"url": page.url},
+            })
+            return True
     return False
+
+
+# --------------------------------------------------- Visuelle Freischaltung
+def handle_unlock_requests():
+    """
+    Oeffnet fuer angeforderte Bots ein SICHTBARES Browserfenster mit demselben
+    Profil, Proxy und Fingerprint. Du meldest dich dort von Hand an; danach
+    werden die Cookies zurueck ins Cockpit gespeichert.
+    """
+    from playwright.sync_api import sync_playwright
+
+    try:
+        reqs = api_get("unlock").get("requests", [])
+    except Exception as exc:
+        print("Freischaltung konnte nicht abgefragt werden:", exc)
+        return
+
+    for req in reqs:
+        bot_id = req["id"]
+        print(f"[unlock] Öffne Fenster für {req.get('name') or bot_id}")
+        api("unlock", {"bot_id": bot_id, "state": "open"})
+        try:
+            data = load_session(bot_id)
+            with sync_playwright() as p:
+                browser, ctx, behavior = build_context(p, data, bot_id, headless=False)
+                page = ctx.pages[0] if ctx.pages else ctx.new_page()
+                page.goto("https://www.facebook.com/", wait_until="domcontentloaded")
+                print("    Bitte im Fenster anmelden. Danach hier ENTER drücken.")
+                input()
+                cookies = ctx.cookies()
+                ua = page.evaluate("navigator.userAgent")
+                api("session", {"bot_id": bot_id, "cookies": cookies,
+                                "user_agent": ua, "status": "ok"})
+                api("unlock", {"bot_id": bot_id, "state": "done",
+                               "note": "Von Hand im Worker-Fenster angemeldet"})
+                print("    Sitzung gespeichert, Bot ist wieder freigeschaltet.")
+                try:
+                    ctx.close()
+                    if browser:
+                        browser.close()
+                except Exception:
+                    pass
+        except Exception as exc:
+            traceback.print_exc()
+            api("unlock", {"bot_id": bot_id, "state": "failed", "note": str(exc)})
 
 
 # ---------------------------------------------------------------- Auftraege
@@ -272,7 +342,9 @@ def main():
     print("FB/Control Worker gestartet")
     while True:
         try:
-            api("heartbeat", {"version": "2.0.0"})
+            api("heartbeat", {"version": "2.1.0"})
+            # Zuerst pruefen, ob du einen Bot von Hand freischalten willst.
+            handle_unlock_requests()
             jobs = api("poll", {"limit": 3}).get("jobs", [])
             if not jobs:
                 time.sleep(POLL_SECONDS + random.uniform(0, 10))
