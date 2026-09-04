@@ -227,7 +227,7 @@ export function StealthPanel({ botId, form, set }: Props) {
         <div className="grid gap-3 sm:grid-cols-2">
           <Field label="Vorlage" hint="Setzt User-Agent, Plattform, Auflösung und Hardware in einem Rutsch auf eine stimmige Kombination.">
             <Select
-              value=""
+              
               onValueChange={(v) => {
                 const preset = FINGERPRINT_PRESETS.find((p) => p.id === v);
                 if (preset) set({ fingerprint: preset.fp as never });
