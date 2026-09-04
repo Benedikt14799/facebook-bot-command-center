@@ -187,11 +187,11 @@ function BotUnlockCard({
             <p className="text-xs text-muted-foreground">Hinweis vom Worker: {String(bot["unlock_note"])}</p>
           ) : null}
           <div className="flex gap-2">
-            <Button size="sm" onClick={() => mAsk.mutate(undefined as never)} disabled={mAsk.isPending}>
+            <Button size="sm" onClick={() => act.mutate("ask")} disabled={act.isPending}>
               Fenster öffnen
             </Button>
             {state === "requested" ? (
-              <Button size="sm" variant="ghost" onClick={() => mStop.mutate(undefined as never)}>
+              <Button size="sm" variant="ghost" onClick={() => act.mutate("stop")}>
                 Abbrechen
               </Button>
             ) : null}
@@ -223,12 +223,12 @@ function BotUnlockCard({
           <div className="flex gap-2">
             <Button
               size="sm"
-              onClick={() => mSave.mutate(undefined as never)}
-              disabled={!cookies.trim() || mSave.isPending}
+              onClick={() => act.mutate("save")}
+              disabled={!cookies.trim() || act.isPending}
             >
               Cookies speichern & freischalten
             </Button>
-            <Button size="sm" variant="ghost" onClick={() => mRelease.mutate(undefined as never)}>
+            <Button size="sm" variant="ghost" onClick={() => act.mutate("release")}>
               Nur freigeben
             </Button>
           </div>
