@@ -14,6 +14,8 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedGroupsRouteImport } from './routes/_authenticated/groups'
+import { Route as AuthenticatedJobsRouteImport } from './routes/_authenticated/jobs'
+import { Route as AuthenticatedMessagesRouteImport } from './routes/_authenticated/messages'
 import { Route as AuthenticatedBotsIndexRouteImport } from './routes/_authenticated/bots.index'
 import { Route as AuthenticatedBotsBotIdRouteImport } from './routes/_authenticated/bots.$botId'
 
@@ -41,6 +43,16 @@ const AuthenticatedGroupsRoute = AuthenticatedGroupsRouteImport.update({
   path: '/groups',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedJobsRoute = AuthenticatedJobsRouteImport.update({
+  id: '/jobs',
+  path: '/jobs',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedMessagesRoute = AuthenticatedMessagesRouteImport.update({
+  id: '/messages',
+  path: '/messages',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedBotsIndexRoute = AuthenticatedBotsIndexRouteImport.update({
   id: '/bots/',
   path: '/bots/',
@@ -57,6 +69,8 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/groups': typeof AuthenticatedGroupsRoute
+  '/jobs': typeof AuthenticatedJobsRoute
+  '/messages': typeof AuthenticatedMessagesRoute
   '/bots/$botId': typeof AuthenticatedBotsBotIdRoute
   '/bots/': typeof AuthenticatedBotsIndexRoute
 }
@@ -65,6 +79,8 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/groups': typeof AuthenticatedGroupsRoute
+  '/jobs': typeof AuthenticatedJobsRoute
+  '/messages': typeof AuthenticatedMessagesRoute
   '/bots/$botId': typeof AuthenticatedBotsBotIdRoute
   '/bots': typeof AuthenticatedBotsIndexRoute
 }
@@ -75,15 +91,32 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/groups': typeof AuthenticatedGroupsRoute
+  '/_authenticated/jobs': typeof AuthenticatedJobsRoute
+  '/_authenticated/messages': typeof AuthenticatedMessagesRoute
   '/_authenticated/bots/$botId': typeof AuthenticatedBotsBotIdRoute
   '/_authenticated/bots/': typeof AuthenticatedBotsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/auth' | '/dashboard' | '/groups' | '/bots/$botId' | '/bots/'
+    | '/'
+    | '/auth'
+    | '/dashboard'
+    | '/groups'
+    | '/jobs'
+    | '/messages'
+    | '/bots/$botId'
+    | '/bots/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/dashboard' | '/groups' | '/bots/$botId' | '/bots'
+  to:
+    | '/'
+    | '/auth'
+    | '/dashboard'
+    | '/groups'
+    | '/jobs'
+    | '/messages'
+    | '/bots/$botId'
+    | '/bots'
   id:
     | '__root__'
     | '/'
@@ -91,6 +124,8 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/dashboard'
     | '/_authenticated/groups'
+    | '/_authenticated/jobs'
+    | '/_authenticated/messages'
     | '/_authenticated/bots/$botId'
     | '/_authenticated/bots/'
   fileRoutesById: FileRoutesById
@@ -138,6 +173,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedGroupsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/jobs': {
+      id: '/_authenticated/jobs'
+      path: '/jobs'
+      fullPath: '/jobs'
+      preLoaderRoute: typeof AuthenticatedJobsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/messages': {
+      id: '/_authenticated/messages'
+      path: '/messages'
+      fullPath: '/messages'
+      preLoaderRoute: typeof AuthenticatedMessagesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/bots/': {
       id: '/_authenticated/bots/'
       path: '/bots'
@@ -158,6 +207,8 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedGroupsRoute: typeof AuthenticatedGroupsRoute
+  AuthenticatedJobsRoute: typeof AuthenticatedJobsRoute
+  AuthenticatedMessagesRoute: typeof AuthenticatedMessagesRoute
   AuthenticatedBotsBotIdRoute: typeof AuthenticatedBotsBotIdRoute
   AuthenticatedBotsIndexRoute: typeof AuthenticatedBotsIndexRoute
 }
@@ -165,6 +216,8 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedGroupsRoute: AuthenticatedGroupsRoute,
+  AuthenticatedJobsRoute: AuthenticatedJobsRoute,
+  AuthenticatedMessagesRoute: AuthenticatedMessagesRoute,
   AuthenticatedBotsBotIdRoute: AuthenticatedBotsBotIdRoute,
   AuthenticatedBotsIndexRoute: AuthenticatedBotsIndexRoute,
 }
