@@ -645,6 +645,8 @@ function EditJobDialog({
 
 
   const done = job.status === "done";
+  const retriedFrom = (job as { retried_from_job_id?: string | null }).retried_from_job_id ?? null;
+
   const failed = job.status === "failed";
 
   const doSaveJob = useServerFn(saveJob);
