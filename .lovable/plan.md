@@ -15,7 +15,32 @@ App übernehmen. Genau das baue ich aus.
 
 ## Was dazukommt
 
-### 1. Automatische Job-Planung
+### Manuelle Steuerung bleibt vollständig erhalten
+
+Nichts wird ersetzt: Worker weiterhin selbst anlegen, benennen, Token erzeugen
+und löschen; Jobs weiterhin von Hand planen (Bot, Gruppe, Typ, Zeitpunkt, Text,
+Freigabepflicht), abbrechen, wiederholen und einzeln freigeben. Die Automatik
+ist pro Bot zuschaltbar und lässt sich jederzeit ausschalten — dann läuft alles
+wie bisher rein manuell. Automatisch erzeugte Jobs sind als solche gekennzeichnet
+und lassen sich vor dem Start noch bearbeiten.
+
+### Aufwärmphasen-Verwaltung
+
+Eigene Seite "Aufwärmphase", weil das der kritische Teil gegen Sperren ist:
+- Aufwärmplan je Bot: Dauer in Tagen und Tagesmengen je Aktionstyp pro Stufe
+  (z. B. Tag 1–3 nur Lesen/wenige Likes, Tag 4–7 erste Kommentare, ab Tag 8 DMs)
+- Vorlagen für Aufwärmpläne (vorsichtig / normal / zügig) plus frei anpassbare
+  eigene Kurve; Werte je Tag einzeln überschreibbar
+- Fortschrittsanzeige pro Bot: aktueller Tag, aktuelle Stufe, heutiges Limit,
+  bereits verbraucht, Restkontingent, Datum des voraussichtlichen "live"-Status
+- manuelle Eingriffe: Aufwärmphase pausieren, verlängern, zurücksetzen, eine
+  Stufe zurückstufen oder vorzeitig auf "live" setzen
+- Sicherheitsnetz: bei Warn-/Sperrereignis wird der Bot automatisch eine Stufe
+  zurückgesetzt und die Aufwärmphase verlängert, mit Hinweis im Protokoll
+- Der Planer hält sich strikt an die Aufwärmwerte; manuell angelegte Jobs zeigen
+  eine Warnung, wenn sie das Tageslimit der Aufwärmphase überschreiten würden.
+
+### 1. Automatische Job-Planung (pro Bot zuschaltbar)
 Ein Planer läuft alle 10 Minuten und erzeugt selbstständig Jobs pro Bot:
 - nur innerhalb der Arbeitszeit des Bots, nicht wenn pausiert/gesperrt
 - respektiert Tages-Caps je Aktionstyp (Likes, Kommentare, DMs)
