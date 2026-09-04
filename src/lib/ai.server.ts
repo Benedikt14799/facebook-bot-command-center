@@ -171,6 +171,8 @@ export type TextRequest = {
   history?: HistoryEntry[];
   /** Angebot/Referral, falls es in genau dieser Nachricht platziert werden soll */
   offer?: { text: string; link?: string | null } | null;
+  /** Wahrscheinlichkeit für gelegentliche Tippfehler (0 = aus, 0.12 = Standard) */
+  typoRate?: number | null;
 };
 
 /** Baut System- und Nutzer-Prompt aus dem gesamten Kontext. */
