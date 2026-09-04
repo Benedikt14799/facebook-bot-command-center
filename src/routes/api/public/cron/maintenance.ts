@@ -3,16 +3,28 @@
  * pausiert Bots bei Fehlerhaeufung und arbeitet Jobs im Simulationsmodus ab.
  */
 import { createFileRoute } from "@tanstack/react-router";
-import { authenticateCronRequest } from "@/integrations/supabase/cron-auth";
+
 
 export const Route = createFileRoute("/api/public/cron/maintenance")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const unauthorized = await authenticateCronRequest(request);
-        if (unauthorized) return unauthorized;
-
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        const admin0 = supabaseAdmin as never as {
+          from: (t: string) => {
+            select: (c: string) => {
+              eq: (k: string, v: string) => { maybeSingle: () => Promise<{ data: { token: string } | null }> };
+            };
+          };
+        };
+
+        // Zugangspruefung: Token kommt aus der internen Tabelle cron_tokens
+        const provided = request.headers.get("x-cron-token") ?? "";
+        const { data: row } = await admin0.from("cron_tokens").select("token").eq("name", "scheduler").maybeSingle();
+        if (!row || !provided || provided !== row.token) {
+          return new Response("Unauthorized", { status: 401 });
+        }
+
         const { acquireLock, releaseLock, runMaintenance } = await import("@/lib/scheduler.server");
         const admin = supabaseAdmin as never;
 
