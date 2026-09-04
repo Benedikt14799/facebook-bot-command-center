@@ -17,7 +17,8 @@ import {
   Server,
   LogOut,
 } from "lucide-react";
-import { Flame, HeartPulse, Contact, Sparkles } from "lucide-react";
+import { Flame, HeartPulse, Contact, Sparkles, KeyRound } from "lucide-react";
+import { NotificationBell } from "@/components/NotificationBell";
 import type { ReactNode } from "react";
 
 const nav = [
@@ -33,6 +34,7 @@ const nav = [
   { to: "/logs", label: "Protokoll", icon: ScrollText },
   { to: "/workers", label: "Worker", icon: Server },
   { to: "/worker-health", label: "Worker-Health", icon: HeartPulse },
+  { to: "/unlock", label: "Freischaltung", icon: KeyRound },
 ] as const;
 
 export function AppShell({
@@ -102,7 +104,10 @@ export function AppShell({
               <p className="mt-0.5 text-sm text-muted-foreground">{subtitle}</p>
             ) : null}
           </div>
-          <div className="flex items-center gap-2">{actions}</div>
+          <div className="flex items-center gap-2">
+            {actions}
+            <NotificationBell />
+          </div>
         </header>
         <div className="md:hidden">
           <nav className="flex gap-1 overflow-x-auto border-b border-border px-3 py-2">
