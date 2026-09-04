@@ -15,6 +15,7 @@ export type Template = Tables["templates"]["Row"];
 export type EventRow = Tables["events"]["Row"];
 export type Worker = Tables["workers"]["Row"];
 export type Recipient = Tables["recipients"]["Row"];
+export type ContactEvent = Tables["contact_events"]["Row"];
 
 export async function selectAll<T extends keyof Tables & string>(
   table: T,
