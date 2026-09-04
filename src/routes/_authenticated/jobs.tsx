@@ -38,12 +38,7 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { selectAll, fmt } from "@/lib/db";
-import {
-  JOB_TYPES,
-  jobTypeLabel,
-  readTypoSettings,
-  type JobTypoSettings,
-} from "@/lib/job-types";
+import { JOB_TYPES, jobTypeLabel, readTypoSettings, type JobTypoSettings } from "@/lib/job-types";
 import { TypoControls } from "@/components/TypoControls";
 import { saveJob, updateJob } from "@/lib/jobs.functions";
 import { useServerFn } from "@tanstack/react-start";
@@ -190,7 +185,10 @@ function JobsPage() {
 
   const patch = useMutation({
     mutationFn: async ({ id, values }: { id: string; values: Record<string, unknown> }) => {
-      const { error } = await supabase.from("jobs").update(values as never).eq("id", id);
+      const { error } = await supabase
+        .from("jobs")
+        .update(values as never)
+        .eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["jobs"] }),
@@ -498,7 +496,9 @@ function JobFields({
           min={1}
           max={20}
           value={typeof payload["count"] === "number" ? payload["count"] : ""}
-          onChange={(e) => update("count", e.target.value === "" ? undefined : Number(e.target.value))}
+          onChange={(e) =>
+            update("count", e.target.value === "" ? undefined : Number(e.target.value))
+          }
           placeholder="z. B. 3"
         />
       </div>
@@ -547,7 +547,9 @@ function JobFields({
           min={1}
           max={100}
           value={typeof payload["limit"] === "number" ? payload["limit"] : ""}
-          onChange={(e) => update("limit", e.target.value === "" ? undefined : Number(e.target.value))}
+          onChange={(e) =>
+            update("limit", e.target.value === "" ? undefined : Number(e.target.value))
+          }
           placeholder="20"
         />
       </div>
@@ -559,8 +561,7 @@ function JobFields({
       <div className="space-y-3">
         <div className="space-y-1.5">
           <Label className="flex items-center gap-2">
-            Person (Profil-Link){" "}
-            <InfoHint text="Link zum Facebook-Profil des neuen Mitglieds." />
+            Person (Profil-Link) <InfoHint text="Link zum Facebook-Profil des neuen Mitglieds." />
           </Label>
           <Input
             type="url"
@@ -766,7 +767,13 @@ function EditJobDialog({
               </SelectContent>
             </Select>
           </div>
-          <JobFields type={type} payload={payload} onChange={setPayload} groupId={groupId || null} groups={groups} />
+          <JobFields
+            type={type}
+            payload={payload}
+            onChange={setPayload}
+            groupId={groupId || null}
+            groups={groups}
+          />
           <div className="space-y-1.5">
             <Label>Startzeit</Label>
             <Input

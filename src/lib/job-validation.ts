@@ -7,12 +7,7 @@
  */
 
 export type JobType =
-  | "dm_new_member"
-  | "reply_message"
-  | "like_posts"
-  | "comment_post"
-  | "scan_group"
-  | "follow_up";
+  "dm_new_member" | "reply_message" | "like_posts" | "comment_post" | "scan_group" | "follow_up";
 
 /** Pflichtfeld-Regeln fuer jeden Auftragstyp. */
 export type JobRequirement =
@@ -34,7 +29,10 @@ const REQUIREMENTS: Record<JobType, JobRequirement[]> = {
   ],
   comment_post: [
     { kind: "group", message: "Für ‚Beitrag kommentieren‘ muss eine Gruppe ausgewählt werden." },
-    { kind: "post", message: "Für ‚Beitrag kommentieren‘ muss post_url oder post_id angegeben werden." },
+    {
+      kind: "post",
+      message: "Für ‚Beitrag kommentieren‘ muss post_url oder post_id angegeben werden.",
+    },
   ],
   scan_group: [
     { kind: "group", message: "Für ‚Gruppe scannen‘ muss eine Gruppe ausgewählt werden." },
@@ -49,8 +47,7 @@ const REQUIREMENTS: Record<JobType, JobRequirement[]> = {
   reply_message: [
     {
       kind: "recipient",
-      message:
-        "Für ‚Auf Nachricht antworten‘ muss eine Person (recipient_id) angegeben werden.",
+      message: "Für ‚Auf Nachricht antworten‘ muss eine Person (recipient_id) angegeben werden.",
     },
   ],
   follow_up: [

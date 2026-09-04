@@ -46,7 +46,9 @@ function normalize(input: JobInput) {
     type: input.type,
     payload: payload as Json,
     generated_text: input.generated_text?.trim() || null,
-    scheduled_for: input.scheduled_for ? new Date(input.scheduled_for).toISOString() : new Date().toISOString(),
+    scheduled_for: input.scheduled_for
+      ? new Date(input.scheduled_for).toISOString()
+      : new Date().toISOString(),
     needs_approval: !!input.needs_approval,
     status: JOB_STATUSES.includes(input.status ?? "") ? input.status! : "pending",
     source: input.source ?? "manual",
@@ -81,7 +83,8 @@ export const updateJob = createServerFn({ method: "POST" })
     if (existing.error) throw new Error(existing.error.message);
     if (!existing.data) throw new Error("Auftrag nicht gefunden");
     if (existing.data.user_id !== context.userId) throw new Error("Nicht berechtigt");
-    if (existing.data.status === "done") throw new Error("Erledigte Aufträge können nicht bearbeitet werden");
+    if (existing.data.status === "done")
+      throw new Error("Erledigte Aufträge können nicht bearbeitet werden");
 
     const values = normalize(rest);
     const { error } = await context.supabase.from("jobs").update(values).eq("id", id);
