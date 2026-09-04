@@ -87,6 +87,7 @@ export const Route = createFileRoute("/api/public/worker/result")({
             : (body.error ?? null);
 
 
+        // Zusaetzlicher Rennschutz: nur veraendern, solange nicht abgeschlossen.
         const { data: job, error } = await ctx.admin
           .from("jobs")
           .update({
@@ -97,9 +98,12 @@ export const Route = createFileRoute("/api/public/worker/result")({
           })
           .eq("id", body.job_id)
           .eq("user_id", ctx.userId)
+          .not("status", "in", "(done,failed,skipped,cancelled)")
           .select("id, type, bot_id, group_id, recipient_id, generated_text")
           .maybeSingle();
         if (error) return json({ error: error.message }, 500);
+        if (!job) return json({ error: "job already finished" }, 409);
+
 
         if (status === "done" && job) {
           let recipientId = job.recipient_id;
