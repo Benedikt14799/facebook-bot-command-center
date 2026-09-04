@@ -11,7 +11,9 @@ import { AppShell } from "@/components/AppShell";
 import { InfoHint } from "@/components/InfoHint";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
+import { useServerFn } from "@tanstack/react-start";
+import { retryJobs } from "@/lib/jobs.functions";
+
 import { selectAll, fmt, type Job } from "@/lib/db";
 import { PROXY_TYPES, stealthScore, type ProxyCheck } from "@/lib/stealth";
 import { effectiveWorkerStatus, isWorkerOffline } from "@/lib/worker-status";
