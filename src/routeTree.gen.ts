@@ -36,6 +36,7 @@ import { Route as ApiPublicWorkerPollRouteImport } from './routes/api/public/wor
 import { Route as ApiPublicWorkerRecipientsRouteImport } from './routes/api/public/worker/recipients'
 import { Route as ApiPublicWorkerResultRouteImport } from './routes/api/public/worker/result'
 import { Route as ApiPublicWorkerSessionRouteImport } from './routes/api/public/worker/session'
+import { Route as ApiPublicWorkerUnlockRouteImport } from './routes/api/public/worker/unlock'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -177,6 +178,11 @@ const ApiPublicWorkerSessionRoute = ApiPublicWorkerSessionRouteImport.update({
   path: '/api/public/worker/session',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicWorkerUnlockRoute = ApiPublicWorkerUnlockRouteImport.update({
+  id: '/api/public/worker/unlock',
+  path: '/api/public/worker/unlock',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -205,6 +211,7 @@ export interface FileRoutesByFullPath {
   '/api/public/worker/recipients': typeof ApiPublicWorkerRecipientsRoute
   '/api/public/worker/result': typeof ApiPublicWorkerResultRoute
   '/api/public/worker/session': typeof ApiPublicWorkerSessionRoute
+  '/api/public/worker/unlock': typeof ApiPublicWorkerUnlockRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -233,6 +240,7 @@ export interface FileRoutesByTo {
   '/api/public/worker/recipients': typeof ApiPublicWorkerRecipientsRoute
   '/api/public/worker/result': typeof ApiPublicWorkerResultRoute
   '/api/public/worker/session': typeof ApiPublicWorkerSessionRoute
+  '/api/public/worker/unlock': typeof ApiPublicWorkerUnlockRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -263,6 +271,7 @@ export interface FileRoutesById {
   '/api/public/worker/recipients': typeof ApiPublicWorkerRecipientsRoute
   '/api/public/worker/result': typeof ApiPublicWorkerResultRoute
   '/api/public/worker/session': typeof ApiPublicWorkerSessionRoute
+  '/api/public/worker/unlock': typeof ApiPublicWorkerUnlockRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -293,6 +302,7 @@ export interface FileRouteTypes {
     | '/api/public/worker/recipients'
     | '/api/public/worker/result'
     | '/api/public/worker/session'
+    | '/api/public/worker/unlock'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -321,6 +331,7 @@ export interface FileRouteTypes {
     | '/api/public/worker/recipients'
     | '/api/public/worker/result'
     | '/api/public/worker/session'
+    | '/api/public/worker/unlock'
   id:
     | '__root__'
     | '/'
@@ -350,6 +361,7 @@ export interface FileRouteTypes {
     | '/api/public/worker/recipients'
     | '/api/public/worker/result'
     | '/api/public/worker/session'
+    | '/api/public/worker/unlock'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -366,6 +378,7 @@ export interface RootRouteChildren {
   ApiPublicWorkerRecipientsRoute: typeof ApiPublicWorkerRecipientsRoute
   ApiPublicWorkerResultRoute: typeof ApiPublicWorkerResultRoute
   ApiPublicWorkerSessionRoute: typeof ApiPublicWorkerSessionRoute
+  ApiPublicWorkerUnlockRoute: typeof ApiPublicWorkerUnlockRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -559,6 +572,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicWorkerSessionRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/worker/unlock': {
+      id: '/api/public/worker/unlock'
+      path: '/api/public/worker/unlock'
+      fullPath: '/api/public/worker/unlock'
+      preLoaderRoute: typeof ApiPublicWorkerUnlockRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -614,6 +634,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicWorkerRecipientsRoute: ApiPublicWorkerRecipientsRoute,
   ApiPublicWorkerResultRoute: ApiPublicWorkerResultRoute,
   ApiPublicWorkerSessionRoute: ApiPublicWorkerSessionRoute,
+  ApiPublicWorkerUnlockRoute: ApiPublicWorkerUnlockRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

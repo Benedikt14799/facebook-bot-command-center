@@ -87,15 +87,29 @@ export const Route = createFileRoute("/api/public/worker/session")({
           if (error) return json({ error: error.message }, 500);
         }
 
+        const status = body.status ?? "ok";
         await ctx.admin
           .from("bots")
           .update({
-            session_status: body.status ?? "ok",
+            session_status: status,
             session_updated_at: new Date().toISOString(),
             last_seen_at: new Date().toISOString(),
           })
           .eq("id", body.bot_id)
           .eq("user_id", ctx.userId);
+
+        // Frische, gueltige Cookies = die Freischaltung hat geklappt.
+        if (body.cookies && status === "ok") {
+          const { data: bot } = await ctx.admin
+            .from("bots")
+            .select("manual_mode")
+            .eq("id", body.bot_id)
+            .eq("user_id", ctx.userId)
+            .maybeSingle();
+          if ((bot as { manual_mode?: boolean } | null)?.manual_mode) {
+            await clearManualMode(ctx.admin, { userId: ctx.userId, botId: body.bot_id });
+          }
+        }
 
         return json({ ok: true });
       },
