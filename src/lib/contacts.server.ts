@@ -198,9 +198,9 @@ export async function upsertRecipient(admin: Admin, input: PersonInput) {
   // Namen robust parsen: Titel/Emojis raus, "Nachname, Vorname" drehen,
   // notfalls aus der Profil-URL ableiten.
   const parsed = parseName({
-    name: input.name,
-    profileUrl: input.profileUrl,
-    text: input.context,
+    name: input.name ?? null,
+    profileUrl: input.profileUrl ?? null,
+    text: input.context ?? null,
   });
 
   const patch: Record<string, unknown> = {
