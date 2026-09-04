@@ -24,6 +24,7 @@ import { Route as AuthenticatedWorkersRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedBotsIndexRouteImport } from './routes/_authenticated/bots.index'
 import { Route as AuthenticatedBotsBotIdRouteImport } from './routes/_authenticated/bots.$botId'
 import { Route as AuthenticatedRecipientsIndexRouteImport } from './routes/_authenticated/recipients.index'
+import { Route as AuthenticatedRecipientsRecipientIdRouteImport } from './routes/_authenticated/recipients.$recipientId'
 import { Route as ApiPublicCronMaintenanceRouteImport } from './routes/api/public/cron/maintenance'
 import { Route as ApiPublicCronPlanRouteImport } from './routes/api/public/cron/plan'
 import { Route as ApiPublicWorkerEventsRouteImport } from './routes/api/public/worker/events'
@@ -110,6 +111,12 @@ const AuthenticatedRecipientsIndexRoute =
     path: '/recipients/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedRecipientsRecipientIdRoute =
+  AuthenticatedRecipientsRecipientIdRouteImport.update({
+    id: '/recipients/$recipientId',
+    path: '/recipients/$recipientId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const ApiPublicCronMaintenanceRoute =
   ApiPublicCronMaintenanceRouteImport.update({
     id: '/api/public/cron/maintenance',
@@ -172,6 +179,7 @@ export interface FileRoutesByFullPath {
   '/worker-health': typeof AuthenticatedWorkerHealthRoute
   '/workers': typeof AuthenticatedWorkersRoute
   '/bots/$botId': typeof AuthenticatedBotsBotIdRoute
+  '/recipients/$recipientId': typeof AuthenticatedRecipientsRecipientIdRoute
   '/bots/': typeof AuthenticatedBotsIndexRoute
   '/recipients/': typeof AuthenticatedRecipientsIndexRoute
   '/api/public/cron/maintenance': typeof ApiPublicCronMaintenanceRoute
@@ -197,6 +205,7 @@ export interface FileRoutesByTo {
   '/worker-health': typeof AuthenticatedWorkerHealthRoute
   '/workers': typeof AuthenticatedWorkersRoute
   '/bots/$botId': typeof AuthenticatedBotsBotIdRoute
+  '/recipients/$recipientId': typeof AuthenticatedRecipientsRecipientIdRoute
   '/bots': typeof AuthenticatedBotsIndexRoute
   '/recipients': typeof AuthenticatedRecipientsIndexRoute
   '/api/public/cron/maintenance': typeof ApiPublicCronMaintenanceRoute
@@ -224,6 +233,7 @@ export interface FileRoutesById {
   '/_authenticated/worker-health': typeof AuthenticatedWorkerHealthRoute
   '/_authenticated/workers': typeof AuthenticatedWorkersRoute
   '/_authenticated/bots/$botId': typeof AuthenticatedBotsBotIdRoute
+  '/_authenticated/recipients/$recipientId': typeof AuthenticatedRecipientsRecipientIdRoute
   '/_authenticated/bots/': typeof AuthenticatedBotsIndexRoute
   '/_authenticated/recipients/': typeof AuthenticatedRecipientsIndexRoute
   '/api/public/cron/maintenance': typeof ApiPublicCronMaintenanceRoute
@@ -251,6 +261,7 @@ export interface FileRouteTypes {
     | '/worker-health'
     | '/workers'
     | '/bots/$botId'
+    | '/recipients/$recipientId'
     | '/bots/'
     | '/recipients/'
     | '/api/public/cron/maintenance'
@@ -276,6 +287,7 @@ export interface FileRouteTypes {
     | '/worker-health'
     | '/workers'
     | '/bots/$botId'
+    | '/recipients/$recipientId'
     | '/bots'
     | '/recipients'
     | '/api/public/cron/maintenance'
@@ -302,6 +314,7 @@ export interface FileRouteTypes {
     | '/_authenticated/worker-health'
     | '/_authenticated/workers'
     | '/_authenticated/bots/$botId'
+    | '/_authenticated/recipients/$recipientId'
     | '/_authenticated/bots/'
     | '/_authenticated/recipients/'
     | '/api/public/cron/maintenance'
@@ -437,6 +450,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRecipientsIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/recipients/$recipientId': {
+      id: '/_authenticated/recipients/$recipientId'
+      path: '/recipients/$recipientId'
+      fullPath: '/recipients/$recipientId'
+      preLoaderRoute: typeof AuthenticatedRecipientsRecipientIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/api/public/cron/maintenance': {
       id: '/api/public/cron/maintenance'
       path: '/api/public/cron/maintenance'
@@ -514,6 +534,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedWorkerHealthRoute: typeof AuthenticatedWorkerHealthRoute
   AuthenticatedWorkersRoute: typeof AuthenticatedWorkersRoute
   AuthenticatedBotsBotIdRoute: typeof AuthenticatedBotsBotIdRoute
+  AuthenticatedRecipientsRecipientIdRoute: typeof AuthenticatedRecipientsRecipientIdRoute
   AuthenticatedBotsIndexRoute: typeof AuthenticatedBotsIndexRoute
   AuthenticatedRecipientsIndexRoute: typeof AuthenticatedRecipientsIndexRoute
 }
@@ -529,6 +550,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedWorkerHealthRoute: AuthenticatedWorkerHealthRoute,
   AuthenticatedWorkersRoute: AuthenticatedWorkersRoute,
   AuthenticatedBotsBotIdRoute: AuthenticatedBotsBotIdRoute,
+  AuthenticatedRecipientsRecipientIdRoute:
+    AuthenticatedRecipientsRecipientIdRoute,
   AuthenticatedBotsIndexRoute: AuthenticatedBotsIndexRoute,
   AuthenticatedRecipientsIndexRoute: AuthenticatedRecipientsIndexRoute,
 }
