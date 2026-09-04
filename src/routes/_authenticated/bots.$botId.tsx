@@ -381,6 +381,8 @@ function BotDetail() {
             Stand: {fmt(bot.data.session_updated_at)}
           </p>
         </section>
+
+        <StealthPanel botId={botId} form={form} set={set} />
       </div>
     </AppShell>
   );
