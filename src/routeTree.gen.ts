@@ -21,6 +21,12 @@ import { Route as AuthenticatedTemplatesRouteImport } from './routes/_authentica
 import { Route as AuthenticatedWorkersRouteImport } from './routes/_authenticated/workers'
 import { Route as AuthenticatedBotsIndexRouteImport } from './routes/_authenticated/bots.index'
 import { Route as AuthenticatedBotsBotIdRouteImport } from './routes/_authenticated/bots.$botId'
+import { Route as ApiPublicWorkerEventsRouteImport } from './routes/api/public/worker/events'
+import { Route as ApiPublicWorkerHeartbeatRouteImport } from './routes/api/public/worker/heartbeat'
+import { Route as ApiPublicWorkerMessagesRouteImport } from './routes/api/public/worker/messages'
+import { Route as ApiPublicWorkerPollRouteImport } from './routes/api/public/worker/poll'
+import { Route as ApiPublicWorkerResultRouteImport } from './routes/api/public/worker/result'
+import { Route as ApiPublicWorkerSessionRouteImport } from './routes/api/public/worker/session'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -81,6 +87,37 @@ const AuthenticatedBotsBotIdRoute = AuthenticatedBotsBotIdRouteImport.update({
   path: '/bots/$botId',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const ApiPublicWorkerEventsRoute = ApiPublicWorkerEventsRouteImport.update({
+  id: '/api/public/worker/events',
+  path: '/api/public/worker/events',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicWorkerHeartbeatRoute =
+  ApiPublicWorkerHeartbeatRouteImport.update({
+    id: '/api/public/worker/heartbeat',
+    path: '/api/public/worker/heartbeat',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicWorkerMessagesRoute = ApiPublicWorkerMessagesRouteImport.update({
+  id: '/api/public/worker/messages',
+  path: '/api/public/worker/messages',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicWorkerPollRoute = ApiPublicWorkerPollRouteImport.update({
+  id: '/api/public/worker/poll',
+  path: '/api/public/worker/poll',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicWorkerResultRoute = ApiPublicWorkerResultRouteImport.update({
+  id: '/api/public/worker/result',
+  path: '/api/public/worker/result',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicWorkerSessionRoute = ApiPublicWorkerSessionRouteImport.update({
+  id: '/api/public/worker/session',
+  path: '/api/public/worker/session',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -94,6 +131,12 @@ export interface FileRoutesByFullPath {
   '/workers': typeof AuthenticatedWorkersRoute
   '/bots/$botId': typeof AuthenticatedBotsBotIdRoute
   '/bots/': typeof AuthenticatedBotsIndexRoute
+  '/api/public/worker/events': typeof ApiPublicWorkerEventsRoute
+  '/api/public/worker/heartbeat': typeof ApiPublicWorkerHeartbeatRoute
+  '/api/public/worker/messages': typeof ApiPublicWorkerMessagesRoute
+  '/api/public/worker/poll': typeof ApiPublicWorkerPollRoute
+  '/api/public/worker/result': typeof ApiPublicWorkerResultRoute
+  '/api/public/worker/session': typeof ApiPublicWorkerSessionRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -107,6 +150,12 @@ export interface FileRoutesByTo {
   '/workers': typeof AuthenticatedWorkersRoute
   '/bots/$botId': typeof AuthenticatedBotsBotIdRoute
   '/bots': typeof AuthenticatedBotsIndexRoute
+  '/api/public/worker/events': typeof ApiPublicWorkerEventsRoute
+  '/api/public/worker/heartbeat': typeof ApiPublicWorkerHeartbeatRoute
+  '/api/public/worker/messages': typeof ApiPublicWorkerMessagesRoute
+  '/api/public/worker/poll': typeof ApiPublicWorkerPollRoute
+  '/api/public/worker/result': typeof ApiPublicWorkerResultRoute
+  '/api/public/worker/session': typeof ApiPublicWorkerSessionRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -122,6 +171,12 @@ export interface FileRoutesById {
   '/_authenticated/workers': typeof AuthenticatedWorkersRoute
   '/_authenticated/bots/$botId': typeof AuthenticatedBotsBotIdRoute
   '/_authenticated/bots/': typeof AuthenticatedBotsIndexRoute
+  '/api/public/worker/events': typeof ApiPublicWorkerEventsRoute
+  '/api/public/worker/heartbeat': typeof ApiPublicWorkerHeartbeatRoute
+  '/api/public/worker/messages': typeof ApiPublicWorkerMessagesRoute
+  '/api/public/worker/poll': typeof ApiPublicWorkerPollRoute
+  '/api/public/worker/result': typeof ApiPublicWorkerResultRoute
+  '/api/public/worker/session': typeof ApiPublicWorkerSessionRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -137,6 +192,12 @@ export interface FileRouteTypes {
     | '/workers'
     | '/bots/$botId'
     | '/bots/'
+    | '/api/public/worker/events'
+    | '/api/public/worker/heartbeat'
+    | '/api/public/worker/messages'
+    | '/api/public/worker/poll'
+    | '/api/public/worker/result'
+    | '/api/public/worker/session'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -150,6 +211,12 @@ export interface FileRouteTypes {
     | '/workers'
     | '/bots/$botId'
     | '/bots'
+    | '/api/public/worker/events'
+    | '/api/public/worker/heartbeat'
+    | '/api/public/worker/messages'
+    | '/api/public/worker/poll'
+    | '/api/public/worker/result'
+    | '/api/public/worker/session'
   id:
     | '__root__'
     | '/'
@@ -164,12 +231,24 @@ export interface FileRouteTypes {
     | '/_authenticated/workers'
     | '/_authenticated/bots/$botId'
     | '/_authenticated/bots/'
+    | '/api/public/worker/events'
+    | '/api/public/worker/heartbeat'
+    | '/api/public/worker/messages'
+    | '/api/public/worker/poll'
+    | '/api/public/worker/result'
+    | '/api/public/worker/session'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  ApiPublicWorkerEventsRoute: typeof ApiPublicWorkerEventsRoute
+  ApiPublicWorkerHeartbeatRoute: typeof ApiPublicWorkerHeartbeatRoute
+  ApiPublicWorkerMessagesRoute: typeof ApiPublicWorkerMessagesRoute
+  ApiPublicWorkerPollRoute: typeof ApiPublicWorkerPollRoute
+  ApiPublicWorkerResultRoute: typeof ApiPublicWorkerResultRoute
+  ApiPublicWorkerSessionRoute: typeof ApiPublicWorkerSessionRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -258,6 +337,48 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBotsBotIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/worker/events': {
+      id: '/api/public/worker/events'
+      path: '/api/public/worker/events'
+      fullPath: '/api/public/worker/events'
+      preLoaderRoute: typeof ApiPublicWorkerEventsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/worker/heartbeat': {
+      id: '/api/public/worker/heartbeat'
+      path: '/api/public/worker/heartbeat'
+      fullPath: '/api/public/worker/heartbeat'
+      preLoaderRoute: typeof ApiPublicWorkerHeartbeatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/worker/messages': {
+      id: '/api/public/worker/messages'
+      path: '/api/public/worker/messages'
+      fullPath: '/api/public/worker/messages'
+      preLoaderRoute: typeof ApiPublicWorkerMessagesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/worker/poll': {
+      id: '/api/public/worker/poll'
+      path: '/api/public/worker/poll'
+      fullPath: '/api/public/worker/poll'
+      preLoaderRoute: typeof ApiPublicWorkerPollRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/worker/result': {
+      id: '/api/public/worker/result'
+      path: '/api/public/worker/result'
+      fullPath: '/api/public/worker/result'
+      preLoaderRoute: typeof ApiPublicWorkerResultRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/worker/session': {
+      id: '/api/public/worker/session'
+      path: '/api/public/worker/session'
+      fullPath: '/api/public/worker/session'
+      preLoaderRoute: typeof ApiPublicWorkerSessionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -292,6 +413,12 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  ApiPublicWorkerEventsRoute: ApiPublicWorkerEventsRoute,
+  ApiPublicWorkerHeartbeatRoute: ApiPublicWorkerHeartbeatRoute,
+  ApiPublicWorkerMessagesRoute: ApiPublicWorkerMessagesRoute,
+  ApiPublicWorkerPollRoute: ApiPublicWorkerPollRoute,
+  ApiPublicWorkerResultRoute: ApiPublicWorkerResultRoute,
+  ApiPublicWorkerSessionRoute: ApiPublicWorkerSessionRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
