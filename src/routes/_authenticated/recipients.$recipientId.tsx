@@ -39,16 +39,50 @@ function RecipientDetail() {
     },
   });
 
+  // Alle Quellen laden und danach zu einer Zeitleiste zusammenfuehren.
   const timeline = useQuery({
-    queryKey: ["contact_events", recipientId],
+    queryKey: ["contact-timeline", recipientId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("contact_events")
-        .select("*")
-        .eq("recipient_id", recipientId)
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return data ?? [];
+      const [ce, msgs, jobs] = await Promise.all([
+        supabase
+          .from("contact_events")
+          .select("*")
+          .eq("recipient_id", recipientId)
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("messages")
+          .select("*")
+          .eq("recipient_id", recipientId)
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("jobs")
+          .select("*")
+          .eq("recipient_id", recipientId)
+          .eq("status", "failed"),
+      ]);
+
+      // Checkpoint-/Sperr-Ereignisse des zugehoerigen Bots einblenden.
+      const botIds = [
+        ...new Set([...(ce.data ?? []), ...(msgs.data ?? [])].map((r) => r.bot_id).filter(Boolean)),
+      ] as string[];
+      const events = botIds.length
+        ? (
+            await supabase
+              .from("events")
+              .select("*")
+              .in("bot_id", botIds)
+              .in("type", ["checkpoint", "captcha", "blocked", "login_required", "session_expired", "two_factor"])
+              .order("created_at", { ascending: false })
+              .limit(50)
+          ).data ?? []
+        : [];
+
+      return buildTimeline({
+        contactEvents: ce.data ?? [],
+        messages: msgs.data ?? [],
+        jobs: jobs.data ?? [],
+        events,
+      });
     },
   });
 
