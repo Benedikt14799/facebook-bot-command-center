@@ -423,6 +423,28 @@ export async function runMaintenance(admin: Admin, now = new Date()): Promise<Ma
           source: "simulation",
         });
       }
+      // Simulierte Aktionen ebenfalls in die Kontaktakte schreiben
+      if (job.recipient_id) {
+        await logContact(admin, {
+          userId: bot.user_id,
+          recipientId: job.recipient_id,
+          botId: bot.id,
+          groupId: job.group_id,
+          jobId: job.id,
+          kind:
+            job.type === "like" || job.type === "like_posts"
+              ? "like"
+              : job.type === "dm_new_member"
+                ? "welcome"
+                : job.type.startsWith("comment")
+                  ? "comment"
+                  : "reply_out",
+          direction: "out",
+          body: (job.payload as { text?: string } | null)?.text ?? null,
+          meta: { simulated: true },
+        });
+        await advanceStage(admin, job.recipient_id, "contacted");
+      }
       res.simulated += 1;
     }
   }
