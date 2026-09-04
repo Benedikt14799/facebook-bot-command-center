@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { InfoHint } from "@/components/InfoHint";
 import { StatusBadge } from "@/components/StatusBadge";
+import { StealthPanel } from "@/components/StealthPanel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -381,6 +382,8 @@ function BotDetail() {
             Stand: {fmt(bot.data.session_updated_at)}
           </p>
         </section>
+
+        <StealthPanel botId={botId} form={form} set={set} />
       </div>
     </AppShell>
   );

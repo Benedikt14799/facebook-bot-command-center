@@ -122,8 +122,9 @@ content-type: application/json
 | POST | `/api/public/worker/result` | `{ "job_id", "status": "done\|failed\|skipped", "result"?, "error"? }` | Ergebnis zurückmelden |
 | POST | `/api/public/worker/messages` | `{ "direction": "in\|out", "body", "bot_id"?, "group_id"?, … }` | Nachricht ins Backlog schreiben |
 | POST | `/api/public/worker/events` | `{ "type", "message", "level"?, "bot_id"?, "meta"? }` | Ereignis protokollieren |
-| GET | `/api/public/worker/session?bot_id=…` | — | Cookies + User-Agent des Bots |
+| GET | `/api/public/worker/session?bot_id=…` | — | Cookies, User-Agent, Proxy, Fingerprint, Verhalten und Antidetect-Konfiguration des Bots |
 | POST | `/api/public/worker/session` | `{ "bot_id", "cookies"?, "user_agent"?, "status"? }` | Cookies/Session-Status aktualisieren |
+| POST | `/api/public/worker/ip-report` | `{ "bot_id", "ip", "country", "isp", "hosting", … }` | tatsächliche Ausgangs-IP der Sitzung melden |
 
 Regeln:
 
@@ -134,6 +135,26 @@ Regeln:
 - Ein Event mit `level: "error"` und `type: "blocked"` sperrt und pausiert den
   betroffenen Bot automatisch.
 - Ohne gültiges Token antworten alle Endpunkte mit `401`.
+
+## Tarnung & Sperr-Schutz
+
+Facebook erkennt Automatisierung an IP-Reputation, Browser-Fingerprint und
+Verhalten. Das Cockpit verwaltet alle drei Punkte pro Bot:
+
+- **Proxy:** Static Residential (ISP) oder Mobil-Proxy (4G/5G) im Land des
+  Accounts. Rechenzentrums-IPs werden rot markiert und beim IP-Bericht des
+  Workers automatisch pausiert. Das Proxy-Passwort liegt in `bot_secrets` und
+  ist für den Browser nicht lesbar.
+- **Fingerprint:** feste Kombination aus Plattform, User-Agent, Auflösung,
+  Hardware, Sprache und Zeitzone je Bot, inklusive Konsistenzprüfung.
+- **Browserstart:** getarntes Chromium (persistentes Profil, keine
+  `navigator.webdriver`-Spur) oder ein Antidetect-Profil (AdsPower,
+  Dolphin{anty}, GoLogin) per CDP, mit optionalem Rückfall auf Stealth.
+- **Verhalten:** Tippgeschwindigkeit mit Tippfehlern, zufällige Pausen,
+  Feed-Scrollen vor der ersten Aktion, Sitzungslängen und Lesezeit — alles
+  pro Bot einstellbar, Presets: vorsichtig / normal / zügig.
+
+Details siehe [WORKER_INTEGRATION.md](./WORKER_INTEGRATION.md).
 
 ### Minimalbeispiel (Python)
 

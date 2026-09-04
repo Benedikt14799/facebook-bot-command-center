@@ -30,6 +30,7 @@ import { Route as ApiPublicCronMaintenanceRouteImport } from './routes/api/publi
 import { Route as ApiPublicCronPlanRouteImport } from './routes/api/public/cron/plan'
 import { Route as ApiPublicWorkerEventsRouteImport } from './routes/api/public/worker/events'
 import { Route as ApiPublicWorkerHeartbeatRouteImport } from './routes/api/public/worker/heartbeat'
+import { Route as ApiPublicWorkerIpReportRouteImport } from './routes/api/public/worker/ip-report'
 import { Route as ApiPublicWorkerMessagesRouteImport } from './routes/api/public/worker/messages'
 import { Route as ApiPublicWorkerPollRouteImport } from './routes/api/public/worker/poll'
 import { Route as ApiPublicWorkerRecipientsRouteImport } from './routes/api/public/worker/recipients'
@@ -145,6 +146,11 @@ const ApiPublicWorkerHeartbeatRoute =
     path: '/api/public/worker/heartbeat',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicWorkerIpReportRoute = ApiPublicWorkerIpReportRouteImport.update({
+  id: '/api/public/worker/ip-report',
+  path: '/api/public/worker/ip-report',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicWorkerMessagesRoute = ApiPublicWorkerMessagesRouteImport.update({
   id: '/api/public/worker/messages',
   path: '/api/public/worker/messages',
@@ -193,6 +199,7 @@ export interface FileRoutesByFullPath {
   '/api/public/cron/plan': typeof ApiPublicCronPlanRoute
   '/api/public/worker/events': typeof ApiPublicWorkerEventsRoute
   '/api/public/worker/heartbeat': typeof ApiPublicWorkerHeartbeatRoute
+  '/api/public/worker/ip-report': typeof ApiPublicWorkerIpReportRoute
   '/api/public/worker/messages': typeof ApiPublicWorkerMessagesRoute
   '/api/public/worker/poll': typeof ApiPublicWorkerPollRoute
   '/api/public/worker/recipients': typeof ApiPublicWorkerRecipientsRoute
@@ -220,6 +227,7 @@ export interface FileRoutesByTo {
   '/api/public/cron/plan': typeof ApiPublicCronPlanRoute
   '/api/public/worker/events': typeof ApiPublicWorkerEventsRoute
   '/api/public/worker/heartbeat': typeof ApiPublicWorkerHeartbeatRoute
+  '/api/public/worker/ip-report': typeof ApiPublicWorkerIpReportRoute
   '/api/public/worker/messages': typeof ApiPublicWorkerMessagesRoute
   '/api/public/worker/poll': typeof ApiPublicWorkerPollRoute
   '/api/public/worker/recipients': typeof ApiPublicWorkerRecipientsRoute
@@ -249,6 +257,7 @@ export interface FileRoutesById {
   '/api/public/cron/plan': typeof ApiPublicCronPlanRoute
   '/api/public/worker/events': typeof ApiPublicWorkerEventsRoute
   '/api/public/worker/heartbeat': typeof ApiPublicWorkerHeartbeatRoute
+  '/api/public/worker/ip-report': typeof ApiPublicWorkerIpReportRoute
   '/api/public/worker/messages': typeof ApiPublicWorkerMessagesRoute
   '/api/public/worker/poll': typeof ApiPublicWorkerPollRoute
   '/api/public/worker/recipients': typeof ApiPublicWorkerRecipientsRoute
@@ -278,6 +287,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/plan'
     | '/api/public/worker/events'
     | '/api/public/worker/heartbeat'
+    | '/api/public/worker/ip-report'
     | '/api/public/worker/messages'
     | '/api/public/worker/poll'
     | '/api/public/worker/recipients'
@@ -305,6 +315,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/plan'
     | '/api/public/worker/events'
     | '/api/public/worker/heartbeat'
+    | '/api/public/worker/ip-report'
     | '/api/public/worker/messages'
     | '/api/public/worker/poll'
     | '/api/public/worker/recipients'
@@ -333,6 +344,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/plan'
     | '/api/public/worker/events'
     | '/api/public/worker/heartbeat'
+    | '/api/public/worker/ip-report'
     | '/api/public/worker/messages'
     | '/api/public/worker/poll'
     | '/api/public/worker/recipients'
@@ -348,6 +360,7 @@ export interface RootRouteChildren {
   ApiPublicCronPlanRoute: typeof ApiPublicCronPlanRoute
   ApiPublicWorkerEventsRoute: typeof ApiPublicWorkerEventsRoute
   ApiPublicWorkerHeartbeatRoute: typeof ApiPublicWorkerHeartbeatRoute
+  ApiPublicWorkerIpReportRoute: typeof ApiPublicWorkerIpReportRoute
   ApiPublicWorkerMessagesRoute: typeof ApiPublicWorkerMessagesRoute
   ApiPublicWorkerPollRoute: typeof ApiPublicWorkerPollRoute
   ApiPublicWorkerRecipientsRoute: typeof ApiPublicWorkerRecipientsRoute
@@ -504,6 +517,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicWorkerHeartbeatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/worker/ip-report': {
+      id: '/api/public/worker/ip-report'
+      path: '/api/public/worker/ip-report'
+      fullPath: '/api/public/worker/ip-report'
+      preLoaderRoute: typeof ApiPublicWorkerIpReportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/worker/messages': {
       id: '/api/public/worker/messages'
       path: '/api/public/worker/messages'
@@ -588,6 +608,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicCronPlanRoute: ApiPublicCronPlanRoute,
   ApiPublicWorkerEventsRoute: ApiPublicWorkerEventsRoute,
   ApiPublicWorkerHeartbeatRoute: ApiPublicWorkerHeartbeatRoute,
+  ApiPublicWorkerIpReportRoute: ApiPublicWorkerIpReportRoute,
   ApiPublicWorkerMessagesRoute: ApiPublicWorkerMessagesRoute,
   ApiPublicWorkerPollRoute: ApiPublicWorkerPollRoute,
   ApiPublicWorkerRecipientsRoute: ApiPublicWorkerRecipientsRoute,

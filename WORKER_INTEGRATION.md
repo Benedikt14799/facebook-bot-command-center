@@ -142,3 +142,33 @@ Anbieter hinterlegen (OpenAI, OpenRouter, Anthropic oder ein beliebiger
 OpenAI-kompatibler Endpunkt). Der Schlüssel wird nur serverseitig gelesen.
 Die KI bekommt Vorname, erkannten Text, Gesprächsverlauf, Rolle des Bots und
 optional das Angebot als Kontext — und schreibt daraus kurze, natürliche Texte.
+
+## Tarnung: Proxy, Fingerprint und Verhalten
+
+### Proxy (Pflicht auf Servern)
+- Empfohlen: **Static Residential (ISP)** oder **Mobil-Proxy (4G/5G)**, IP im Land des Accounts.
+- Rechenzentrums-IPs (Hetzner, AWS, DigitalOcean …) führen fast immer zu Checkpoint oder Sperre.
+- Rotierende Residential-Proxys nur mit fester Sitzungsbindung — IP-Wechsel im Minutentakt ist ein Alarmsignal.
+- Konfiguration je Bot im Cockpit unter „Netzwerk & Proxy“. Das Passwort liegt in `bot_secrets` und ist im Browser nicht lesbar.
+- `Proxy prüfen` im Cockpit bewertet den Proxy-Endpunkt (Land, Anbieter, Hosting-Flag). Die echte Ausgangs-IP meldet der Worker per `POST /api/public/worker/ip-report` bei jedem Sitzungsstart; bei Hosting-IP wird der Bot automatisch pausiert und ein `proxy_warning`-Ereignis erzeugt.
+
+### Session-Endpunkt
+`GET /api/public/worker/session?bot_id=…` liefert zusätzlich zu Cookies und User-Agent:
+
+| Feld | Inhalt |
+| --- | --- |
+| `proxy` | `{ type, server, username, password, country, rotate_url }` oder `null` |
+| `fingerprint` | Plattform, User-Agent, Auflösung, RAM, CPU-Kerne, Sprache, Zeitzone |
+| `behavior` | Tippverzögerungen, Pausen, Scroll-Verhalten, Sitzungslängen, Lesezeit |
+| `browser_mode` | `stealth` oder `antidetect` |
+| `antidetect` | Anbieter, lokale API-URL, Profil-ID, API-Schlüssel, Stealth-Rückfall |
+
+### Browserstart
+- **Stealth-Chromium (Standard):** persistentes Profil je Bot, `--disable-blink-features=AutomationControlled`, Init-Script gegen `navigator.webdriver`, Proxy + Fingerprint aus dem Cockpit.
+- **Antidetect per CDP (optional):** AdsPower, Dolphin{anty} oder GoLogin werden über ihre lokale API gestartet, der Worker verbindet sich mit `connect_over_cdp`. Schlägt der Start fehl, greift optional Stealth-Chromium.
+
+### Menschliches Verhalten
+Der Worker nutzt nur Zufallswerte innerhalb der eingestellten Bereiche: `human_type` (Anschlag für Anschlag inkl. Tippfehler + Korrektur), `human_pause`, `human_scroll` (Feed-Aufwärmen vor der ersten Aktion) und `read_delay` (Lesezeit abhängig von der Textlänge). Niemals `page.fill()` verwenden.
+
+### Checkpoint-Erkennung
+`check_blocked()` prüft URL und Seiteninhalt auf Checkpoint-/Sperrhinweise, bricht sofort ab und meldet ein `blocked`-Ereignis — das Cockpit pausiert den Bot daraufhin automatisch.

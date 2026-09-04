@@ -4,6 +4,7 @@
  */
 import { createFileRoute } from "@tanstack/react-router";
 import { authenticateWorker, json } from "@/lib/worker-auth.server";
+import { normalizeAntidetect, normalizeBehavior, normalizeFingerprint } from "@/lib/stealth";
 
 export const Route = createFileRoute("/api/public/worker/session")({
   server: {
@@ -22,7 +23,44 @@ export const Route = createFileRoute("/api/public/worker/session")({
           .maybeSingle();
         if (error) return json({ error: error.message }, 500);
         if (!data) return json({ error: "no session" }, 404);
-        return json(data);
+
+        // Tarnprofil: Proxy, Fingerprint, Verhalten und Antidetect-Konfiguration.
+        const { data: bot } = await ctx.admin
+          .from("bots")
+          .select(
+            "proxy_type, proxy_protocol, proxy_host, proxy_port, proxy_user, proxy_country, proxy_rotate_url, fingerprint, behavior, browser_mode, antidetect",
+          )
+          .eq("id", botId)
+          .eq("user_id", ctx.userId)
+          .maybeSingle();
+        const { data: secrets } = await ctx.admin
+          .from("bot_secrets")
+          .select("proxy_password, antidetect_key")
+          .eq("bot_id", botId)
+          .eq("user_id", ctx.userId)
+          .maybeSingle();
+
+        const fingerprint = normalizeFingerprint(bot?.fingerprint);
+        return json({
+          ...data,
+          user_agent: data.user_agent ?? fingerprint.user_agent,
+          proxy: bot?.proxy_host
+            ? {
+                type: bot.proxy_type,
+                server: `${bot.proxy_protocol ?? "http"}://${bot.proxy_host}:${bot.proxy_port ?? 8080}`,
+                username: bot.proxy_user ?? null,
+                password: secrets?.proxy_password ?? null,
+                country: bot.proxy_country ?? null,
+                rotate_url: bot.proxy_rotate_url ?? null,
+              }
+            : null,
+          fingerprint,
+          behavior: normalizeBehavior(bot?.behavior),
+          browser_mode: bot?.browser_mode ?? "stealth",
+          antidetect: bot?.antidetect
+            ? { ...normalizeAntidetect(bot.antidetect), api_key: secrets?.antidetect_key ?? null }
+            : null,
+        });
       },
       POST: async ({ request }) => {
         const ctx = await authenticateWorker(request);
