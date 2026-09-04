@@ -1,3 +1,7 @@
+/**
+ * Worker-API: Facebook-Cookies je Bot lesen und speichern.
+ * Cookies sind fuer den Browser nicht lesbar - nur Worker/Service-Rolle.
+ */
 import { createFileRoute } from "@tanstack/react-router";
 import { authenticateWorker, json } from "@/lib/worker-auth.server";
 

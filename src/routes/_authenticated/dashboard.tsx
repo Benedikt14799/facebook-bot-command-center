@@ -1,3 +1,6 @@
+/**
+ * Dashboard: Kennzahlen-Uebersicht ueber Bots, Jobs, Nachrichten und Ereignisse.
+ */
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { AppShell } from "@/components/AppShell";

@@ -1,3 +1,6 @@
+/**
+ * Bot-Uebersicht: alle Profile mit Status, Aufwaermphase und Schnellaktionen.
+ */
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";

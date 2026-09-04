@@ -1,3 +1,8 @@
+/**
+ * Demo-Zugang: legt bei Bedarf den bestaetigten Demo-Account an und seedet
+ * einmalig Beispieldaten (Bots, Gruppen, Jobs, Nachrichten, Events),
+ * damit man das Cockpit ohne eigene Anmeldung ausprobieren kann.
+ */
 import { createServerFn } from "@tanstack/react-start";
 
 export const DEMO_EMAIL = "demo@fbcontrol.app";

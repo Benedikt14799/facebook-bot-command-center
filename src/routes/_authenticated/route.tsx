@@ -1,3 +1,7 @@
+/**
+ * Auth-Gate: alle Routen unterhalb von /_authenticated sind nur mit gueltiger
+ * Sitzung erreichbar, sonst Weiterleitung auf /auth.
+ */
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 

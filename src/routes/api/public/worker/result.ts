@@ -1,3 +1,6 @@
+/**
+ * Worker-API: Ergebnis eines Auftrags zurueckmelden (done/failed/skipped).
+ */
 import { createFileRoute } from "@tanstack/react-router";
 import { authenticateWorker, json } from "@/lib/worker-auth.server";
 

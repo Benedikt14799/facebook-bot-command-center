@@ -1,3 +1,6 @@
+/**
+ * Protokoll: technische Ereignisse der Worker (Info, Warnung, Fehler).
+ */
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";

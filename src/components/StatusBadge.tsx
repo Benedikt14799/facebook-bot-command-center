@@ -1,3 +1,6 @@
+/**
+ * Einheitliche farbige Status-Kennzeichnung (live, warmup, blocked, error, ...).
+ */
 import { cn } from "@/lib/utils";
 
 const tone: Record<string, string> = {
