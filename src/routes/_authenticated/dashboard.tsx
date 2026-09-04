@@ -65,6 +65,31 @@ function Dashboard() {
   return (
     <AppShell title="Cockpit"
       hint="Überblick über alle Bots, geplante Aufträge, Systemereignisse und den Nachrichtenverlauf. Die eigentliche Ausführung übernimmt dein Worker, der sich hier die Aufträge abholt." subtitle="Was gerade läuft">
+      {/* Hinweis auf die geführte Inbetriebnahme, solange die Basis fehlt */}
+      {(() => {
+        const workerOnline = (workers.data ?? []).some((w) => w.status === "online");
+        const sessionOk = botList.some((b) => b.session_status === "valid" && !b.manual_mode);
+        const setupDone = botList.length > 0 && workerOnline && sessionOk;
+        if (setupDone) return null;
+        return (
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-primary/40 bg-primary/10 p-4">
+            <div>
+              <p className="text-sm font-medium text-foreground">Einrichtung noch nicht abgeschlossen</p>
+              <p className="text-xs text-muted-foreground">
+                Die geführte Inbetriebnahme bringt dich Schritt für Schritt bis zum ersten Auftrag,
+                den dein Worker ausführt.
+              </p>
+            </div>
+            <Link
+              to="/inbetriebnahme"
+              className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground"
+            >
+              Inbetriebnahme öffnen
+            </Link>
+          </div>
+        );
+      })()}
+
       {(() => {
         const alerts: string[] = [];
         if (automation.data?.paused) {
