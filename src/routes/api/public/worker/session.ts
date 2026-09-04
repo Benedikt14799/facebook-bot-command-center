@@ -16,17 +16,8 @@ export const Route = createFileRoute("/api/public/worker/session")({
         const botId = new URL(request.url).searchParams.get("bot_id");
         if (!botId) return json({ error: "bot_id required" }, 400);
 
-        const { data, error } = await ctx.admin
-          .from("bot_sessions")
-          .select("cookies, user_agent, updated_at")
-          .eq("bot_id", botId)
-          .eq("user_id", ctx.userId)
-          .maybeSingle();
-        if (error) return json({ error: error.message }, 500);
-        if (!data) return json({ error: "no session" }, 404);
-
         // Tarnprofil: Proxy, Fingerprint, Verhalten und Antidetect-Konfiguration.
-        const { data: bot } = await ctx.admin
+        const { data: bot, error: botError } = await ctx.admin
           .from("bots")
           .select(
             "proxy_type, proxy_protocol, proxy_host, proxy_port, proxy_user, proxy_country, proxy_rotate_url, fingerprint, behavior, browser_mode, antidetect",
@@ -34,6 +25,17 @@ export const Route = createFileRoute("/api/public/worker/session")({
           .eq("id", botId)
           .eq("user_id", ctx.userId)
           .maybeSingle();
+        if (botError) return json({ error: botError.message }, 500);
+        if (!bot) return json({ error: "bot not found" }, 404);
+
+        const { data: sessionData, error: sessionError } = await ctx.admin
+          .from("bot_sessions")
+          .select("cookies, user_agent, updated_at")
+          .eq("bot_id", botId)
+          .eq("user_id", ctx.userId)
+          .maybeSingle();
+        if (sessionError) return json({ error: sessionError.message }, 500);
+
         const { data: secrets } = await ctx.admin
           .from("bot_secrets")
           .select("proxy_password, antidetect_key")
@@ -41,11 +43,12 @@ export const Route = createFileRoute("/api/public/worker/session")({
           .eq("user_id", ctx.userId)
           .maybeSingle();
 
-        const fingerprint = normalizeFingerprint(bot?.fingerprint);
+        const fingerprint = normalizeFingerprint(bot.fingerprint);
         return json({
-          ...data,
-          user_agent: data.user_agent ?? fingerprint.user_agent,
-          proxy: bot?.proxy_host
+          cookies: sessionData?.cookies ?? [],
+          user_agent: sessionData?.user_agent ?? fingerprint.user_agent ?? null,
+          updated_at: sessionData?.updated_at ?? null,
+          proxy: bot.proxy_host
             ? {
                 type: bot.proxy_type,
                 server: `${bot.proxy_protocol ?? "http"}://${bot.proxy_host}:${bot.proxy_port ?? 8080}`,
@@ -56,9 +59,9 @@ export const Route = createFileRoute("/api/public/worker/session")({
               }
             : null,
           fingerprint,
-          behavior: normalizeBehavior(bot?.behavior),
-          browser_mode: bot?.browser_mode ?? "stealth",
-          antidetect: bot?.antidetect
+          behavior: normalizeBehavior(bot.behavior),
+          browser_mode: bot.browser_mode ?? "stealth",
+          antidetect: bot.antidetect
             ? { ...normalizeAntidetect(bot.antidetect), api_key: secrets?.antidetect_key ?? null }
             : null,
         });

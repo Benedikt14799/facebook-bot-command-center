@@ -53,6 +53,21 @@ def api_get(path: str) -> dict:
 def load_session(bot_id: str) -> dict:
     """Cookies, Proxy, Fingerprint, Verhalten und Antidetect-Konfig des Bots."""
     resp = session.get(f"{BASE_URL}/api/public/worker/session?bot_id={bot_id}", timeout=30)
+    if resp.status_code == 404:
+        try:
+            err = resp.json().get("error")
+        except Exception:
+            err = None
+        if err == "no session":
+            return {
+                "cookies": [],
+                "user_agent": None,
+                "fingerprint": {},
+                "proxy": None,
+                "behavior": {},
+                "browser_mode": "stealth",
+                "antidetect": None,
+            }
     resp.raise_for_status()
     return resp.json()
 
