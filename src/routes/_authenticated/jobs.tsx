@@ -565,6 +565,15 @@ function EditJobDialog({
               onChange={(e) => setPayload(e.target.value)}
             />
           </div>
+          {!done ? (
+            <TextPreview
+              botId={botId}
+              type={type}
+              groupId={groupId || null}
+              recipientId={(job as { recipient_id?: string | null }).recipient_id ?? null}
+              onUse={(t: string) => setText(t)}
+            />
+          ) : null}
         </div>
         <DialogFooter>
           {done ? (
