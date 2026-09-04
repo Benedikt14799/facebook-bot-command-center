@@ -24,6 +24,10 @@ type JobInput = {
   needs_approval?: boolean;
   status?: string;
   source?: string;
+  error?: string | null;
+  claimed_at?: string | null;
+  claimed_by?: string | null;
+  finished_at?: string | null;
 };
 
 function normalize(input: JobInput) {
