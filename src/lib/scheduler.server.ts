@@ -10,7 +10,12 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import { warmupInfo, parseWeights, weightedActionOrder } from "@/lib/warmup";
 import { AiBlockedError, generateText, loadAiConfig, type AiConfig } from "@/lib/ai.server";
-import { conversationHistory, shouldPlaceOffer } from "@/lib/contacts.server";
+import {
+  advanceStage,
+  conversationHistory,
+  logContact,
+  shouldPlaceOffer,
+} from "@/lib/contacts.server";
 
 type Admin = SupabaseClient<Database>;
 
