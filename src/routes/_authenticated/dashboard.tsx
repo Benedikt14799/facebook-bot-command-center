@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { AppShell } from "@/components/AppShell";
+import { InfoHint } from "@/components/InfoHint";
 import { StatusBadge } from "@/components/StatusBadge";
 import { selectAll, fmt } from "@/lib/db";
 
@@ -48,7 +49,8 @@ function Dashboard() {
   ];
 
   return (
-    <AppShell title="Cockpit" subtitle="Was gerade läuft">
+    <AppShell title="Cockpit"
+      hint="Überblick über alle Bots, geplante Aufträge, Systemereignisse und den Nachrichtenverlauf. Die eigentliche Ausführung übernimmt dein Worker, der sich hier die Aufträge abholt." subtitle="Was gerade läuft">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((s) => (
           <div key={s.label} className="rounded-lg border border-border bg-card p-4">
@@ -60,7 +62,7 @@ function Dashboard() {
 
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
         <section className="rounded-lg border border-border bg-card p-4">
-          <h2 className="mb-3 text-sm font-medium text-foreground">Bots</h2>
+          <h2 className="mb-3 flex items-center gap-2 text-sm font-medium text-foreground">Bots <InfoHint text="Deine Facebook-Profile. Status zeigt, ob ein Profil live ist, sich aufwärmt, pausiert oder von Facebook blockiert wurde." /></h2>
           <div className="space-y-2">
             {botList.length === 0 ? (
               <p className="text-sm text-muted-foreground">
@@ -89,7 +91,7 @@ function Dashboard() {
         </section>
 
         <section className="rounded-lg border border-border bg-card p-4">
-          <h2 className="mb-3 text-sm font-medium text-foreground">Letzte Aufträge</h2>
+          <h2 className="mb-3 flex items-center gap-2 text-sm font-medium text-foreground">Letzte Aufträge <InfoHint text="Einzelne Aktionen (DM, Like, Kommentar, Antwort), die zu einer geplanten Zeit vom Worker ausgeführt werden." /></h2>
           <div className="space-y-2">
             {jobList.slice(0, 8).map((j) => (
               <div
@@ -110,7 +112,7 @@ function Dashboard() {
         </section>
 
         <section className="rounded-lg border border-border bg-card p-4">
-          <h2 className="mb-3 text-sm font-medium text-foreground">Ereignisse</h2>
+          <h2 className="mb-3 flex items-center gap-2 text-sm font-medium text-foreground">Ereignisse <InfoHint text="Protokoll des Workers: Logins, Warnungen, Fehler und Sperr-Hinweise von Facebook." /></h2>
           <div className="space-y-1.5 font-mono text-xs">
             {(events.data ?? []).map((e) => (
               <div key={e.id} className="flex gap-2">
@@ -126,7 +128,7 @@ function Dashboard() {
         </section>
 
         <section className="rounded-lg border border-border bg-card p-4">
-          <h2 className="mb-3 text-sm font-medium text-foreground">Letzte Nachrichten</h2>
+          <h2 className="mb-3 flex items-center gap-2 text-sm font-medium text-foreground">Letzte Nachrichten <InfoHint text="Backlog aller ein- und ausgehenden Nachrichten und Kommentare deiner Bots." /></h2>
           <div className="space-y-2">
             {(messages.data ?? []).map((m) => (
               <div key={m.id} className="rounded-md border border-border/60 px-3 py-2 text-sm">

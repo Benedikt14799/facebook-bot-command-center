@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { AppShell } from "@/components/AppShell";
+import { InfoHint } from "@/components/InfoHint";
 import { StatusBadge } from "@/components/StatusBadge";
 import {
   Select,
@@ -38,6 +39,7 @@ function LogsPage() {
   return (
     <AppShell
       title="Protokoll"
+      hint="Technisches Ereignisprotokoll deiner Worker: Infos, Warnungen und Fehler — inklusive automatischer Sperr-Erkennung."
       subtitle="Ereignisse und Fehler"
       actions={
         <Select value={level} onValueChange={setLevel}>

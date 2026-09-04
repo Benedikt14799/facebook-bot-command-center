@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { AppShell } from "@/components/AppShell";
+import { InfoHint } from "@/components/InfoHint";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -108,6 +109,7 @@ function JobsPage() {
   return (
     <AppShell
       title="Aufträge"
+      hint="Die Warteschlange: jeder Auftrag ist eine Aktion für einen Bot zu einer geplanten Zeit. Der Worker holt sich fällige Aufträge ab, führt sie aus und meldet das Ergebnis zurück."
       subtitle="Warteschlange, Freigaben und Ergebnisse"
       actions={
         <>
@@ -134,7 +136,7 @@ function JobsPage() {
               </DialogHeader>
               <div className="space-y-3">
                 <div className="space-y-1.5">
-                  <Label>Bot</Label>
+                  <Label className="flex items-center gap-2">Bot <InfoHint text="Welches Profil die Aktion ausführt. Limits und Arbeitszeiten dieses Bots gelten dabei." /></Label>
                   <Select value={botId} onValueChange={setBotId}>
                     <SelectTrigger>
                       <SelectValue placeholder="Bot wählen" />
@@ -149,7 +151,7 @@ function JobsPage() {
                   </Select>
                 </div>
                 <div className="space-y-1.5">
-                  <Label>Gruppe (optional)</Label>
+                  <Label className="flex items-center gap-2">Gruppe (optional) <InfoHint text="Bezugsgruppe der Aktion. Regeln und Tonfall der Gruppe werden dann angewendet." /></Label>
                   <Select value={groupId} onValueChange={setGroupId}>
                     <SelectTrigger>
                       <SelectValue placeholder="Gruppe wählen" />
@@ -164,7 +166,7 @@ function JobsPage() {
                   </Select>
                 </div>
                 <div className="space-y-1.5">
-                  <Label>Typ</Label>
+                  <Label className="flex items-center gap-2">Typ <InfoHint text="Art der Aktion: neue Mitglieder anschreiben, auf Nachrichten antworten, Likes verteilen, Kommentare beantworten oder eine Gruppe scannen." /></Label>
                   <Select value={type} onValueChange={setType}>
                     <SelectTrigger>
                       <SelectValue />
@@ -179,7 +181,7 @@ function JobsPage() {
                   </Select>
                 </div>
                 <div className="space-y-1.5">
-                  <Label>Startzeit</Label>
+                  <Label className="flex items-center gap-2">Startzeit <InfoHint text="Frühester Ausführungszeitpunkt. Der Worker verschiebt zusätzlich zufällig (Jitter), damit es natürlich wirkt." /></Label>
                   <Input
                     type="datetime-local"
                     value={when}
@@ -187,7 +189,7 @@ function JobsPage() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label>Payload (JSON)</Label>
+                  <Label className="flex items-center gap-2">Payload (JSON) <InfoHint text="Zusatzdaten für den Worker, z. B. Ziel-Profil, Beitrags-ID oder ein fertiger Text. Leer lassen, wenn nicht nötig." /></Label>
                   <Textarea
                     rows={3}
                     className="font-mono text-xs"

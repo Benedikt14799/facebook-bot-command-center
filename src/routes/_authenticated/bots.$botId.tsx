@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
+import { InfoHint } from "@/components/InfoHint";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -133,7 +134,7 @@ function BotDetail() {
     >
       <div className="grid gap-4 lg:grid-cols-2">
         <section className="rounded-lg border border-border bg-card p-4">
-          <h2 className="mb-3 text-sm font-medium text-foreground">Profil</h2>
+          <h2 className="mb-3 flex items-center gap-2 text-sm font-medium text-foreground">Profil <InfoHint text="Stammdaten des Bots: Name, Facebook-Profil, optionaler Proxy und Notizen." /></h2>
           <div className="grid gap-3 sm:grid-cols-2">
             <Field label="Name">
               <Input value={f.name ?? ""} onChange={(e) => set({ name: e.target.value })} />
@@ -189,7 +190,7 @@ function BotDetail() {
         </section>
 
         <section className="rounded-lg border border-border bg-card p-4">
-          <h2 className="mb-3 text-sm font-medium text-foreground">Zeitplan & Limits</h2>
+          <h2 className="mb-3 flex items-center gap-2 text-sm font-medium text-foreground">Zeitplan & Limits <InfoHint text="Arbeitsfenster, Zufalls-Jitter, Wochenendfaktor und Tages-Caps. So verhält sich der Bot menschlich und wird seltener von Facebook gesperrt." /></h2>
           <div className="grid gap-3 sm:grid-cols-2">
             <Field label="Aktiv von">
               <Input
@@ -248,7 +249,7 @@ function BotDetail() {
         </section>
 
         <section className="rounded-lg border border-border bg-card p-4">
-          <h2 className="mb-3 text-sm font-medium text-foreground">Textgenerierung</h2>
+          <h2 className="mb-3 flex items-center gap-2 text-sm font-medium text-foreground">Textgenerierung <InfoHint text="Vorlagen, KI oder beides. Der Tonfall steuert, wie die Texte klingen — damit sie nicht nach KI wirken." /></h2>
           <div className="grid gap-3">
             <Field label="Modus">
               <Select value={f.text_mode} onValueChange={(v) => set({ text_mode: v })}>
@@ -281,7 +282,7 @@ function BotDetail() {
         </section>
 
         <section className="rounded-lg border border-border bg-card p-4">
-          <h2 className="mb-1 text-sm font-medium text-foreground">Cookie-Session</h2>
+          <h2 className="mb-1 flex items-center gap-2 text-sm font-medium text-foreground">Cookie-Session <InfoHint text="Du meldest dich manuell bei Facebook an, exportierst die Cookies und fügst sie hier ein. Sie werden verschlüsselt gespeichert und nur vom Worker gelesen, nie im Browser angezeigt." /></h2>
           <p className="mb-3 text-xs text-muted-foreground">
             Melde dich manuell im Browser an, exportiere die Facebook-Cookies als JSON-Array und
             füge sie hier ein. Aus Sicherheitsgründen können hinterlegte Cookies nicht wieder
@@ -322,10 +323,21 @@ function BotDetail() {
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({
+  label,
+  hint,
+  children,
+}: {
+  label: string;
+  hint?: string;
+  children: React.ReactNode;
+}) {
   return (
     <div className="space-y-1.5">
-      <Label className="text-xs text-muted-foreground">{label}</Label>
+      <Label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+        {label}
+        {hint ? <InfoHint text={hint} /> : null}
+      </Label>
       {children}
     </div>
   );

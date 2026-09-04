@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { AppShell } from "@/components/AppShell";
+import { InfoHint } from "@/components/InfoHint";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -65,6 +66,7 @@ function BotsPage() {
   return (
     <AppShell
       title="Bots"
+      hint="Jeder Bot ist ein Facebook-Profil. Du hinterlegst pro Bot Arbeitszeiten, Tageslimits, Tonfall und die Cookie-Session für die Anmeldung."
       subtitle="Profile, Warmup und Sessions"
       actions={
         <Dialog open={open} onOpenChange={setOpen}>
@@ -77,11 +79,11 @@ function BotsPage() {
             </DialogHeader>
             <div className="space-y-3">
               <div className="space-y-1.5">
-                <Label htmlFor="bot-name">Name</Label>
+                <Label htmlFor="bot-name" className="flex items-center gap-2">Name <InfoHint text="Interner Name zur Unterscheidung, z. B. der Profilname oder die Rolle des Profils." /></Label>
                 <Input id="bot-name" value={name} onChange={(e) => setName(e.target.value)} />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="bot-url">Profil-URL (optional)</Label>
+                <Label htmlFor="bot-url" className="flex items-center gap-2">Profil-URL (optional) <InfoHint text="Link zum Facebook-Profil. Dient nur der Zuordnung und dem schnellen Nachschauen." /></Label>
                 <Input
                   id="bot-url"
                   value={profileUrl}

@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { AppShell } from "@/components/AppShell";
+import { InfoHint } from "@/components/InfoHint";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Input } from "@/components/ui/input";
 import {
@@ -45,6 +46,7 @@ function MessagesPage() {
   return (
     <AppShell
       title="Nachrichten"
+      hint="Vollständiges Backlog: jede gesendete und empfangene Nachricht sowie Kommentare. Durchsuchbar und nach Richtung filterbar."
       subtitle="Vollständiges Backlog"
       actions={
         <>

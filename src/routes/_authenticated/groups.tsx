@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { AppShell } from "@/components/AppShell";
+import { InfoHint } from "@/components/InfoHint";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -107,6 +108,7 @@ function GroupsPage() {
   return (
     <AppShell
       title="Gruppen"
+      hint="Verwalte alle Facebook-Gruppen: erlaubte Aktionen, eigene Tageslimits, Cooldown, Arbeitszeiten, Mindest-Score der Empfänger sowie welche Bots in der Gruppe aktiv sind."
       subtitle="Regeln, Caps und Empfänger je Gruppe"
       actions={
         <Dialog open={open} onOpenChange={setOpen}>
@@ -384,10 +386,14 @@ function Row({
   label: string;
   children: React.ReactNode;
   full?: boolean;
+  hint?: string;
 }) {
   return (
     <div className={`space-y-1.5 ${full ? "sm:col-span-2" : ""}`}>
-      <Label className="text-xs text-muted-foreground">{label}</Label>
+      <Label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+        {label}
+        {hint ? <InfoHint text={hint} /> : null}
+      </Label>
       {children}
     </div>
   );
