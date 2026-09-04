@@ -1,6 +1,9 @@
 /**
  * Worker-Health: Zustand aller Worker, aktuelle Fehler, letzte Auftragslaeufe
  * und ein Wiederholen-Knopf fuer fehlgeschlagene Auftraege.
+ *
+ * Der Offline-Status wird mit derselben Funktion berechnet wie auf der
+ * Worker-Verwaltungsseite, damit beide Seiten uebereinstimmen.
  */
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -11,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { selectAll, fmt, type Job } from "@/lib/db";
 import { PROXY_TYPES, stealthScore, type ProxyCheck } from "@/lib/stealth";
+import { effectiveWorkerStatus, isWorkerOffline } from "@/lib/worker-status";
 import { toast } from "sonner";
 import { RefreshCw } from "lucide-react";
 
@@ -32,14 +36,6 @@ export const Route = createFileRoute("/_authenticated/worker-health")({
   }),
   component: WorkerHealthPage,
 });
-
-/** Ein Worker gilt als offline, wenn er sich >5 Minuten nicht gemeldet hat. */
-const OFFLINE_AFTER_MS = 5 * 60 * 1000;
-
-function isOffline(lastSeen: string | null) {
-  if (!lastSeen) return true;
-  return Date.now() - new Date(lastSeen).getTime() > OFFLINE_AFTER_MS;
-}
 
 function WorkerHealthPage() {
   const qc = useQueryClient();
@@ -97,7 +93,7 @@ function WorkerHealthPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const online = (workers.data ?? []).filter((w) => !isOffline(w.last_seen_at));
+  const online = (workers.data ?? []).filter((w) => !isWorkerOffline(w.last_seen_at));
 
   return (
     <AppShell
@@ -154,7 +150,7 @@ function WorkerHealthPage() {
         </h2>
         <div className="space-y-2">
           {(workers.data ?? []).map((w) => {
-            const off = isOffline(w.last_seen_at);
+            const status = effectiveWorkerStatus(w.status, w.last_seen_at);
             return (
               <div
                 key={w.id}
@@ -166,7 +162,7 @@ function WorkerHealthPage() {
                     {w.version ?? "unbekannte Version"} · Heartbeat {fmt(w.last_seen_at)}
                   </p>
                 </div>
-                <StatusBadge value={off ? "offline" : "online"} />
+                <StatusBadge value={status} />
               </div>
             );
           })}
