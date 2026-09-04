@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { selectAll, fmt } from "@/lib/db";
+import { workerScript } from "@/lib/worker-script";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/workers")({
@@ -98,6 +99,25 @@ function WorkersPage() {
               >
                 Token kopieren
               </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  // Fertiges Startskript mit Token und Basis-URL herunterladen
+                  const blob = new Blob([workerScript(baseUrl, w.token)], {
+                    type: "text/x-python",
+                  });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement("a");
+                  a.href = url;
+                  a.download = "fbcontrol_worker.py";
+                  a.click();
+                  URL.revokeObjectURL(url);
+                }}
+              >
+                Worker-Skript herunterladen
+              </Button>
+              <InfoHint text="Lädt ein fertiges Python-Skript mit deinem Token herunter. Nur noch 'pip install requests playwright' ausführen und starten — dann holt sich dieser Worker automatisch Aufträge." />
               <Button size="sm" variant="ghost" onClick={() => remove.mutate(w.id)}>
                 Löschen
               </Button>

@@ -7,6 +7,7 @@ import { AppShell } from "@/components/AppShell";
 import { InfoHint } from "@/components/InfoHint";
 import { StatusBadge } from "@/components/StatusBadge";
 import { selectAll, fmt } from "@/lib/db";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -38,6 +39,16 @@ function Dashboard() {
       selectAll("messages", (q) => q.order("created_at", { ascending: false }).limit(10)),
   });
 
+  // Automatik-Status (wird bei KI-/Guthaben-Problemen serverseitig pausiert)
+  const automation = useQuery({
+    queryKey: ["automation_state"],
+    queryFn: async () => {
+      const { data } = await supabase.from("automation_state").select("*").maybeSingle();
+      return data;
+    },
+  });
+  const workers = useQuery({ queryKey: ["workers"], queryFn: () => selectAll("workers") });
+
   const botList = bots.data ?? [];
   const jobList = jobs.data ?? [];
   const pending = jobList.filter((j) => j.status === "pending").length;
@@ -54,6 +65,32 @@ function Dashboard() {
   return (
     <AppShell title="Cockpit"
       hint="Überblick über alle Bots, geplante Aufträge, Systemereignisse und den Nachrichtenverlauf. Die eigentliche Ausführung übernimmt dein Worker, der sich hier die Aufträge abholt." subtitle="Was gerade läuft">
+      {(() => {
+        const alerts: string[] = [];
+        if (automation.data?.paused) {
+          alerts.push(`Automatik pausiert: ${automation.data.paused_reason ?? "unbekannter Grund"}`);
+        }
+        const offline = (workers.data ?? []).filter((w) => w.status !== "online").length;
+        if (offline > 0) alerts.push(`${offline} Worker offline — Aufträge bleiben liegen.`);
+        const blocked = botList.filter((b) => b.status === "blocked").length;
+        if (blocked > 0) alerts.push(`${blocked} Bot(s) von Facebook eingeschränkt.`);
+        if (failed > 0) alerts.push(`${failed} Aufträge fehlgeschlagen.`);
+        if (alerts.length === 0) return null;
+        return (
+          <div className="mb-4 space-y-1 rounded-lg border border-destructive/40 bg-destructive/10 p-4">
+            <p className="flex items-center gap-1.5 text-sm font-medium text-foreground">
+              Warnungen
+              <InfoHint text="Sammelt automatisch erkannte Probleme: pausierte Automatik, offline gegangene Worker, gesperrte Bots und fehlgeschlagene Aufträge." />
+            </p>
+            {alerts.map((a) => (
+              <p key={a} className="text-xs text-muted-foreground">
+                {a}
+              </p>
+            ))}
+          </div>
+        );
+      })()}
+
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((s) => (
           <div key={s.label} className="rounded-lg border border-border bg-card p-4">
