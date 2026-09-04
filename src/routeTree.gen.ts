@@ -23,6 +23,7 @@ import { Route as AuthenticatedWorkerHealthRouteImport } from './routes/_authent
 import { Route as AuthenticatedWorkersRouteImport } from './routes/_authenticated/workers'
 import { Route as AuthenticatedBotsIndexRouteImport } from './routes/_authenticated/bots.index'
 import { Route as AuthenticatedBotsBotIdRouteImport } from './routes/_authenticated/bots.$botId'
+import { Route as AuthenticatedRecipientsIndexRouteImport } from './routes/_authenticated/recipients.index'
 import { Route as ApiPublicCronMaintenanceRouteImport } from './routes/api/public/cron/maintenance'
 import { Route as ApiPublicCronPlanRouteImport } from './routes/api/public/cron/plan'
 import { Route as ApiPublicWorkerEventsRouteImport } from './routes/api/public/worker/events'
@@ -103,6 +104,12 @@ const AuthenticatedBotsBotIdRoute = AuthenticatedBotsBotIdRouteImport.update({
   path: '/bots/$botId',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedRecipientsIndexRoute =
+  AuthenticatedRecipientsIndexRouteImport.update({
+    id: '/recipients/',
+    path: '/recipients/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const ApiPublicCronMaintenanceRoute =
   ApiPublicCronMaintenanceRouteImport.update({
     id: '/api/public/cron/maintenance',
@@ -166,6 +173,7 @@ export interface FileRoutesByFullPath {
   '/workers': typeof AuthenticatedWorkersRoute
   '/bots/$botId': typeof AuthenticatedBotsBotIdRoute
   '/bots/': typeof AuthenticatedBotsIndexRoute
+  '/recipients/': typeof AuthenticatedRecipientsIndexRoute
   '/api/public/cron/maintenance': typeof ApiPublicCronMaintenanceRoute
   '/api/public/cron/plan': typeof ApiPublicCronPlanRoute
   '/api/public/worker/events': typeof ApiPublicWorkerEventsRoute
@@ -190,6 +198,7 @@ export interface FileRoutesByTo {
   '/workers': typeof AuthenticatedWorkersRoute
   '/bots/$botId': typeof AuthenticatedBotsBotIdRoute
   '/bots': typeof AuthenticatedBotsIndexRoute
+  '/recipients': typeof AuthenticatedRecipientsIndexRoute
   '/api/public/cron/maintenance': typeof ApiPublicCronMaintenanceRoute
   '/api/public/cron/plan': typeof ApiPublicCronPlanRoute
   '/api/public/worker/events': typeof ApiPublicWorkerEventsRoute
@@ -216,6 +225,7 @@ export interface FileRoutesById {
   '/_authenticated/workers': typeof AuthenticatedWorkersRoute
   '/_authenticated/bots/$botId': typeof AuthenticatedBotsBotIdRoute
   '/_authenticated/bots/': typeof AuthenticatedBotsIndexRoute
+  '/_authenticated/recipients/': typeof AuthenticatedRecipientsIndexRoute
   '/api/public/cron/maintenance': typeof ApiPublicCronMaintenanceRoute
   '/api/public/cron/plan': typeof ApiPublicCronPlanRoute
   '/api/public/worker/events': typeof ApiPublicWorkerEventsRoute
@@ -242,6 +252,7 @@ export interface FileRouteTypes {
     | '/workers'
     | '/bots/$botId'
     | '/bots/'
+    | '/recipients/'
     | '/api/public/cron/maintenance'
     | '/api/public/cron/plan'
     | '/api/public/worker/events'
@@ -266,6 +277,7 @@ export interface FileRouteTypes {
     | '/workers'
     | '/bots/$botId'
     | '/bots'
+    | '/recipients'
     | '/api/public/cron/maintenance'
     | '/api/public/cron/plan'
     | '/api/public/worker/events'
@@ -291,6 +303,7 @@ export interface FileRouteTypes {
     | '/_authenticated/workers'
     | '/_authenticated/bots/$botId'
     | '/_authenticated/bots/'
+    | '/_authenticated/recipients/'
     | '/api/public/cron/maintenance'
     | '/api/public/cron/plan'
     | '/api/public/worker/events'
@@ -417,6 +430,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBotsBotIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/recipients/': {
+      id: '/_authenticated/recipients/'
+      path: '/recipients'
+      fullPath: '/recipients/'
+      preLoaderRoute: typeof AuthenticatedRecipientsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/api/public/cron/maintenance': {
       id: '/api/public/cron/maintenance'
       path: '/api/public/cron/maintenance'
@@ -495,6 +515,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedWorkersRoute: typeof AuthenticatedWorkersRoute
   AuthenticatedBotsBotIdRoute: typeof AuthenticatedBotsBotIdRoute
   AuthenticatedBotsIndexRoute: typeof AuthenticatedBotsIndexRoute
+  AuthenticatedRecipientsIndexRoute: typeof AuthenticatedRecipientsIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -509,6 +530,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedWorkersRoute: AuthenticatedWorkersRoute,
   AuthenticatedBotsBotIdRoute: AuthenticatedBotsBotIdRoute,
   AuthenticatedBotsIndexRoute: AuthenticatedBotsIndexRoute,
+  AuthenticatedRecipientsIndexRoute: AuthenticatedRecipientsIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
