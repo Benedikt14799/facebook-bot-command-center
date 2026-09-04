@@ -382,6 +382,7 @@ function Row({
   label,
   children,
   full,
+  hint,
 }: {
   label: string;
   children: React.ReactNode;
