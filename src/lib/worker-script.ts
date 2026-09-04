@@ -1,22 +1,26 @@
 /**
  * Erzeugt ein fertiges Python-Worker-Startskript zum Herunterladen.
- * Das Skript meldet sich mit dem Token an, holt Auftraege ab, fuehrt sie
- * (Platzhalter fuer Playwright) aus und meldet Ergebnisse zurueck.
+ * Enthaelt: Proxy- und Fingerprint-Uebernahme aus dem Cockpit, Stealth-Patches,
+ * optionalen Antidetect-Start per CDP, menschliches Verhalten, IP-Check und
+ * Checkpoint-Erkennung.
  */
 export function workerScript(baseUrl: string, token: string, botHint = "") {
   return `#!/usr/bin/env python3
-"""FB/Control Worker - Grundgeruest.
+"""FB/Control Worker - Tarnung, Proxy und menschliches Verhalten.
 
 Installation:
-    pip install requests playwright
+    pip install requests playwright playwright-stealth
     playwright install chromium
 
 Start:
     python fbcontrol_worker.py
 
-Der Worker holt Auftraege aus dem Cockpit ab. Die eigentliche Facebook-Aktion
-setzt du in run_job() mit Playwright um - Cookies kommen aus /worker/session.
+Der Worker holt Auftraege aus dem Cockpit ab. Proxy, Fingerprint, Verhalten und
+Cookies kommen aus /worker/session. Die eigentlichen Facebook-Klicks baust du in
+run_job() ein - nutze dabei immer human_type/human_pause/human_scroll.
 """
+import os
+import random
 import time
 import traceback
 
@@ -25,6 +29,7 @@ import requests
 BASE_URL = "${baseUrl}"
 TOKEN = "${token}"
 POLL_SECONDS = 20
+PROFILE_DIR = os.path.expanduser("~/.fbcontrol/profiles")
 ${botHint}
 
 session = requests.Session()
@@ -38,47 +43,239 @@ def api(path: str, payload: dict | None = None, method: str = "POST"):
     return resp.json() if resp.content else {}
 
 
-def load_session(bot_id: str):
-    """Cookies + User-Agent des Bots holen (nur serverseitig lesbar)."""
+def load_session(bot_id: str) -> dict:
+    """Cookies, Proxy, Fingerprint, Verhalten und Antidetect-Konfig des Bots."""
     resp = session.get(f"{BASE_URL}/api/public/worker/session?bot_id={bot_id}", timeout=30)
     resp.raise_for_status()
     return resp.json()
 
 
+# ---------------------------------------------------------------- Verhalten
+def human_pause(behavior: dict, factor: float = 1.0):
+    lo = behavior.get("pause_min", 12) * factor
+    hi = behavior.get("pause_max", 65) * factor
+    time.sleep(random.uniform(lo, hi))
+
+
+def read_delay(behavior: dict, text: str):
+    """Lesezeit abhaengig von der Textlaenge - Menschen antworten nicht sofort."""
+    ms = len(text or "") * behavior.get("read_ms_per_char", 30)
+    time.sleep(min(max(ms / 1000.0, 1.5), 60) * random.uniform(0.7, 1.4))
+
+
+def human_type(page, selector_or_locator, text: str, behavior: dict):
+    """Tippt Zeichen fuer Zeichen mit Zufallsverzoegerung und gelegentlichem Tippfehler."""
+    loc = page.locator(selector_or_locator) if isinstance(selector_or_locator, str) else selector_or_locator
+    loc.click()
+    lo = behavior.get("type_delay_min", 60)
+    hi = behavior.get("type_delay_max", 170)
+    typo = behavior.get("typo_chance", 0.04)
+    for char in text:
+        if random.random() < typo:
+            page.keyboard.type(random.choice("abcdefghijklmnopqrstuvwxyz"))
+            time.sleep(random.uniform(lo, hi) / 1000.0)
+            page.keyboard.press("Backspace")
+            time.sleep(random.uniform(lo, hi) / 1000.0)
+        page.keyboard.type(char)
+        time.sleep(random.uniform(lo, hi) / 1000.0)
+
+
+def human_scroll(page, behavior: dict):
+    steps = random.randint(behavior.get("warmup_scroll_min", 3), behavior.get("warmup_scroll_max", 7))
+    for _ in range(steps):
+        page.mouse.wheel(0, random.randint(250, 900))
+        time.sleep(random.uniform(0.8, 3.5))
+    if random.random() < behavior.get("idle_click_chance", 0.2):
+        page.mouse.move(random.randint(100, 900), random.randint(100, 600))
+        time.sleep(random.uniform(0.5, 2.0))
+
+
+# ---------------------------------------------------------------- Browser
+STEALTH_JS = """
+Object.defineProperty(navigator, 'webdriver', {get: () => undefined});
+Object.defineProperty(navigator, 'plugins', {get: () => [1,2,3,4,5]});
+window.chrome = window.chrome || {runtime: {}};
+const q = navigator.permissions.query;
+navigator.permissions.query = (p) => p.name === 'notifications'
+  ? Promise.resolve({state: Notification.permission}) : q(p);
+"""
+
+
+def build_context(p, data: dict, bot_id: str):
+    """Startet Chromium (Stealth) oder verbindet sich mit einem Antidetect-Browser."""
+    fp = data.get("fingerprint") or {}
+    proxy = data.get("proxy")
+    behavior = data.get("behavior") or {}
+    antidetect = data.get("antidetect")
+
+    if data.get("browser_mode") == "antidetect" and antidetect and antidetect.get("profile_id"):
+        try:
+            ws = start_antidetect(antidetect)
+            browser = p.chromium.connect_over_cdp(ws)
+            ctx = browser.contexts[0] if browser.contexts else browser.new_context()
+            return browser, ctx, behavior
+        except Exception as exc:
+            print("Antidetect-Start fehlgeschlagen:", exc)
+            if not antidetect.get("fallback_stealth", True):
+                raise
+
+    proxy_cfg = None
+    if proxy and proxy.get("server"):
+        proxy_cfg = {"server": proxy["server"]}
+        if proxy.get("username"):
+            proxy_cfg["username"] = proxy["username"]
+        if proxy.get("password"):
+            proxy_cfg["password"] = proxy["password"]
+
+    user_data = os.path.join(PROFILE_DIR, bot_id)
+    os.makedirs(user_data, exist_ok=True)
+    ctx = p.chromium.launch_persistent_context(
+        user_data,
+        headless=False,
+        proxy=proxy_cfg,
+        user_agent=data.get("user_agent") or fp.get("user_agent"),
+        locale=fp.get("locale", "de-DE"),
+        timezone_id=fp.get("timezone", "Europe/Berlin"),
+        viewport={"width": fp.get("width", 1920), "height": fp.get("height", 1080)},
+        args=["--disable-blink-features=AutomationControlled"],
+    )
+    ctx.add_init_script(STEALTH_JS)
+    if data.get("cookies"):
+        try:
+            ctx.add_cookies(data["cookies"])
+        except Exception as exc:
+            print("Cookies konnten nicht gesetzt werden:", exc)
+    return None, ctx, behavior
+
+
+def start_antidetect(cfg: dict) -> str:
+    """Startet das Profil im Antidetect-Tool und liefert die CDP-Adresse."""
+    provider = cfg.get("provider")
+    base = cfg.get("api_url", "").rstrip("/")
+    key = cfg.get("api_key")
+    pid = cfg["profile_id"]
+    if provider == "adspower":
+        r = requests.get(f"{base}/api/v1/browser/start", params={"user_id": pid}, timeout=60).json()
+        return r["data"]["ws"]["puppeteer"]
+    if provider == "dolphin":
+        r = requests.get(f"{base}/v1.0/browser_profiles/{pid}/start", params={"automation": 1}, timeout=60).json()
+        return f"ws://127.0.0.1:{r['automation']['port']}{r['automation']['wsEndpoint']}"
+    if provider == "gologin":
+        r = requests.post(
+            f"{base}/browser/start-profile",
+            json={"profileId": pid},
+            headers={"Authorization": f"Bearer {key}"} if key else {},
+            timeout=90,
+        ).json()
+        return r["wsUrl"]
+    raise RuntimeError(f"Unbekannter Antidetect-Anbieter: {provider}")
+
+
+def report_ip(page, bot_id: str):
+    """Ausgangs-IP ueber den Proxy pruefen und ans Cockpit melden."""
+    try:
+        page.goto("http://ip-api.com/json/?fields=query,countryCode,isp,org,as,hosting,mobile",
+                  wait_until="domcontentloaded")
+        info = page.evaluate("() => JSON.parse(document.body.innerText)")
+        api("ip-report", {
+            "bot_id": bot_id,
+            "ip": info.get("query"),
+            "country": info.get("countryCode"),
+            "isp": info.get("isp"),
+            "org": info.get("org"),
+            "asn": info.get("as"),
+            "hosting": bool(info.get("hosting")),
+            "type": "mobile" if info.get("mobile") else ("datacenter" if info.get("hosting") else "residential"),
+        })
+        return info
+    except Exception as exc:
+        print("IP-Check fehlgeschlagen:", exc)
+        return {}
+
+
+CHECKPOINT_HINTS = ["/checkpoint", "confirm your identity", "we suspend", "dein konto wurde gesperrt",
+                    "bestätige deine identität", "unusual activity"]
+
+
+def check_blocked(page, bot_id: str) -> bool:
+    """Erkennt Checkpoint-/Sperrseiten und meldet sie sofort ans Cockpit."""
+    try:
+        url = (page.url or "").lower()
+        body = (page.content() or "").lower()
+    except Exception:
+        return False
+    if any(h in url or h in body for h in CHECKPOINT_HINTS):
+        api("events", {"bot_id": bot_id, "level": "error", "type": "blocked",
+                       "message": f"Checkpoint/Sperre erkannt: {page.url}"})
+        return True
+    return False
+
+
+# ---------------------------------------------------------------- Auftraege
 def run_job(job: dict) -> dict:
     """Hier deine Playwright-Automatisierung einbauen."""
+    from playwright.sync_api import sync_playwright
+
+    bot_id = job["bot_id"]
+    data = load_session(bot_id)
     kind = job.get("type")
     payload = job.get("payload") or {}
-    text = payload.get("text")
+    text = payload.get("text") or job.get("generated_text")
 
-    # Beispiel: Browser mit den Bot-Cookies starten
-    # data = load_session(job["bot_id"])
-    # with sync_playwright() as p: ...
+    with sync_playwright() as p:
+        browser, ctx, behavior = build_context(p, data, bot_id)
+        page = ctx.pages[0] if ctx.pages else ctx.new_page()
+        try:
+            report_ip(page, bot_id)
+            page.goto("https://www.facebook.com/", wait_until="domcontentloaded")
+            if check_blocked(page, bot_id):
+                raise RuntimeError("Checkpoint erkannt - Bot pausiert")
 
-    print(f"[job] {kind} -> {text!r}")
-    time.sleep(2)
+            # Sitzung menschlich aufwaermen, bevor irgendetwas passiert
+            human_scroll(page, behavior)
+            human_pause(behavior, 0.3)
 
-    if text and kind in ("comment", "dm_new_member"):
-        api("messages", {
-            "bot_id": job["bot_id"],
-            "group_id": job.get("group_id"),
-            "recipient_id": job.get("recipient_id"),
-            "job_id": job["id"],
-            "direction": "out",
-            "channel": "comment" if kind == "comment" else "dm",
-            "body": text,
-        })
-    return {"ok": True}
+            # === Hier die eigentliche Aktion umsetzen ===
+            # like_posts / comment_post / dm_new_member / reply_message
+            if text:
+                read_delay(behavior, text)
+            print(f"[job] {kind} -> {text!r}")
+
+            if check_blocked(page, bot_id):
+                raise RuntimeError("Checkpoint nach Aktion erkannt")
+
+            if text and kind in ("comment", "comment_post", "dm_new_member", "reply_message", "follow_up"):
+                api("messages", {
+                    "bot_id": bot_id,
+                    "group_id": job.get("group_id"),
+                    "recipient_id": job.get("recipient_id"),
+                    "job_id": job["id"],
+                    "direction": "out",
+                    "channel": "comment" if "comment" in (kind or "") else "dm",
+                    "body": text,
+                })
+            human_pause(behavior)
+            return {"ok": True}
+        finally:
+            try:
+                ctx.close()
+            except Exception:
+                pass
+            if browser:
+                try:
+                    browser.close()
+                except Exception:
+                    pass
 
 
 def main():
     print("FB/Control Worker gestartet")
     while True:
         try:
-            api("heartbeat", {"version": "1.0.0"})
+            api("heartbeat", {"version": "2.0.0"})
             jobs = api("poll", {"limit": 3}).get("jobs", [])
             if not jobs:
-                time.sleep(POLL_SECONDS)
+                time.sleep(POLL_SECONDS + random.uniform(0, 10))
                 continue
             for job in jobs:
                 try:
@@ -93,6 +290,7 @@ def main():
                         "type": "job_failed",
                         "message": str(exc),
                     })
+                time.sleep(random.uniform(20, 120))
         except Exception as exc:
             print("Verbindungsfehler:", exc)
             time.sleep(POLL_SECONDS)
