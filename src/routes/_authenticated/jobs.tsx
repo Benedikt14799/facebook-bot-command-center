@@ -655,7 +655,7 @@ function EditJobDialog({
   }
 
   const save = useMutation({
-    mutationFn: async (mode: "save" | "requeue" | "duplicate") => {
+    mutationFn: async (mode: "save" | "retry" | "duplicate") => {
       const basePayload = buildPayload();
       const base = {
         bot_id: botId,
@@ -675,29 +675,32 @@ function EditJobDialog({
             source: "manual",
           },
         });
-        return;
+        return "Auftrag dupliziert";
       }
 
-      if (mode === "requeue") {
-        await doUpdateJob({
+      if (mode === "retry") {
+        // Variante A: Ursprungsauftrag bleibt failed, neue Wiederholung entsteht.
+        const res = (await doRetryJobs({
           data: {
-            id: job.id,
-            ...base,
-            status: "pending",
-            error: null,
-            claimed_at: null,
-            claimed_by: null,
-            finished_at: null,
+            ids: [job.id],
+            overrides: base,
+            scheduled_for: base.scheduled_for,
           },
-        });
-      } else {
-        await doUpdateJob({ data: { id: job.id, ...base } });
+        })) as { created: number; skipped: number };
+        if (!res.created) {
+          throw new Error("Für diesen Auftrag ist bereits eine Wiederholung eingeplant.");
+        }
+        return "Wiederholung eingeplant";
       }
+
+      await doUpdateJob({ data: { id: job.id, ...base } });
+      return "Auftrag gespeichert";
     },
-    onSuccess: () => {
-      toast.success("Auftrag gespeichert");
+    onSuccess: (msg: string) => {
+      toast.success(msg);
       onSaved();
     },
+
     onError: (e: Error) => {
       toast.error(e.message);
       setErrors([e.message]);
