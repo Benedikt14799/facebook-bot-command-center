@@ -47,3 +47,33 @@ export function json(body: unknown, status = 200) {
     headers: { "content-type": "application/json" },
   });
 }
+
+/**
+ * Einheitliches Einlesen des Anfragekoerpers fuer alle Worker-Endpunkte.
+ *
+ * - leerer Body           -> {} (erlaubt)
+ * - kaputtes JSON         -> HTTP 400
+ * - Liste/Zahl/Text/null  -> HTTP 400
+ */
+export async function readJsonBody<T extends Record<string, unknown>>(
+  request: Request,
+): Promise<T | Response> {
+  let raw: string;
+  try {
+    raw = await request.text();
+  } catch {
+    return json({ error: "Ungültiger JSON-Body." }, 400);
+  }
+  if (!raw.trim()) return {} as T;
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return json({ error: "Ungültiger JSON-Body." }, 400);
+  }
+  if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
+    return json({ error: "Ungültiger JSON-Body." }, 400);
+  }
+  return parsed as T;
+}

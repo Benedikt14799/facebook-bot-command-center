@@ -40,7 +40,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { selectAll, fmt } from "@/lib/db";
 import { JOB_TYPES, jobTypeLabel, readTypoSettings, type JobTypoSettings } from "@/lib/job-types";
 import { TypoControls } from "@/components/TypoControls";
-import { saveJob, updateJob } from "@/lib/jobs.functions";
+import { retryJobs, saveJob, updateJob } from "@/lib/jobs.functions";
 import { useServerFn } from "@tanstack/react-start";
 import type { Json } from "@/integrations/supabase/types";
 import type { Job } from "@/lib/db";
@@ -388,6 +388,14 @@ function JobsPage() {
                   >
                     {j.source === "auto" ? "auto" : "manuell"}
                   </span>
+                  {(j as { retried_from_job_id?: string | null }).retried_from_job_id ? (
+                    <span
+                      className="ml-2 rounded border border-border/60 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-muted-foreground"
+                      title="Wiederholung eines fehlgeschlagenen Auftrags"
+                    >
+                      Wiederholung
+                    </span>
+                  ) : null}
                 </td>
                 <td className="px-4 py-2 text-muted-foreground">
                   {bots.data?.find((b) => b.id === j.bot_id)?.name ?? "—"}
@@ -641,8 +649,11 @@ function EditJobDialog({
   const [errors, setErrors] = useState<string[]>([]);
 
   const doUpdateJob = useServerFn(updateJob);
+  const doRetryJobs = useServerFn(retryJobs);
 
   const done = job.status === "done";
+  const retriedFrom = (job as { retried_from_job_id?: string | null }).retried_from_job_id ?? null;
+
   const failed = job.status === "failed";
 
   const doSaveJob = useServerFn(saveJob);
@@ -655,7 +666,7 @@ function EditJobDialog({
   }
 
   const save = useMutation({
-    mutationFn: async (mode: "save" | "requeue" | "duplicate") => {
+    mutationFn: async (mode: "save" | "retry" | "duplicate") => {
       const basePayload = buildPayload();
       const base = {
         bot_id: botId,
@@ -675,29 +686,32 @@ function EditJobDialog({
             source: "manual",
           },
         });
-        return;
+        return "Auftrag dupliziert";
       }
 
-      if (mode === "requeue") {
-        await doUpdateJob({
+      if (mode === "retry") {
+        // Variante A: Ursprungsauftrag bleibt failed, neue Wiederholung entsteht.
+        const res = (await doRetryJobs({
           data: {
-            id: job.id,
-            ...base,
-            status: "pending",
-            error: null,
-            claimed_at: null,
-            claimed_by: null,
-            finished_at: null,
+            ids: [job.id],
+            overrides: base,
+            scheduled_for: base.scheduled_for,
           },
-        });
-      } else {
-        await doUpdateJob({ data: { id: job.id, ...base } });
+        })) as { created: number; skipped: number };
+        if (!res.created) {
+          throw new Error("Für diesen Auftrag ist bereits eine Wiederholung eingeplant.");
+        }
+        return "Wiederholung eingeplant";
       }
+
+      await doUpdateJob({ data: { id: job.id, ...base } });
+      return "Auftrag gespeichert";
     },
-    onSuccess: () => {
-      toast.success("Auftrag gespeichert");
+    onSuccess: (msg: string) => {
+      toast.success(msg);
       onSaved();
     },
+
     onError: (e: Error) => {
       toast.error(e.message);
       setErrors([e.message]);
@@ -717,7 +731,13 @@ function EditJobDialog({
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-3 overflow-y-auto pr-1">
-          {job.error ? (
+          {retriedFrom ? (
+            <div className="rounded-md border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
+              Wiederholung eines fehlgeschlagenen Auftrags (Ursprung:{" "}
+              <code className="font-mono">{retriedFrom.slice(0, 8)}</code>)
+            </div>
+          ) : null}
+          {job.error && job.status !== "pending" ? (
             <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-xs text-destructive">
               {job.error}
             </div>
@@ -826,17 +846,12 @@ function EditJobDialog({
             <Button onClick={() => save.mutate("duplicate")} disabled={save.isPending}>
               Als neuen Auftrag duplizieren
             </Button>
+          ) : failed ? (
+            <Button onClick={() => save.mutate("retry")} disabled={save.isPending}>
+              Als Wiederholung neu einplanen
+            </Button>
           ) : (
             <>
-              {failed ? (
-                <Button
-                  variant="outline"
-                  onClick={() => save.mutate("requeue")}
-                  disabled={save.isPending}
-                >
-                  Speichern & neu einplanen
-                </Button>
-              ) : null}
               <Button onClick={() => save.mutate("save")} disabled={save.isPending}>
                 Speichern
               </Button>

@@ -2,7 +2,7 @@
  * Worker-API: Lebenszeichen des Workers (Version + Online-Status).
  */
 import { createFileRoute } from "@tanstack/react-router";
-import { authenticateWorker, json } from "@/lib/worker-auth.server";
+import { authenticateWorker, json, readJsonBody } from "@/lib/worker-auth.server";
 
 export const Route = createFileRoute("/api/public/worker/heartbeat")({
   server: {
@@ -10,7 +10,9 @@ export const Route = createFileRoute("/api/public/worker/heartbeat")({
       POST: async ({ request }) => {
         const ctx = await authenticateWorker(request);
         if (ctx instanceof Response) return ctx;
-        const body = (await request.json().catch(() => ({}))) as { version?: string };
+        const parsedBody = await readJsonBody(request);
+        if (parsedBody instanceof Response) return parsedBody;
+        const body = parsedBody as { version?: string };
         await ctx.admin
           .from("workers")
           .update({ version: body.version ?? null, status: "online" })

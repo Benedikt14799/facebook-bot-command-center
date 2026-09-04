@@ -11,7 +11,9 @@ import { AppShell } from "@/components/AppShell";
 import { InfoHint } from "@/components/InfoHint";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
+import { useServerFn } from "@tanstack/react-start";
+import { retryJobs } from "@/lib/jobs.functions";
+
 import { selectAll, fmt, type Job } from "@/lib/db";
 import { PROXY_TYPES, stealthScore, type ProxyCheck } from "@/lib/stealth";
 import { effectiveWorkerStatus, isWorkerOffline } from "@/lib/worker-status";
@@ -69,25 +71,25 @@ function WorkerHealthPage() {
     .filter((j) => ["done", "failed", "claimed", "running"].includes(j.status))
     .slice(0, 20);
 
-  /** Auftrag zurueck in die Warteschlange legen (Fehler und Zuweisung loeschen). */
+  /**
+   * Wiederholung (Variante A): der fehlgeschlagene Auftrag bleibt erhalten,
+   * es entsteht ein neuer Auftrag mit Verweis auf den Ursprung. Einzel- und
+   * Sammelwiederholung nutzen dieselbe Serverlogik.
+   */
+  const doRetryJobs = useServerFn(retryJobs);
   const retry = useMutation({
-    mutationFn: async (ids: string[]) => {
-      const { error } = await supabase
-        .from("jobs")
-        .update({
-          status: "pending",
-          error: null,
-          claimed_by: null,
-          claimed_at: null,
-          finished_at: null,
-          scheduled_for: new Date().toISOString(),
-        })
-        .in("id", ids);
-      if (error) throw error;
-      return ids.length;
-    },
-    onSuccess: (n) => {
-      toast.success(n === 1 ? "Auftrag erneut eingeplant" : `${n} Aufträge erneut eingeplant`);
+    mutationFn: async (ids: string[]) =>
+      (await doRetryJobs({ data: { ids } })) as { created: number; skipped: number },
+    onSuccess: (res) => {
+      if (res.created === 0) {
+        toast.info("Keine neue Wiederholung — es ist bereits eine eingeplant.");
+      } else {
+        toast.success(
+          res.created === 1
+            ? "Wiederholung eingeplant"
+            : `${res.created} Wiederholungen eingeplant`,
+        );
+      }
       qc.invalidateQueries({ queryKey: ["jobs"] });
     },
     onError: (e: Error) => toast.error(e.message),

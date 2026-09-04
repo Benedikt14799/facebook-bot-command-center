@@ -4,7 +4,7 @@
  * und schreibt einen Eintrag in ihre Kontaktakte.
  */
 import { createFileRoute } from "@tanstack/react-router";
-import { authenticateWorker, json } from "@/lib/worker-auth.server";
+import { authenticateWorker, json, readJsonBody } from "@/lib/worker-auth.server";
 import { logContact, upsertRecipient } from "@/lib/contacts.server";
 
 type Person = {
@@ -24,8 +24,9 @@ export const Route = createFileRoute("/api/public/worker/recipients")({
         const ctx = await authenticateWorker(request);
         if (ctx instanceof Response) return ctx;
 
-        const body = (await request.json().catch(() => null)) as
-          (Person & { people?: Person[] }) | null;
+        const parsedBody = await readJsonBody(request);
+        if (parsedBody instanceof Response) return parsedBody;
+        const body = parsedBody as (Person & { people?: Person[] }) | null;
         if (!body) return json({ error: "body required" }, 400);
 
         const people = Array.isArray(body.people) ? body.people : [body];

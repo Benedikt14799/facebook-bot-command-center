@@ -109,3 +109,78 @@ export const failJob = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+/**
+ * Wiederholt fehlgeschlagene Auftraege (Variante A):
+ * Der Ursprungsauftrag bleibt unveraendert "failed" inkl. Fehlertext; es
+ * entsteht ein neuer, sauberer Auftrag mit Verweis auf den Ursprung.
+ *
+ * Wird sowohl vom Auftrags-Dialog (einzeln) als auch von der Worker-Health-
+ * Seite (Sammelwiederholung) genutzt. Existiert bereits eine offene
+ * Wiederholung, wird der Auftrag uebersprungen — keine Duplikate.
+ */
+export const retryJobs = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    (input: { ids: string[]; overrides?: Partial<JobInput>; scheduled_for?: string }) => input,
+  )
+  .handler(async ({ data, context }) => {
+    const ids = [...new Set(data.ids)].filter(Boolean);
+    if (!ids.length) return { created: 0, skipped: 0 };
+
+    const { data: sources, error: loadErr } = await context.supabase
+      .from("jobs")
+      .select("*")
+      .in("id", ids)
+      .eq("user_id", context.userId);
+    if (loadErr) throw new Error(loadErr.message);
+
+    // Bereits vorhandene, noch nicht abgeschlossene Wiederholungen ermitteln.
+    const { data: existing } = await context.supabase
+      .from("jobs")
+      .select("id, retried_from_job_id, status")
+      .in("retried_from_job_id", ids)
+      .eq("user_id", context.userId)
+      .in("status", ["pending", "running", "claimed"]);
+    const alreadyRetried = new Set(
+      (existing ?? []).map((j) => j.retried_from_job_id).filter(Boolean) as string[],
+    );
+
+    let created = 0;
+    let skipped = 0;
+    for (const src of sources ?? []) {
+      if (src.status !== "failed") {
+        skipped++;
+        continue;
+      }
+      if (alreadyRetried.has(src.id)) {
+        skipped++;
+        continue;
+      }
+
+      const o = data.overrides ?? {};
+      const values = normalize({
+        bot_id: o.bot_id ?? src.bot_id,
+        group_id: o.group_id !== undefined ? o.group_id : src.group_id,
+        recipient_id: o.recipient_id !== undefined ? o.recipient_id : src.recipient_id,
+        type: o.type ?? src.type,
+        payload: (o.payload ?? src.payload) as Json,
+        generated_text: o.generated_text !== undefined ? o.generated_text : src.generated_text,
+        scheduled_for: data.scheduled_for ?? new Date().toISOString(),
+        needs_approval: src.needs_approval,
+        status: "pending",
+        source: src.source,
+      });
+
+      const { error } = await context.supabase.from("jobs").insert({
+        ...values,
+        user_id: context.userId,
+        retried_from_job_id: src.id,
+      });
+      if (error) throw new Error(error.message);
+      alreadyRetried.add(src.id);
+      created++;
+    }
+
+    return { created, skipped };
+  });

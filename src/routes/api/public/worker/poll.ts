@@ -6,7 +6,7 @@
  * den Worker ausgeliefert, damit kein Browser gestartet wird.
  */
 import { createFileRoute } from "@tanstack/react-router";
-import { authenticateWorker, json } from "@/lib/worker-auth.server";
+import { authenticateWorker, json, readJsonBody } from "@/lib/worker-auth.server";
 import { validateJob } from "@/lib/job-validation";
 
 export const Route = createFileRoute("/api/public/worker/poll")({
@@ -15,11 +15,26 @@ export const Route = createFileRoute("/api/public/worker/poll")({
       POST: async ({ request }) => {
         const ctx = await authenticateWorker(request);
         if (ctx instanceof Response) return ctx;
-        const body = (await request.json().catch(() => ({}))) as {
+        const parsedBody = await readJsonBody(request);
+        if (parsedBody instanceof Response) return parsedBody;
+        const body = parsedBody as {
           bot_id?: string;
-          limit?: number;
+          limit?: unknown;
         };
-        const limit = Math.min(Math.max(body.limit ?? 5, 1), 25);
+
+        // Nur ganze Zahlen von 1 bis MAX_LIMIT; ungueltige Werte -> 400.
+        const MAX_LIMIT = 25;
+        let limit = 5;
+        if (body.limit !== undefined && body.limit !== null) {
+          const n = body.limit;
+          if (typeof n !== "number" || !Number.isInteger(n) || n < 1 || n > MAX_LIMIT) {
+            return json(
+              { error: `Ungültiges limit. Erlaubt ist eine ganze Zahl von 1 bis ${MAX_LIMIT}.` },
+              400,
+            );
+          }
+          limit = n;
+        }
 
         let query = ctx.admin
           .from("jobs")
@@ -83,7 +98,12 @@ export const Route = createFileRoute("/api/public/worker/poll")({
           ? await ctx.admin.from("bots").select("*").in("id", botIds)
           : { data: [] };
 
-        return json({ jobs: claimed, bots: bots ?? [] });
+        return json({
+          jobs: claimed.slice(0, limit),
+          bots: bots ?? [],
+          limit,
+          max_limit: MAX_LIMIT,
+        });
       },
     },
   },
