@@ -14,7 +14,6 @@ type Admin = SupabaseClient<Database>;
 
 export { STAGES, STAGE_LABEL, KIND_LABEL } from "@/lib/contact-labels";
 import { STAGES, type Stage } from "@/lib/contact-labels";
-import type { KIND_LABEL as KindLabelType } from "@/lib/contact-labels";
 export type { Stage };
 
 /** Vorname aus einem vollen Namen ableiten. */
