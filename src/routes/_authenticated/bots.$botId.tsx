@@ -139,7 +139,7 @@ function BotDetail() {
             <Field label="Name">
               <Input value={f.name ?? ""} onChange={(e) => set({ name: e.target.value })} />
             </Field>
-            <Field label="FB-Profilname">
+            <Field label="FB-Profilname" hint="Der Name, wie er auf Facebook angezeigt wird — hilft beim Zuordnen von Nachrichten.">
               <Input
                 value={f.fb_profile_name ?? ""}
                 onChange={(e) => set({ fb_profile_name: e.target.value })}
@@ -151,10 +151,10 @@ function BotDetail() {
                 onChange={(e) => set({ profile_url: e.target.value })}
               />
             </Field>
-            <Field label="Proxy">
+            <Field label="Proxy" hint="Optionale Proxy-Adresse, damit jedes Profil über eine eigene IP arbeitet. Reduziert das Risiko, dass Facebook Profile verknüpft.">
               <Input value={f.proxy ?? ""} onChange={(e) => set({ proxy: e.target.value })} />
             </Field>
-            <Field label="Status">
+            <Field label="Status" hint="live = arbeitet normal, warmup = eingeschränkter Aufwärmbetrieb, paused = pausiert, blocked = von Facebook eingeschränkt.">
               <Select value={f.status} onValueChange={(v) => set({ status: v })}>
                 <SelectTrigger>
                   <SelectValue />
@@ -168,7 +168,7 @@ function BotDetail() {
                 </SelectContent>
               </Select>
             </Field>
-            <Field label="Warmup-Start">
+            <Field label="Warmup-Start" hint="Startdatum der Aufwärmphase. Je jünger, desto vorsichtiger arbeitet der Bot (weniger Aktionen pro Tag).">
               <Input
                 type="date"
                 value={f.warmup_start ?? ""}
@@ -192,31 +192,31 @@ function BotDetail() {
         <section className="rounded-lg border border-border bg-card p-4">
           <h2 className="mb-3 flex items-center gap-2 text-sm font-medium text-foreground">Zeitplan & Limits <InfoHint text="Arbeitsfenster, Zufalls-Jitter, Wochenendfaktor und Tages-Caps. So verhält sich der Bot menschlich und wird seltener von Facebook gesperrt." /></h2>
           <div className="grid gap-3 sm:grid-cols-2">
-            <Field label="Aktiv von">
+            <Field label="Aktiv von" hint="Beginn des täglichen Arbeitsfensters, z. B. 08:00 — außerhalb passiert nichts.">
               <Input
                 type="time"
                 value={(f.active_from ?? "").slice(0, 5)}
                 onChange={(e) => set({ active_from: `${e.target.value}:00` })}
               />
             </Field>
-            <Field label="Aktiv bis">
+            <Field label="Aktiv bis" hint="Ende des Arbeitsfensters, z. B. 22:00.">
               <Input
                 type="time"
                 value={(f.active_to ?? "").slice(0, 5)}
                 onChange={(e) => set({ active_to: `${e.target.value}:00` })}
               />
             </Field>
-            <Field label="Zeitzone">
+            <Field label="Zeitzone" hint="Zeitzone, in der die Arbeitszeiten gelten (z. B. Europe/Berlin).">
               <Input value={f.timezone ?? ""} onChange={(e) => set({ timezone: e.target.value })} />
             </Field>
-            <Field label="Jitter (Minuten)">
+            <Field label="Jitter (Minuten)" hint="Zufällige Verschiebung jeder Aktion in Minuten, damit kein maschinelles Muster entsteht.">
               <Input
                 type="number"
                 value={f.jitter_minutes ?? 0}
                 onChange={(e) => set({ jitter_minutes: Number(e.target.value) })}
               />
             </Field>
-            <Field label="Wochenend-Faktor">
+            <Field label="Wochenend-Faktor" hint="Multiplikator für Wochenenden, z. B. 0.6 = 40 % weniger Aktionen.">
               <Input
                 type="number"
                 step="0.1"
@@ -224,21 +224,21 @@ function BotDetail() {
                 onChange={(e) => set({ weekend_factor: Number(e.target.value) })}
               />
             </Field>
-            <Field label="Cap Likes / Tag">
+            <Field label="Cap Likes / Tag" hint="Maximale Likes pro Tag für dieses Profil.">
               <Input
                 type="number"
                 value={f.cap_likes ?? 0}
                 onChange={(e) => set({ cap_likes: Number(e.target.value) })}
               />
             </Field>
-            <Field label="Cap Kommentare / Tag">
+            <Field label="Cap Kommentare / Tag" hint="Maximale Kommentare pro Tag für dieses Profil.">
               <Input
                 type="number"
                 value={f.cap_comments ?? 0}
                 onChange={(e) => set({ cap_comments: Number(e.target.value) })}
               />
             </Field>
-            <Field label="Cap DMs / Tag">
+            <Field label="Cap DMs / Tag" hint="Maximale Direktnachrichten pro Tag. Bei neuen Profilen niedrig halten.">
               <Input
                 type="number"
                 value={f.cap_dms ?? 0}
@@ -251,7 +251,7 @@ function BotDetail() {
         <section className="rounded-lg border border-border bg-card p-4">
           <h2 className="mb-3 flex items-center gap-2 text-sm font-medium text-foreground">Textgenerierung <InfoHint text="Vorlagen, KI oder beides. Der Tonfall steuert, wie die Texte klingen — damit sie nicht nach KI wirken." /></h2>
           <div className="grid gap-3">
-            <Field label="Modus">
+            <Field label="Modus" hint="Vorlagen = feste Textbausteine, KI = generierte Texte, beides = Vorlage als Grundlage, KI variiert sie.">
               <Select value={f.text_mode} onValueChange={(v) => set({ text_mode: v })}>
                 <SelectTrigger>
                   <SelectValue />
@@ -263,7 +263,7 @@ function BotDetail() {
                 </SelectContent>
               </Select>
             </Field>
-            <Field label="Tonfall / Schreibstil">
+            <Field label="Tonfall / Schreibstil" hint="Beschreibe, wie der Bot schreiben soll — knapp, locker, ohne Emojis usw. Wichtig, damit es nicht nach KI klingt.">
               <Textarea
                 rows={4}
                 value={f.tone ?? ""}
@@ -288,7 +288,7 @@ function BotDetail() {
             füge sie hier ein. Aus Sicherheitsgründen können hinterlegte Cookies nicht wieder
             ausgelesen werden — nur dein Worker liest sie serverseitig.
           </p>
-          <Field label="Cookies (JSON)">
+          <Field label="Cookies (JSON)" hint="Cookies aus deinem eingeloggten Browser exportieren und hier einfügen. Damit übernimmt der Worker deine Facebook-Sitzung, ohne Passwort.">
             <Textarea
               rows={7}
               className="font-mono text-xs"
@@ -298,7 +298,7 @@ function BotDetail() {
             />
           </Field>
           <div className="mt-3">
-            <Field label="User-Agent (optional)">
+            <Field label="User-Agent (optional)" hint="Browser-Kennung deines echten Browsers. Gleich lassen wie beim Cookie-Export, sonst wirkt der Login verdächtig.">
               <Input value={userAgent} onChange={(e) => setUserAgent(e.target.value)} />
             </Field>
           </div>
