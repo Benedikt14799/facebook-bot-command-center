@@ -185,6 +185,20 @@ function BotDetail() {
             <Switch checked={!!f.paused} onCheckedChange={(v) => set({ paused: v })} />
           </div>
           <div className="mt-2 flex items-center justify-between rounded-md border border-border/60 px-3 py-2">
+            <span className="flex items-center gap-1.5 text-sm text-foreground">
+              Automatik (Autopilot)
+              <InfoHint text="Wenn eingeschaltet, plant das Cockpit alle 10 Minuten selbst Aufträge für diesen Bot — innerhalb der Arbeitszeit, der Tages-Caps und der Aufwärmphase. Aus = du planst alles manuell." />
+            </span>
+            <Switch checked={!!f.autopilot} onCheckedChange={(v) => set({ autopilot: v })} />
+          </div>
+          <div className="mt-2 flex items-center justify-between rounded-md border border-border/60 px-3 py-2">
+            <span className="flex items-center gap-1.5 text-sm text-foreground">
+              Simulationsmodus
+              <InfoHint text="Trockenlauf ohne echten Worker: Aufträge werden automatisch als erledigt markiert und Beispiel-Nachrichten erzeugt. Ideal zum Testen der Abläufe." />
+            </span>
+            <Switch checked={!!f.simulate} onCheckedChange={(v) => set({ simulate: v })} />
+          </div>
+          <div className="mt-2 flex items-center justify-between rounded-md border border-border/60 px-3 py-2">
             <span className="text-sm text-foreground">Texte vor Versand freigeben</span>
             <Switch
               checked={!!f.require_approval}

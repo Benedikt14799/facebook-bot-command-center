@@ -17,11 +17,13 @@ import {
   Server,
   LogOut,
 } from "lucide-react";
+import { Flame } from "lucide-react";
 import type { ReactNode } from "react";
 
 const nav = [
   { to: "/dashboard", label: "Cockpit", icon: Activity },
   { to: "/bots", label: "Bots", icon: Bot },
+  { to: "/warmup", label: "Aufwärmphase", icon: Flame },
   { to: "/groups", label: "Gruppen", icon: Users },
   { to: "/jobs", label: "Aufträge", icon: ListChecks },
   { to: "/messages", label: "Nachrichten", icon: MessagesSquare },

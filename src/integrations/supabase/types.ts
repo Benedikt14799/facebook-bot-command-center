@@ -58,6 +58,36 @@ export type Database = {
           },
         ]
       }
+      automation_state: {
+        Row: {
+          created_at: string
+          last_error: string | null
+          last_run_at: string | null
+          paused: boolean
+          paused_reason: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          last_error?: string | null
+          last_run_at?: string | null
+          paused?: boolean
+          paused_reason?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          last_error?: string | null
+          last_run_at?: string | null
+          paused?: boolean
+          paused_reason?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       bot_groups: {
         Row: {
           bot_id: string
@@ -139,6 +169,7 @@ export type Database = {
         Row: {
           active_from: string
           active_to: string
+          autopilot: boolean
           cap_comments: number
           cap_dms: number
           cap_likes: number
@@ -155,18 +186,24 @@ export type Database = {
           require_approval: boolean
           session_status: string
           session_updated_at: string | null
+          simulate: boolean
           status: string
           text_mode: string
           timezone: string
           tone: string | null
           updated_at: string
           user_id: string
+          warmup_extra_days: number
+          warmup_paused: boolean
+          warmup_plan: Json
+          warmup_preset: string
           warmup_start: string
           weekend_factor: number
         }
         Insert: {
           active_from?: string
           active_to?: string
+          autopilot?: boolean
           cap_comments?: number
           cap_dms?: number
           cap_likes?: number
@@ -183,18 +220,24 @@ export type Database = {
           require_approval?: boolean
           session_status?: string
           session_updated_at?: string | null
+          simulate?: boolean
           status?: string
           text_mode?: string
           timezone?: string
           tone?: string | null
           updated_at?: string
           user_id?: string
+          warmup_extra_days?: number
+          warmup_paused?: boolean
+          warmup_plan?: Json
+          warmup_preset?: string
           warmup_start?: string
           weekend_factor?: number
         }
         Update: {
           active_from?: string
           active_to?: string
+          autopilot?: boolean
           cap_comments?: number
           cap_dms?: number
           cap_likes?: number
@@ -211,12 +254,17 @@ export type Database = {
           require_approval?: boolean
           session_status?: string
           session_updated_at?: string | null
+          simulate?: boolean
           status?: string
           text_mode?: string
           timezone?: string
           tone?: string | null
           updated_at?: string
           user_id?: string
+          warmup_extra_days?: number
+          warmup_paused?: boolean
+          warmup_plan?: Json
+          warmup_preset?: string
           warmup_start?: string
           weekend_factor?: number
         }
@@ -335,6 +383,27 @@ export type Database = {
         }
         Relationships: []
       }
+      job_locks: {
+        Row: {
+          created_at: string
+          holder: string | null
+          locked_until: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          holder?: string | null
+          locked_until: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          holder?: string | null
+          locked_until?: string
+          name?: string
+        }
+        Relationships: []
+      }
       jobs: {
         Row: {
           attempts: number
@@ -351,6 +420,7 @@ export type Database = {
           recipient_id: string | null
           result: Json | null
           scheduled_for: string
+          source: string
           status: string
           type: string
           updated_at: string
@@ -371,6 +441,7 @@ export type Database = {
           recipient_id?: string | null
           result?: Json | null
           scheduled_for?: string
+          source?: string
           status?: string
           type: string
           updated_at?: string
@@ -391,6 +462,7 @@ export type Database = {
           recipient_id?: string | null
           result?: Json | null
           scheduled_for?: string
+          source?: string
           status?: string
           type?: string
           updated_at?: string

@@ -227,7 +227,19 @@ function JobsPage() {
           <tbody>
             {list.map((j) => (
               <tr key={j.id} className="border-b border-border/50">
-                <td className="px-4 py-2 font-mono text-xs text-foreground">{j.type}</td>
+                <td className="px-4 py-2 font-mono text-xs text-foreground">
+                  {j.type}
+                  <span
+                    className="ml-2 rounded border border-border/60 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-muted-foreground"
+                    title={
+                      j.source === "auto"
+                        ? "Automatisch vom Planer erzeugt"
+                        : "Manuell von dir angelegt"
+                    }
+                  >
+                    {j.source === "auto" ? "auto" : "manuell"}
+                  </span>
+                </td>
                 <td className="px-4 py-2 text-muted-foreground">
                   {bots.data?.find((b) => b.id === j.bot_id)?.name ?? "—"}
                 </td>

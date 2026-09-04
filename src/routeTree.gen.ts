@@ -18,9 +18,12 @@ import { Route as AuthenticatedJobsRouteImport } from './routes/_authenticated/j
 import { Route as AuthenticatedLogsRouteImport } from './routes/_authenticated/logs'
 import { Route as AuthenticatedMessagesRouteImport } from './routes/_authenticated/messages'
 import { Route as AuthenticatedTemplatesRouteImport } from './routes/_authenticated/templates'
+import { Route as AuthenticatedWarmupRouteImport } from './routes/_authenticated/warmup'
 import { Route as AuthenticatedWorkersRouteImport } from './routes/_authenticated/workers'
 import { Route as AuthenticatedBotsIndexRouteImport } from './routes/_authenticated/bots.index'
 import { Route as AuthenticatedBotsBotIdRouteImport } from './routes/_authenticated/bots.$botId'
+import { Route as ApiPublicCronMaintenanceRouteImport } from './routes/api/public/cron/maintenance'
+import { Route as ApiPublicCronPlanRouteImport } from './routes/api/public/cron/plan'
 import { Route as ApiPublicWorkerEventsRouteImport } from './routes/api/public/worker/events'
 import { Route as ApiPublicWorkerHeartbeatRouteImport } from './routes/api/public/worker/heartbeat'
 import { Route as ApiPublicWorkerMessagesRouteImport } from './routes/api/public/worker/messages'
@@ -72,6 +75,11 @@ const AuthenticatedTemplatesRoute = AuthenticatedTemplatesRouteImport.update({
   path: '/templates',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedWarmupRoute = AuthenticatedWarmupRouteImport.update({
+  id: '/warmup',
+  path: '/warmup',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedWorkersRoute = AuthenticatedWorkersRouteImport.update({
   id: '/workers',
   path: '/workers',
@@ -86,6 +94,17 @@ const AuthenticatedBotsBotIdRoute = AuthenticatedBotsBotIdRouteImport.update({
   id: '/bots/$botId',
   path: '/bots/$botId',
   getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const ApiPublicCronMaintenanceRoute =
+  ApiPublicCronMaintenanceRouteImport.update({
+    id: '/api/public/cron/maintenance',
+    path: '/api/public/cron/maintenance',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicCronPlanRoute = ApiPublicCronPlanRouteImport.update({
+  id: '/api/public/cron/plan',
+  path: '/api/public/cron/plan',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicWorkerEventsRoute = ApiPublicWorkerEventsRouteImport.update({
   id: '/api/public/worker/events',
@@ -128,9 +147,12 @@ export interface FileRoutesByFullPath {
   '/logs': typeof AuthenticatedLogsRoute
   '/messages': typeof AuthenticatedMessagesRoute
   '/templates': typeof AuthenticatedTemplatesRoute
+  '/warmup': typeof AuthenticatedWarmupRoute
   '/workers': typeof AuthenticatedWorkersRoute
   '/bots/$botId': typeof AuthenticatedBotsBotIdRoute
   '/bots/': typeof AuthenticatedBotsIndexRoute
+  '/api/public/cron/maintenance': typeof ApiPublicCronMaintenanceRoute
+  '/api/public/cron/plan': typeof ApiPublicCronPlanRoute
   '/api/public/worker/events': typeof ApiPublicWorkerEventsRoute
   '/api/public/worker/heartbeat': typeof ApiPublicWorkerHeartbeatRoute
   '/api/public/worker/messages': typeof ApiPublicWorkerMessagesRoute
@@ -147,9 +169,12 @@ export interface FileRoutesByTo {
   '/logs': typeof AuthenticatedLogsRoute
   '/messages': typeof AuthenticatedMessagesRoute
   '/templates': typeof AuthenticatedTemplatesRoute
+  '/warmup': typeof AuthenticatedWarmupRoute
   '/workers': typeof AuthenticatedWorkersRoute
   '/bots/$botId': typeof AuthenticatedBotsBotIdRoute
   '/bots': typeof AuthenticatedBotsIndexRoute
+  '/api/public/cron/maintenance': typeof ApiPublicCronMaintenanceRoute
+  '/api/public/cron/plan': typeof ApiPublicCronPlanRoute
   '/api/public/worker/events': typeof ApiPublicWorkerEventsRoute
   '/api/public/worker/heartbeat': typeof ApiPublicWorkerHeartbeatRoute
   '/api/public/worker/messages': typeof ApiPublicWorkerMessagesRoute
@@ -168,9 +193,12 @@ export interface FileRoutesById {
   '/_authenticated/logs': typeof AuthenticatedLogsRoute
   '/_authenticated/messages': typeof AuthenticatedMessagesRoute
   '/_authenticated/templates': typeof AuthenticatedTemplatesRoute
+  '/_authenticated/warmup': typeof AuthenticatedWarmupRoute
   '/_authenticated/workers': typeof AuthenticatedWorkersRoute
   '/_authenticated/bots/$botId': typeof AuthenticatedBotsBotIdRoute
   '/_authenticated/bots/': typeof AuthenticatedBotsIndexRoute
+  '/api/public/cron/maintenance': typeof ApiPublicCronMaintenanceRoute
+  '/api/public/cron/plan': typeof ApiPublicCronPlanRoute
   '/api/public/worker/events': typeof ApiPublicWorkerEventsRoute
   '/api/public/worker/heartbeat': typeof ApiPublicWorkerHeartbeatRoute
   '/api/public/worker/messages': typeof ApiPublicWorkerMessagesRoute
@@ -189,9 +217,12 @@ export interface FileRouteTypes {
     | '/logs'
     | '/messages'
     | '/templates'
+    | '/warmup'
     | '/workers'
     | '/bots/$botId'
     | '/bots/'
+    | '/api/public/cron/maintenance'
+    | '/api/public/cron/plan'
     | '/api/public/worker/events'
     | '/api/public/worker/heartbeat'
     | '/api/public/worker/messages'
@@ -208,9 +239,12 @@ export interface FileRouteTypes {
     | '/logs'
     | '/messages'
     | '/templates'
+    | '/warmup'
     | '/workers'
     | '/bots/$botId'
     | '/bots'
+    | '/api/public/cron/maintenance'
+    | '/api/public/cron/plan'
     | '/api/public/worker/events'
     | '/api/public/worker/heartbeat'
     | '/api/public/worker/messages'
@@ -228,9 +262,12 @@ export interface FileRouteTypes {
     | '/_authenticated/logs'
     | '/_authenticated/messages'
     | '/_authenticated/templates'
+    | '/_authenticated/warmup'
     | '/_authenticated/workers'
     | '/_authenticated/bots/$botId'
     | '/_authenticated/bots/'
+    | '/api/public/cron/maintenance'
+    | '/api/public/cron/plan'
     | '/api/public/worker/events'
     | '/api/public/worker/heartbeat'
     | '/api/public/worker/messages'
@@ -243,6 +280,8 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  ApiPublicCronMaintenanceRoute: typeof ApiPublicCronMaintenanceRoute
+  ApiPublicCronPlanRoute: typeof ApiPublicCronPlanRoute
   ApiPublicWorkerEventsRoute: typeof ApiPublicWorkerEventsRoute
   ApiPublicWorkerHeartbeatRoute: typeof ApiPublicWorkerHeartbeatRoute
   ApiPublicWorkerMessagesRoute: typeof ApiPublicWorkerMessagesRoute
@@ -316,6 +355,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTemplatesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/warmup': {
+      id: '/_authenticated/warmup'
+      path: '/warmup'
+      fullPath: '/warmup'
+      preLoaderRoute: typeof AuthenticatedWarmupRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/workers': {
       id: '/_authenticated/workers'
       path: '/workers'
@@ -336,6 +382,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/bots/$botId'
       preLoaderRoute: typeof AuthenticatedBotsBotIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/api/public/cron/maintenance': {
+      id: '/api/public/cron/maintenance'
+      path: '/api/public/cron/maintenance'
+      fullPath: '/api/public/cron/maintenance'
+      preLoaderRoute: typeof ApiPublicCronMaintenanceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/cron/plan': {
+      id: '/api/public/cron/plan'
+      path: '/api/public/cron/plan'
+      fullPath: '/api/public/cron/plan'
+      preLoaderRoute: typeof ApiPublicCronPlanRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/public/worker/events': {
       id: '/api/public/worker/events'
@@ -389,6 +449,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedLogsRoute: typeof AuthenticatedLogsRoute
   AuthenticatedMessagesRoute: typeof AuthenticatedMessagesRoute
   AuthenticatedTemplatesRoute: typeof AuthenticatedTemplatesRoute
+  AuthenticatedWarmupRoute: typeof AuthenticatedWarmupRoute
   AuthenticatedWorkersRoute: typeof AuthenticatedWorkersRoute
   AuthenticatedBotsBotIdRoute: typeof AuthenticatedBotsBotIdRoute
   AuthenticatedBotsIndexRoute: typeof AuthenticatedBotsIndexRoute
@@ -401,6 +462,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedLogsRoute: AuthenticatedLogsRoute,
   AuthenticatedMessagesRoute: AuthenticatedMessagesRoute,
   AuthenticatedTemplatesRoute: AuthenticatedTemplatesRoute,
+  AuthenticatedWarmupRoute: AuthenticatedWarmupRoute,
   AuthenticatedWorkersRoute: AuthenticatedWorkersRoute,
   AuthenticatedBotsBotIdRoute: AuthenticatedBotsBotIdRoute,
   AuthenticatedBotsIndexRoute: AuthenticatedBotsIndexRoute,
@@ -413,6 +475,8 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  ApiPublicCronMaintenanceRoute: ApiPublicCronMaintenanceRoute,
+  ApiPublicCronPlanRoute: ApiPublicCronPlanRoute,
   ApiPublicWorkerEventsRoute: ApiPublicWorkerEventsRoute,
   ApiPublicWorkerHeartbeatRoute: ApiPublicWorkerHeartbeatRoute,
   ApiPublicWorkerMessagesRoute: ApiPublicWorkerMessagesRoute,
