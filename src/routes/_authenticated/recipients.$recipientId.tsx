@@ -104,6 +104,7 @@ function RecipientDetail() {
   }
 
   const p = person.data;
+  const items: TimelineItem[] = timeline.data ?? [];
 
   return (
     <AppShell
