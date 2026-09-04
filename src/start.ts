@@ -1,7 +1,11 @@
 import { createStart, createCsrfMiddleware, createMiddleware } from "@tanstack/react-start";
 
 import { renderErrorPage } from "./lib/error-page";
+import { validateEnv } from "./lib/env";
 import { attachSupabaseAuth } from "@/integrations/supabase/auth-attacher";
+
+// Beim Start pruefen, ob alle benoetigten Umgebungsvariablen vorhanden sind.
+validateEnv();
 
 const errorMiddleware = createMiddleware().server(async ({ next }) => {
   try {
