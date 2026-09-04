@@ -29,6 +29,7 @@ import { Route as ApiPublicWorkerEventsRouteImport } from './routes/api/public/w
 import { Route as ApiPublicWorkerHeartbeatRouteImport } from './routes/api/public/worker/heartbeat'
 import { Route as ApiPublicWorkerMessagesRouteImport } from './routes/api/public/worker/messages'
 import { Route as ApiPublicWorkerPollRouteImport } from './routes/api/public/worker/poll'
+import { Route as ApiPublicWorkerRecipientsRouteImport } from './routes/api/public/worker/recipients'
 import { Route as ApiPublicWorkerResultRouteImport } from './routes/api/public/worker/result'
 import { Route as ApiPublicWorkerSessionRouteImport } from './routes/api/public/worker/session'
 
@@ -134,6 +135,12 @@ const ApiPublicWorkerPollRoute = ApiPublicWorkerPollRouteImport.update({
   path: '/api/public/worker/poll',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicWorkerRecipientsRoute =
+  ApiPublicWorkerRecipientsRouteImport.update({
+    id: '/api/public/worker/recipients',
+    path: '/api/public/worker/recipients',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicWorkerResultRoute = ApiPublicWorkerResultRouteImport.update({
   id: '/api/public/worker/result',
   path: '/api/public/worker/result',
@@ -165,6 +172,7 @@ export interface FileRoutesByFullPath {
   '/api/public/worker/heartbeat': typeof ApiPublicWorkerHeartbeatRoute
   '/api/public/worker/messages': typeof ApiPublicWorkerMessagesRoute
   '/api/public/worker/poll': typeof ApiPublicWorkerPollRoute
+  '/api/public/worker/recipients': typeof ApiPublicWorkerRecipientsRoute
   '/api/public/worker/result': typeof ApiPublicWorkerResultRoute
   '/api/public/worker/session': typeof ApiPublicWorkerSessionRoute
 }
@@ -188,6 +196,7 @@ export interface FileRoutesByTo {
   '/api/public/worker/heartbeat': typeof ApiPublicWorkerHeartbeatRoute
   '/api/public/worker/messages': typeof ApiPublicWorkerMessagesRoute
   '/api/public/worker/poll': typeof ApiPublicWorkerPollRoute
+  '/api/public/worker/recipients': typeof ApiPublicWorkerRecipientsRoute
   '/api/public/worker/result': typeof ApiPublicWorkerResultRoute
   '/api/public/worker/session': typeof ApiPublicWorkerSessionRoute
 }
@@ -213,6 +222,7 @@ export interface FileRoutesById {
   '/api/public/worker/heartbeat': typeof ApiPublicWorkerHeartbeatRoute
   '/api/public/worker/messages': typeof ApiPublicWorkerMessagesRoute
   '/api/public/worker/poll': typeof ApiPublicWorkerPollRoute
+  '/api/public/worker/recipients': typeof ApiPublicWorkerRecipientsRoute
   '/api/public/worker/result': typeof ApiPublicWorkerResultRoute
   '/api/public/worker/session': typeof ApiPublicWorkerSessionRoute
 }
@@ -238,6 +248,7 @@ export interface FileRouteTypes {
     | '/api/public/worker/heartbeat'
     | '/api/public/worker/messages'
     | '/api/public/worker/poll'
+    | '/api/public/worker/recipients'
     | '/api/public/worker/result'
     | '/api/public/worker/session'
   fileRoutesByTo: FileRoutesByTo
@@ -261,6 +272,7 @@ export interface FileRouteTypes {
     | '/api/public/worker/heartbeat'
     | '/api/public/worker/messages'
     | '/api/public/worker/poll'
+    | '/api/public/worker/recipients'
     | '/api/public/worker/result'
     | '/api/public/worker/session'
   id:
@@ -285,6 +297,7 @@ export interface FileRouteTypes {
     | '/api/public/worker/heartbeat'
     | '/api/public/worker/messages'
     | '/api/public/worker/poll'
+    | '/api/public/worker/recipients'
     | '/api/public/worker/result'
     | '/api/public/worker/session'
   fileRoutesById: FileRoutesById
@@ -299,6 +312,7 @@ export interface RootRouteChildren {
   ApiPublicWorkerHeartbeatRoute: typeof ApiPublicWorkerHeartbeatRoute
   ApiPublicWorkerMessagesRoute: typeof ApiPublicWorkerMessagesRoute
   ApiPublicWorkerPollRoute: typeof ApiPublicWorkerPollRoute
+  ApiPublicWorkerRecipientsRoute: typeof ApiPublicWorkerRecipientsRoute
   ApiPublicWorkerResultRoute: typeof ApiPublicWorkerResultRoute
   ApiPublicWorkerSessionRoute: typeof ApiPublicWorkerSessionRoute
 }
@@ -445,6 +459,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicWorkerPollRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/worker/recipients': {
+      id: '/api/public/worker/recipients'
+      path: '/api/public/worker/recipients'
+      fullPath: '/api/public/worker/recipients'
+      preLoaderRoute: typeof ApiPublicWorkerRecipientsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/worker/result': {
       id: '/api/public/worker/result'
       path: '/api/public/worker/result'
@@ -503,6 +524,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicWorkerHeartbeatRoute: ApiPublicWorkerHeartbeatRoute,
   ApiPublicWorkerMessagesRoute: ApiPublicWorkerMessagesRoute,
   ApiPublicWorkerPollRoute: ApiPublicWorkerPollRoute,
+  ApiPublicWorkerRecipientsRoute: ApiPublicWorkerRecipientsRoute,
   ApiPublicWorkerResultRoute: ApiPublicWorkerResultRoute,
   ApiPublicWorkerSessionRoute: ApiPublicWorkerSessionRoute,
 }
