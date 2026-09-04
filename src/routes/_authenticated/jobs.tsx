@@ -514,7 +514,7 @@ function JobFields({
           </Label>
           <Input
             type="url"
-            value={payload["post_url"] ?? ""}
+            value={typeof payload["post_url"] === "string" ? payload["post_url"] : ""}
             onChange={(e) => update("post_url", e.target.value || undefined)}
             placeholder="https://facebook.com/groups/.../posts/..."
           />
@@ -525,7 +525,7 @@ function JobFields({
             <InfoHint text="Alternativ die interne Post-ID (wenn kein Link vorhanden ist)." />
           </Label>
           <Input
-            value={payload["post_id"] ?? ""}
+            value={typeof payload["post_id"] === "string" ? payload["post_id"] : ""}
             onChange={(e) => update("post_id", e.target.value || undefined)}
             placeholder="1234567890"
           />
