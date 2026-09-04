@@ -195,13 +195,24 @@ export async function upsertRecipient(admin: Admin, input: PersonInput) {
     existing = data ?? null;
   }
 
+  // Namen robust parsen: Titel/Emojis raus, "Nachname, Vorname" drehen,
+  // notfalls aus der Profil-URL ableiten.
+  const parsed = parseName({
+    name: input.name,
+    profileUrl: input.profileUrl,
+    text: input.context,
+  });
+
   const patch: Record<string, unknown> = {
-    name: input.name ?? undefined,
-    first_name: firstNameOf(input.name) ?? undefined,
+    name: parsed.name ?? input.name ?? undefined,
+    first_name: parsed.firstName ?? undefined,
+    name_source: parsed.source ?? undefined,
     profile_url: input.profileUrl ?? undefined,
     fb_user_id: input.fbUserId ?? undefined,
     group_id: input.groupId ?? undefined,
     bot_id: input.botId ?? undefined,
+    // Rohdaten des Worker-Events unveraendert mitspeichern
+    raw_event: input.rawEvent ? (input.rawEvent as never) : undefined,
   };
   if (input.context) {
     patch["last_context"] = input.context;
