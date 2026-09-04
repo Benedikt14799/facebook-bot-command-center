@@ -43,6 +43,13 @@ def api(path: str, payload: dict | None = None, method: str = "POST"):
     return resp.json() if resp.content else {}
 
 
+def api_get(path: str) -> dict:
+    """GET-Aufruf auf die Worker-API (z. B. offene Freischaltungen)."""
+    resp = session.get(f"{BASE_URL}/api/public/worker/{path}", timeout=30)
+    resp.raise_for_status()
+    return resp.json() if resp.content else {}
+
+
 def load_session(bot_id: str) -> dict:
     """Cookies, Proxy, Fingerprint, Verhalten und Antidetect-Konfig des Bots."""
     resp = session.get(f"{BASE_URL}/api/public/worker/session?bot_id={bot_id}", timeout=30)
@@ -101,7 +108,7 @@ navigator.permissions.query = (p) => p.name === 'notifications'
 """
 
 
-def build_context(p, data: dict, bot_id: str):
+def build_context(p, data: dict, bot_id: str, headless: bool = False):
     """Startet Chromium (Stealth) oder verbindet sich mit einem Antidetect-Browser."""
     fp = data.get("fingerprint") or {}
     proxy = data.get("proxy")
@@ -131,7 +138,7 @@ def build_context(p, data: dict, bot_id: str):
     os.makedirs(user_data, exist_ok=True)
     ctx = p.chromium.launch_persistent_context(
         user_data,
-        headless=False,
+        headless=headless,
         proxy=proxy_cfg,
         user_agent=data.get("user_agent") or fp.get("user_agent"),
         locale=fp.get("locale", "de-DE"),
@@ -335,7 +342,9 @@ def main():
     print("FB/Control Worker gestartet")
     while True:
         try:
-            api("heartbeat", {"version": "2.0.0"})
+            api("heartbeat", {"version": "2.1.0"})
+            # Zuerst pruefen, ob du einen Bot von Hand freischalten willst.
+            handle_unlock_requests()
             jobs = api("poll", {"limit": 3}).get("jobs", [])
             if not jobs:
                 time.sleep(POLL_SECONDS + random.uniform(0, 10))
