@@ -1,0 +1,31 @@
+{
+  "verification_missing": {
+    "request": { "job_id": "33333333-3333-4333-8333-333333333333", "status": "done", "result": { "verified": "true" } },
+    "http": 400,
+    "response": {
+      "error": { "code": "verification_required", "message": "Für done muss result.verified exakt true sein." }
+    }
+  },
+  "wrong_worker": {
+    "request": { "job_id": "33333333-3333-4333-8333-333333333333", "status": "failed", "error": "Timeout" },
+    "http": 403,
+    "response": {
+      "error": { "code": "forbidden", "message": "Nur der abholende Worker darf das Ergebnis melden." }
+    }
+  },
+  "already_finished_other_result": {
+    "request": { "job_id": "33333333-3333-4333-8333-333333333333", "status": "done", "result": { "verified": true, "liked": 9 } },
+    "http": 409,
+    "response": {
+      "error": { "code": "result_mismatch", "message": "job already finished with a different result", "status": "done" }
+    }
+  },
+  "invalid_limit": {
+    "endpoint": "poll",
+    "request": { "limit": 26 },
+    "http": 400,
+    "response": {
+      "error": { "code": "invalid_payload", "message": "Ungültiges limit. Erlaubt ist eine ganze Zahl von 1 bis 25." }
+    }
+  }
+}
