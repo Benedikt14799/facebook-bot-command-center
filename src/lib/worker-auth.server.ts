@@ -101,7 +101,7 @@ export async function readJsonBody<T extends Record<string, unknown>>(
   try {
     raw = await request.text();
   } catch {
-    return json({ error: "Ungültiger JSON-Body." }, 400);
+    return json({ error: { code: "invalid_json", message: "Ungültiger JSON-Body." } }, 400);
   }
   if (!raw.trim()) return {} as T;
 
@@ -109,10 +109,10 @@ export async function readJsonBody<T extends Record<string, unknown>>(
   try {
     parsed = JSON.parse(raw);
   } catch {
-    return json({ error: "Ungültiger JSON-Body." }, 400);
+    return json({ error: { code: "invalid_json", message: "Ungültiger JSON-Body." } }, 400);
   }
   if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
-    return json({ error: "Ungültiger JSON-Body." }, 400);
+    return json({ error: { code: "invalid_json", message: "Ungültiger JSON-Body." } }, 400);
   }
   return parsed as T;
 }

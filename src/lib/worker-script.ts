@@ -347,7 +347,7 @@ def run_job(job: dict) -> dict:
             if check_blocked(page, bot_id):
                 raise RuntimeError("Checkpoint nach Aktion erkannt")
 
-            if text and kind in ("comment", "comment_post", "dm_new_member", "reply_message", "follow_up"):
+            if text and kind in ("comment_post", "dm_new_member", "reply_message"):
                 api("messages", {
                     "bot_id": bot_id,
                     "group_id": job.get("group_id"),
