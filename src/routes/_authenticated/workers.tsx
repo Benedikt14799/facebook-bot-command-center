@@ -50,6 +50,8 @@ function publicApiBase(origin: string) {
 function WorkersPage() {
   const qc = useQueryClient();
   const [name, setName] = useState("");
+  const [issuedToken, setIssuedToken] = useState<string | null>(null);
+  const [issuedFor, setIssuedFor] = useState<string | null>(null);
   const baseUrl = typeof window !== "undefined" ? publicApiBase(window.location.origin) : "";
 
   const workers = useQuery({
@@ -57,6 +59,42 @@ function WorkersPage() {
     queryFn: () => selectAll("workers"),
     refetchInterval: 30_000,
   });
+
+  const tokens = useQuery({
+    queryKey: ["worker_tokens"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("worker_tokens")
+        .select("id, worker_id, token_prefix, label, created_at, last_used_at, revoked_at")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const issueToken = useServerFn(createWorkerToken);
+  const issue = useMutation({
+    mutationFn: async (workerId: string) => issueToken({ data: { worker_id: workerId } }),
+    onSuccess: (res, workerId) => {
+      setIssuedToken(res.token);
+      setIssuedFor(workerId);
+      toast.success("Neuer Schlüssel erzeugt");
+      qc.invalidateQueries({ queryKey: ["worker_tokens"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const revokeToken = useServerFn(revokeWorkerToken);
+  const revoke = useMutation({
+    mutationFn: async (tokenId: string) => revokeToken({ data: { token_id: tokenId } }),
+    onSuccess: () => {
+      toast.success("Schlüssel widerrufen");
+      qc.invalidateQueries({ queryKey: ["worker_tokens"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+
 
   const create = useMutation({
     mutationFn: async () => {
