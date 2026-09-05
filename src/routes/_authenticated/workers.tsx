@@ -293,10 +293,8 @@ function WorkersPage() {
                 </p>
               </div>
             )}
-
           </div>
         ))}
-
 
         {(workers.data ?? []).length === 0 && (
           <p className="text-sm text-muted-foreground">Noch kein Worker registriert.</p>
