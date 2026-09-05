@@ -28,10 +28,17 @@ Nichts davon löst echte Facebook-Aktionen aus; alles bleibt im technischen Prob
    wird serverseitig `worker_bots` geprüft. Fremder Bot → 403 `forbidden`.
 4. **Keine unverschlüsselte Ablage.** Cookies, Proxy-Passwörter und Antidetect-Schlüssel
    werden immer verschlüsselt gespeichert. Fehlt der Schlüssel aus dem Secret-Management,
-   bricht das Speichern mit `server_error` ab statt im Klartext zu speichern. Altbestand
-   wird per Migration verschlüsselt, Klartextfelder danach geleert. Rotation über `enc_key_id`.
-5. **Echtbetrieb gesperrt.** Standard ist Probebetrieb; `live` nur durch ausdrückliche
-   serverseitige Freigabe je Worker, nie durch Angaben des Workers selbst.
+   bricht das Speichern mit `server_error` ab statt im Klartext zu speichern. Der Altbestand
+   wird nicht per SQL, sondern über einen geschützten, wiederholbaren Serverlauf verschlüsselt:
+   bereits verschlüsselte Datensätze werden übersprungen, Klartext erst nach erfolgreicher
+   Prüfung geleert, und die Zusammenfassung nennt nur Anzahlen, nie Inhalte. Rotation über `enc_key_id`.
+5. **Echtbetrieb gesperrt.** Standard ist Probebetrieb. Echtbetrieb gilt nur, wenn der Worker
+   ausdrücklich freigeschaltet ist (`live_enabled`), dem Bot zugeordnet ist, die Fähigkeit
+   besitzt und Bot, Sitzung, Zeitfenster und Grenzen es zulassen. Andernfalls liefert der
+   Server `dry_run` zurück; Angaben des Workers schalten nie etwas frei.
+6. **Nur ein echtes Lebenszeichen zählt.** Nur der Lebenszeichen-Endpunkt setzt einen Worker
+   auf „online“; andere Aufrufe nicht. Älter als 90 Sekunden gilt als offline — dann keine
+   neuen Aufträge; Anzeige im Cockpit und Test dazu.
 
 ## Stufe 2 – Vor der Abnahme
 
