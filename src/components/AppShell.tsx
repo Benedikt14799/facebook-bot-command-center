@@ -17,7 +17,16 @@ import {
   Server,
   LogOut,
 } from "lucide-react";
-import { Flame, HeartPulse, Contact, Sparkles, KeyRound, Rocket } from "lucide-react";
+import {
+  Flame,
+  HeartPulse,
+  Contact,
+  Sparkles,
+  KeyRound,
+  Rocket,
+  FlaskConical,
+} from "lucide-react";
+
 import { NotificationBell } from "@/components/NotificationBell";
 import type { ReactNode } from "react";
 
