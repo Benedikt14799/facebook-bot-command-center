@@ -17,7 +17,16 @@ import {
   Server,
   LogOut,
 } from "lucide-react";
-import { Flame, HeartPulse, Contact, Sparkles, KeyRound, Rocket } from "lucide-react";
+import {
+  Flame,
+  HeartPulse,
+  Contact,
+  Sparkles,
+  KeyRound,
+  Rocket,
+  FlaskConical,
+} from "lucide-react";
+
 import { NotificationBell } from "@/components/NotificationBell";
 import type { ReactNode } from "react";
 
@@ -36,6 +45,8 @@ const nav = [
   { to: "/workers", label: "Worker", icon: Server },
   { to: "/worker-health", label: "Worker-Health", icon: HeartPulse },
   { to: "/unlock", label: "Freischaltung", icon: KeyRound },
+  { to: "/test-data", label: "Testdaten", icon: FlaskConical },
+
 ] as const;
 
 export function AppShell({

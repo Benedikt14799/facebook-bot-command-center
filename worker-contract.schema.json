@@ -1,0 +1,135 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fbcontrol.example/worker-contract-1.0.schema.json",
+  "title": "FB/Control Worker-Vertrag 1.0",
+  "type": "object",
+  "$defs": {
+    "jobStatus": {
+      "enum": ["pending", "running", "done", "failed", "skipped", "cancelled"]
+    },
+    "reportableStatus": { "enum": ["done", "failed", "skipped"] },
+    "sessionState": {
+      "enum": ["missing", "ok", "expired", "needs_login", "checkpoint", "captcha", "revoked"]
+    },
+    "capability": { "enum": ["like", "comment", "scan", "dm", "reply"] },
+    "uuid": { "type": "string", "format": "uuid" },
+    "error": {
+      "type": "object",
+      "required": ["error"],
+      "properties": {
+        "error": {
+          "type": "object",
+          "required": ["code", "message"],
+          "properties": {
+            "code": {
+              "enum": [
+                "unauthorized",
+                "forbidden",
+                "invalid_json",
+                "invalid_payload",
+                "not_found",
+                "conflict",
+                "status_mismatch",
+                "result_mismatch",
+                "verification_required",
+                "server_error"
+              ]
+            },
+            "message": { "type": "string" }
+          }
+        }
+      }
+    },
+    "heartbeatRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "version": { "type": "string" },
+        "contract_version": { "type": "string" },
+        "capabilities": { "type": "array", "items": { "$ref": "#/$defs/capability" } },
+        "mode": { "enum": ["dry_run", "live"] },
+        "status": { "type": "string" },
+        "bot_id": { "$ref": "#/$defs/uuid" },
+        "message": { "type": "string" }
+      }
+    },
+    "pollRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "bot_id": { "$ref": "#/$defs/uuid" },
+        "limit": { "type": "integer", "minimum": 1, "maximum": 25, "default": 5 }
+      }
+    },
+    "resultRequest": {
+      "type": "object",
+      "required": ["job_id", "status"],
+      "properties": {
+        "job_id": { "$ref": "#/$defs/uuid" },
+        "status": { "$ref": "#/$defs/reportableStatus" },
+        "result": { "type": "object" },
+        "error": { "type": "string" },
+        "error_code": { "type": "string" },
+        "error_stage": { "type": "string" },
+        "error_retryable": { "type": "boolean" },
+        "executor_version": { "type": "string" },
+        "recipient_name": { "type": "string" },
+        "recipient_fb_id": { "type": "string" },
+        "recipient_profile_url": { "type": "string" },
+        "context": { "type": "string" },
+        "sent_text": { "type": "string" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "status": { "const": "done" } }, "required": ["status"] },
+          "then": {
+            "required": ["result"],
+            "properties": {
+              "result": {
+                "type": "object",
+                "required": ["verified"],
+                "properties": { "verified": { "const": true } }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "sessionPostRequest": {
+      "type": "object",
+      "required": ["bot_id"],
+      "properties": {
+        "bot_id": { "$ref": "#/$defs/uuid" },
+        "cookies": { "type": "array" },
+        "user_agent": { "type": "string" },
+        "status": { "$ref": "#/$defs/sessionState" }
+      }
+    },
+    "messageRequest": {
+      "type": "object",
+      "required": ["direction", "body"],
+      "properties": {
+        "bot_id": { "$ref": "#/$defs/uuid" },
+        "group_id": { "$ref": "#/$defs/uuid" },
+        "recipient_id": { "$ref": "#/$defs/uuid" },
+        "job_id": { "$ref": "#/$defs/uuid" },
+        "direction": { "enum": ["in", "out"] },
+        "channel": { "type": "string" },
+        "body": { "type": "string", "minLength": 1 },
+        "thread_ref": { "type": "string" },
+        "external_id": { "type": "string" }
+      }
+    },
+    "eventRequest": {
+      "type": "object",
+      "required": ["type", "message"],
+      "properties": {
+        "bot_id": { "$ref": "#/$defs/uuid" },
+        "level": { "enum": ["info", "warn", "error"] },
+        "type": { "type": "string" },
+        "message": { "type": "string" },
+        "meta": { "type": "object" }
+      }
+    }
+  }
+}

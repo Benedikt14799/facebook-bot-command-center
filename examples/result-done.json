@@ -1,0 +1,10 @@
+{
+  "request": {
+    "job_id": "33333333-3333-4333-8333-333333333333",
+    "status": "done",
+    "result": { "verified": true, "liked": 3, "duration_ms": 41500 },
+    "executor_version": "3.0.0"
+  },
+  "response": { "ok": true, "status": "done" },
+  "repeat_response": { "ok": true, "unchanged": true, "status": "done" }
+}

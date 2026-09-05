@@ -7,7 +7,7 @@
  */
 
 export type JobType =
-  "dm_new_member" | "reply_message" | "like_posts" | "comment_post" | "scan_group" | "follow_up";
+  "dm_new_member" | "reply_message" | "like_posts" | "comment_post" | "scan_group";
 
 /** Pflichtfeld-Regeln fuer jeden Auftragstyp. */
 export type JobRequirement =
@@ -15,6 +15,7 @@ export type JobRequirement =
   | { kind: "recipient"; message: string }
   | { kind: "count"; min: number; max: number; message: string }
   | { kind: "post"; message: string }
+  | { kind: "text"; max: number; message: string }
   | { kind: "limit"; min: number; max: number; message: string };
 
 const REQUIREMENTS: Record<JobType, JobRequirement[]> = {
@@ -33,9 +34,20 @@ const REQUIREMENTS: Record<JobType, JobRequirement[]> = {
       kind: "post",
       message: "Für ‚Beitrag kommentieren‘ muss post_url oder post_id angegeben werden.",
     },
+    {
+      kind: "text",
+      max: 2000,
+      message: "Für ‚Beitrag kommentieren‘ wird ein Text (höchstens 2000 Zeichen) benötigt.",
+    },
   ],
   scan_group: [
     { kind: "group", message: "Für ‚Gruppe scannen‘ muss eine Gruppe ausgewählt werden." },
+    {
+      kind: "limit",
+      min: 1,
+      max: 100,
+      message: "Die Scan-Tiefe muss eine ganze Zahl zwischen 1 und 100 sein.",
+    },
   ],
   dm_new_member: [
     {
@@ -43,20 +55,26 @@ const REQUIREMENTS: Record<JobType, JobRequirement[]> = {
       message:
         "Für ‚Neues Gruppenmitglied anschreiben‘ muss eine Person (recipient_id oder profile_url) angegeben werden.",
     },
+    {
+      kind: "text",
+      max: 2000,
+      message:
+        "Für ‚Neues Gruppenmitglied anschreiben‘ wird ein Text (höchstens 2000 Zeichen) benötigt.",
+    },
   ],
   reply_message: [
     {
       kind: "recipient",
       message: "Für ‚Auf Nachricht antworten‘ muss eine Person (recipient_id) angegeben werden.",
     },
-  ],
-  follow_up: [
     {
-      kind: "recipient",
-      message: "Für ‚Follow-up-Nachricht‘ muss eine Person (recipient_id) angegeben werden.",
+      kind: "text",
+      max: 2000,
+      message: "Für ‚Auf Nachricht antworten‘ wird ein Text (höchstens 2000 Zeichen) benötigt.",
     },
   ],
 };
+
 
 /** Alle bekannten Auftragstypen, die validiert werden koennen. */
 export const VALIDATED_JOB_TYPES = Object.keys(REQUIREMENTS) as JobType[];
@@ -80,38 +98,42 @@ function checkRequirement(
   groupId: string | null | undefined,
   recipientId: string | null | undefined,
   payload: Record<string, unknown>,
+  generatedText?: string | null,
 ): string | null {
+  const p = asRecord(payload);
   switch (req.kind) {
     case "group":
       return groupId ? null : req.message;
     case "recipient": {
       if (recipientId) return null;
-      const p = asRecord(payload);
       if (p["recipient_id"] && typeof p["recipient_id"] === "string") return null;
       if (p["profile_url"] && typeof p["profile_url"] === "string") return null;
       return req.message;
     }
     case "count": {
-      const p = asRecord(payload);
-      const count = typeof p["count"] === "number" ? p["count"] : Number(p["count"]);
-      if (Number.isFinite(count) && count >= req.min && count <= req.max) return null;
-      return req.message;
+      const count = p["count"];
+      if (typeof count !== "number" || !Number.isInteger(count)) return req.message;
+      return count >= req.min && count <= req.max ? null : req.message;
     }
     case "post": {
-      const p = asRecord(payload);
-      if (p["post_url"] && typeof p["post_url"] === "string") return null;
-      if (p["post_id"] && typeof p["post_id"] === "string") return null;
+      if (typeof p["post_url"] === "string" && p["post_url"].trim()) return null;
+      if (typeof p["post_id"] === "string" && p["post_id"].trim()) return null;
       return req.message;
     }
+    case "text": {
+      const raw = typeof p["text"] === "string" ? p["text"] : (generatedText ?? "");
+      if (typeof raw !== "string" || !raw.trim()) return req.message;
+      return raw.length <= req.max ? null : req.message;
+    }
     case "limit": {
-      const p = asRecord(payload);
-      if (p["limit"] === undefined) return null; // optional
-      const limit = typeof p["limit"] === "number" ? p["limit"] : Number(p["limit"]);
-      if (Number.isFinite(limit) && limit >= req.min && limit <= req.max) return null;
-      return req.message;
+      if (p["limit"] === undefined || p["limit"] === null) return null; // optional
+      const limit = p["limit"];
+      if (typeof limit !== "number" || !Number.isInteger(limit)) return req.message;
+      return limit >= req.min && limit <= req.max ? null : req.message;
     }
   }
 }
+
 
 /** Validierungsergebnis. */
 export type JobValidationResult = { valid: true } | { valid: false; errors: string[] };
@@ -125,6 +147,7 @@ export function validateJob(
   groupId: string | null | undefined,
   recipientId: string | null | undefined,
   payload: unknown,
+  generatedText?: string | null,
 ): JobValidationResult {
   if (!isKnownJobType(type)) {
     return { valid: false, errors: [`Unbekannter Auftragstyp: ${type}`] };
@@ -132,9 +155,10 @@ export function validateJob(
   const errors: string[] = [];
   const normalizedPayload = asRecord(payload);
   for (const req of REQUIREMENTS[type]) {
-    const err = checkRequirement(req, groupId, recipientId, normalizedPayload);
+    const err = checkRequirement(req, groupId, recipientId, normalizedPayload, generatedText);
     if (err) errors.push(err);
   }
+
   if (errors.length) return { valid: false, errors };
   return { valid: true };
 }

@@ -9,7 +9,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { validateJob } from "@/lib/job-validation";
 import type { Json } from "@/integrations/supabase/types";
 
-const JOB_STATUSES = ["pending", "running", "done", "failed", "cancelled", "claimed"];
+import { JOB_STATUSES } from "@/lib/worker-contract";
 
 /** Gemeinsame Eingabe fuer Anlegen und Aendern. */
 type JobInput = {
@@ -33,11 +33,17 @@ type JobInput = {
 function normalize(input: JobInput) {
   const groupId = input.group_id ?? null;
   const recipientId = input.recipient_id ?? null;
-  const validation = validateJob(input.type, groupId, recipientId, input.payload);
-  if (!validation.valid) throw new Error(validation.errors.join(" "));
-
-  const payload = (input.payload ?? {}) as Record<string, unknown>;
+  const payload = { ...((input.payload ?? {}) as Record<string, unknown>) };
   if (input.generated_text) payload["text"] = input.generated_text;
+
+  const validation = validateJob(
+    input.type,
+    groupId,
+    recipientId,
+    payload,
+    input.generated_text ?? null,
+  );
+  if (!validation.valid) throw new Error(validation.errors.join(" "));
 
   return {
     bot_id: input.bot_id,
@@ -50,7 +56,9 @@ function normalize(input: JobInput) {
       ? new Date(input.scheduled_for).toISOString()
       : new Date().toISOString(),
     needs_approval: !!input.needs_approval,
-    status: JOB_STATUSES.includes(input.status ?? "") ? input.status! : "pending",
+    status: (JOB_STATUSES as readonly string[]).includes(input.status ?? "")
+      ? input.status!
+      : "pending",
     source: input.source ?? "manual",
   };
 }
@@ -141,7 +149,7 @@ export const retryJobs = createServerFn({ method: "POST" })
       .select("id, retried_from_job_id, status")
       .in("retried_from_job_id", ids)
       .eq("user_id", context.userId)
-      .in("status", ["pending", "running", "claimed"]);
+      .in("status", ["pending", "running"]);
     const alreadyRetried = new Set(
       (existing ?? []).map((j) => j.retried_from_job_id).filter(Boolean) as string[],
     );
@@ -176,7 +184,24 @@ export const retryJobs = createServerFn({ method: "POST" })
         ...values,
         user_id: context.userId,
         retried_from_job_id: src.id,
+        error: null,
+        error_code: null,
+        error_message: null,
+        error_stage: null,
+        error_retryable: null,
+        result: null,
+        attempts: 0,
+        claimed_at: null,
+        claimed_by: null,
+        started_at: null,
+        finished_at: null,
       });
+      // Doppelklick/Parallelaufruf: die Datenbank laesst nur eine offene
+      // Wiederholung je Ursprungsauftrag zu.
+      if (error && error.code === "23505") {
+        skipped++;
+        continue;
+      }
       if (error) throw new Error(error.message);
       alreadyRetried.add(src.id);
       created++;

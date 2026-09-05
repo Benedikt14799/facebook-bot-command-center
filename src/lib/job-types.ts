@@ -89,7 +89,8 @@ export function jobTypeInfo(value: string) {
 }
 
 export function jobTypeLabel(value: string) {
-  if (value === "follow_up") return "Follow-up-Nachricht";
+  // Alter Typ "follow_up" wird nicht mehr angelegt, alte Eintraege bleiben lesbar.
+  if (value === "follow_up") return "Follow-up-Nachricht (alt)";
   return jobTypeInfo(value)?.label ?? value;
 }
 

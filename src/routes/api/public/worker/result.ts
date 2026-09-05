@@ -1,16 +1,18 @@
 /**
  * Worker-API: Ergebnis eines Auftrags zurueckmelden (done/failed/skipped).
  *
- * Bei erfolgreichen Auftraegen wird zusaetzlich ein Eintrag in der Kontaktakte
- * der betroffenen Person angelegt (Like, Kommentar, Welcome-DM, Follow-up).
- *
- * Ungueltige Auftraege koennen niemals als done gemeldet werden; der Server
- * zwingt stattdessen den Status failed.
+ * Verbindliche Regeln:
+ * - Ein Ergebnis wird nur fuer Auftraege im Zustand "running" angenommen und
+ *   nur von genau dem Worker, der den Auftrag abgeholt hat.
+ * - "done" verlangt result.verified === true (exakt der boolesche Wert).
+ * - Wiederholte identische Meldungen sind unschaedlich (idempotent) — auch die
+ *   Nebenwirkungen (Kontaktakte, Stufen) werden nicht doppelt geschrieben.
  */
 import { createFileRoute } from "@tanstack/react-router";
 import { authenticateWorker, json, readJsonBody } from "@/lib/worker-auth.server";
 import { validateJob } from "@/lib/job-validation";
 import { advanceStage, logContact, upsertRecipient } from "@/lib/contacts.server";
+import { REPORTABLE_STATUSES, TERMINAL_STATUSES } from "@/lib/worker-contract";
 
 /** Auftragstyp -> Art des Eintrags in der Kontaktakte. */
 const KIND_BY_TYPE: Record<string, string> = {
@@ -19,7 +21,6 @@ const KIND_BY_TYPE: Record<string, string> = {
   comment: "comment",
   comment_post: "comment",
   dm_new_member: "welcome",
-  follow_up: "follow_up",
   reply_message: "reply_out",
 };
 
@@ -31,6 +32,10 @@ function canonical(value: unknown): string {
     .filter(([, v]) => v !== undefined)
     .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
   return `{${entries.map(([k, v]) => `${JSON.stringify(k)}:${canonical(v)}`).join(",")}}`;
+}
+
+function fail(code: string, message: string, status: number, extra?: Record<string, unknown>) {
+  return json({ error: { code, message, ...(extra ?? {}) } }, status);
 }
 
 export const Route = createFileRoute("/api/public/worker/result")({
@@ -46,7 +51,10 @@ export const Route = createFileRoute("/api/public/worker/result")({
           status?: string;
           result?: unknown;
           error?: string;
-          // optional: vom Worker erkannte Person
+          error_code?: string;
+          error_stage?: string;
+          error_retryable?: boolean;
+          executor_version?: string;
           recipient_name?: string;
           recipient_fb_id?: string;
           recipient_profile_url?: string;
@@ -54,48 +62,62 @@ export const Route = createFileRoute("/api/public/worker/result")({
           sent_text?: string;
         } | null;
 
-        if (!body?.job_id) return json({ error: "job_id required" }, 400);
+        if (!body?.job_id || typeof body.job_id !== "string")
+          return fail("invalid_payload", "job_id required", 400);
 
-        // Strikte Statuspruefung: kein Fallback auf "done".
-        const ALLOWED = ["done", "failed", "skipped"] as const;
         const requested = body.status ?? "";
-        if (!ALLOWED.includes(requested as (typeof ALLOWED)[number])) {
-          return json({ error: "Ungültiger Status. Erlaubt sind: done, failed, skipped." }, 400);
+        if (!REPORTABLE_STATUSES.includes(requested as (typeof REPORTABLE_STATUSES)[number])) {
+          return fail(
+            "invalid_payload",
+            "Ungültiger Status. Erlaubt sind: done, failed, skipped.",
+            400,
+          );
         }
 
-        // Vollstaendigen Auftrag laden, um ihn validieren zu koennen.
+        // "done" nur mit ausdruecklicher Verifikation.
+        const resultObj =
+          body.result && typeof body.result === "object" && !Array.isArray(body.result)
+            ? (body.result as Record<string, unknown>)
+            : null;
+        if (requested === "done" && resultObj?.["verified"] !== true) {
+          return fail(
+            "verification_required",
+            "Für done muss result.verified exakt true sein.",
+            400,
+          );
+        }
+
         const { data: fullJob, error: loadErr } = await ctx.admin
           .from("jobs")
           .select("*")
           .eq("id", body.job_id)
           .eq("user_id", ctx.userId)
           .maybeSingle();
-        if (loadErr) return json({ error: loadErr.message }, 500);
-        if (!fullJob) return json({ error: "job not found" }, 404);
+        if (loadErr) return fail("server_error", loadErr.message, 500);
+        if (!fullJob) return fail("not_found", "job not found", 404);
 
-        // Bereits abgeschlossene Auftraege duerfen nicht mehr veraendert werden.
-        // Identische Wiederholung -> 200 (idempotent), abweichender Inhalt -> 409.
-        const TERMINAL = ["done", "failed", "skipped", "cancelled"];
-        if (TERMINAL.includes(fullJob.status)) {
-          if (fullJob.status !== requested) {
-            return json(
-              { error: "job already finished", status: fullJob.status, reason: "status_mismatch" },
-              409,
-            );
-          }
+        // Abgeschlossene Auftraege: identische Wiederholung ist idempotent.
+        if (TERMINAL_STATUSES.includes(fullJob.status as never)) {
+          if (fullJob.status !== requested)
+            return fail("status_mismatch", "job already finished", 409, {
+              status: fullJob.status,
+            });
           const sameResult = canonical(fullJob.result ?? null) === canonical(body.result ?? null);
           const sameError = (fullJob.error ?? null) === (body.error ?? null);
-          if (sameResult && sameError) return json({ ok: true, unchanged: true });
-          return json(
-            { error: "job already finished", status: fullJob.status, reason: "result_mismatch" },
-            409,
-          );
+          if (!sameResult || !sameError)
+            return fail("result_mismatch", "job already finished with a different result", 409, {
+              status: fullJob.status,
+            });
+          return json({ ok: true, unchanged: true, status: fullJob.status });
         }
 
-        // Ergebnis nur vom Worker akzeptieren, der den Auftrag uebernommen hat.
-        if (fullJob.claimed_by && fullJob.claimed_by !== ctx.workerId) {
-          return json({ error: "job claimed by another worker" }, 409);
-        }
+        // Ergebnisse nur fuer laufende Auftraege des abholenden Workers.
+        if (fullJob.status !== "running")
+          return fail("status_mismatch", "Auftrag läuft nicht (Status: " + fullJob.status + ").", 409, {
+            status: fullJob.status,
+          });
+        if (fullJob.claimed_by !== ctx.workerId)
+          return fail("forbidden", "Nur der abholende Worker darf das Ergebnis melden.", 403);
 
         // Ungueltige Auftraege duerfen nie als done gemeldet werden.
         const validation = validateJob(
@@ -103,6 +125,7 @@ export const Route = createFileRoute("/api/public/worker/result")({
           fullJob.group_id,
           fullJob.recipient_id,
           fullJob.payload,
+          fullJob.generated_text,
         );
         const status = requested === "done" && !validation.valid ? "failed" : requested;
         const errorText =
@@ -110,24 +133,29 @@ export const Route = createFileRoute("/api/public/worker/result")({
             ? validation.errors.join("; ")
             : (body.error ?? null);
 
-        // Zusaetzlicher Rennschutz: nur veraendern, solange nicht abgeschlossen.
         const { data: job, error } = await ctx.admin
           .from("jobs")
           .update({
             status,
             result: (body.result ?? null) as never,
             error: errorText,
+            error_code: body.error_code ?? (status === "failed" ? "worker_error" : null),
+            error_message: errorText,
+            error_stage: body.error_stage ?? null,
+            error_retryable: typeof body.error_retryable === "boolean" ? body.error_retryable : null,
+            executor_version: body.executor_version ?? null,
             finished_at: new Date().toISOString(),
           })
           .eq("id", body.job_id)
           .eq("user_id", ctx.userId)
-          .not("status", "in", "(done,failed,skipped,cancelled)")
+          .eq("status", "running")
+          .eq("claimed_by", ctx.workerId)
           .select("id, type, bot_id, group_id, recipient_id, generated_text")
           .maybeSingle();
-        if (error) return json({ error: error.message }, 500);
-        if (!job) return json({ error: "job already finished" }, 409);
+        if (error) return fail("server_error", error.message, 500);
+        if (!job) return fail("conflict", "job already finished", 409);
 
-        if (status === "done" && job) {
+        if (status === "done") {
           let recipientId = job.recipient_id;
           if (
             !recipientId &&
@@ -151,27 +179,35 @@ export const Route = createFileRoute("/api/public/worker/result")({
           }
 
           if (recipientId) {
-            await logContact(ctx.admin, {
-              userId: ctx.userId,
-              recipientId,
-              botId: job.bot_id,
-              groupId: job.group_id,
-              jobId: job.id,
-              kind: KIND_BY_TYPE[job.type] ?? job.type,
-              direction: "out",
-              body: body.sent_text ?? job.generated_text ?? null,
-            });
-            if (["dm_new_member", "follow_up", "reply_message"].includes(job.type)) {
-              await advanceStage(ctx.admin, recipientId, "contacted");
-              await ctx.admin
-                .from("recipients")
-                .update({ last_contacted_at: new Date().toISOString() } as never)
-                .eq("id", recipientId);
+            // Nebenwirkungen nur einmal je Auftrag schreiben.
+            const { data: existing } = await ctx.admin
+              .from("contact_events")
+              .select("id")
+              .eq("job_id", job.id)
+              .limit(1);
+            if (!existing?.length) {
+              await logContact(ctx.admin, {
+                userId: ctx.userId,
+                recipientId,
+                botId: job.bot_id,
+                groupId: job.group_id,
+                jobId: job.id,
+                kind: KIND_BY_TYPE[job.type] ?? job.type,
+                direction: "out",
+                body: body.sent_text ?? job.generated_text ?? null,
+              });
+              if (["dm_new_member", "reply_message"].includes(job.type)) {
+                await advanceStage(ctx.admin, recipientId, "contacted");
+                await ctx.admin
+                  .from("recipients")
+                  .update({ last_contacted_at: new Date().toISOString() } as never)
+                  .eq("id", recipientId);
+              }
             }
           }
         }
 
-        return json({ ok: true });
+        return json({ ok: true, status });
       },
     },
   },

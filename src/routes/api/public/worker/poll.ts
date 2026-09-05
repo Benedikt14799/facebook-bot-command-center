@@ -1,13 +1,22 @@
 /**
- * Worker-API: faellige Auftraege atomar abholen (claim) inkl. Bot-Kontext
- * mit Limits und Zeitfenstern.
+ * Worker-API: faellige Auftraege konkurrenzsicher abholen.
  *
- * Ungueltige Auftraege werden hier direkt als failed markiert und niemals an
- * den Worker ausgeliefert, damit kein Browser gestartet wird.
+ * Das Sperren passiert in der Datenbank (claim_jobs mit FOR UPDATE SKIP
+ * LOCKED). Zwei parallele Worker koennen denselben Auftrag deshalb niemals
+ * bekommen. Ungueltige Auftraege werden vorher als "failed" markiert und nie
+ * ausgeliefert. Berechtigungen (Benutzer, erlaubte Bots, Faehigkeiten, Modus)
+ * ermittelt ausschliesslich der Server.
  */
 import { createFileRoute } from "@tanstack/react-router";
 import { authenticateWorker, json, readJsonBody } from "@/lib/worker-auth.server";
 import { validateJob } from "@/lib/job-validation";
+import {
+  BLOCKING_SESSION_STATES,
+  CAPABILITY_BY_JOB_TYPE,
+  CONTRACT_VERSION,
+} from "@/lib/worker-contract";
+
+const MAX_LIMIT = 25;
 
 export const Route = createFileRoute("/api/public/worker/poll")({
   server: {
@@ -17,92 +26,111 @@ export const Route = createFileRoute("/api/public/worker/poll")({
         if (ctx instanceof Response) return ctx;
         const parsedBody = await readJsonBody(request);
         if (parsedBody instanceof Response) return parsedBody;
-        const body = parsedBody as {
-          bot_id?: string;
-          limit?: unknown;
-        };
+        const body = parsedBody as { bot_id?: unknown; limit?: unknown };
 
         // Nur ganze Zahlen von 1 bis MAX_LIMIT; ungueltige Werte -> 400.
-        const MAX_LIMIT = 25;
         let limit = 5;
         if (body.limit !== undefined && body.limit !== null) {
           const n = body.limit;
           if (typeof n !== "number" || !Number.isInteger(n) || n < 1 || n > MAX_LIMIT) {
             return json(
-              { error: `Ungültiges limit. Erlaubt ist eine ganze Zahl von 1 bis ${MAX_LIMIT}.` },
+              {
+                error: {
+                  code: "invalid_payload",
+                  message: `Ungültiges limit. Erlaubt ist eine ganze Zahl von 1 bis ${MAX_LIMIT}.`,
+                },
+              },
               400,
             );
           }
           limit = n;
         }
 
-        let query = ctx.admin
+        // Erlaubte Bots serverseitig bestimmen (Zuordnung im Cockpit).
+        let allowedBotIds = ctx.allowedBotIds;
+        if (typeof body.bot_id === "string" && body.bot_id) {
+          if (allowedBotIds.length && !allowedBotIds.includes(body.bot_id)) {
+            return json(
+              { error: { code: "forbidden", message: "Bot ist diesem Worker nicht zugeordnet." } },
+              403,
+            );
+          }
+          allowedBotIds = [body.bot_id];
+        }
+
+        // Faehigkeiten -> erlaubte Auftragstypen.
+        const capabilities = ctx.capabilities;
+        const allowedTypes = capabilities.length
+          ? Object.entries(CAPABILITY_BY_JOB_TYPE)
+              .filter(([, cap]) => capabilities.includes(cap))
+              .map(([type]) => type)
+          : Object.keys(CAPABILITY_BY_JOB_TYPE);
+
+        // Ungueltige faellige Auftraege vorab aussortieren (nie ausliefern).
+        const { data: candidates } = await ctx.admin
           .from("jobs")
-          .select("*")
+          .select("id, type, group_id, recipient_id, payload, generated_text")
           .eq("user_id", ctx.userId)
           .eq("status", "pending")
           .eq("needs_approval", false)
           .lte("scheduled_for", new Date().toISOString())
-          .order("scheduled_for", { ascending: true })
-          .limit(limit);
-        if (body.bot_id) query = query.eq("bot_id", body.bot_id);
+          .in("type", allowedTypes)
+          .limit(MAX_LIMIT * 4);
 
-        const { data: candidates, error } = await query;
-        if (error) return json({ error: error.message }, 500);
-
-        // Bots im manuellen Modus (Checkpoint/CAPTCHA/Login) bekommen nichts,
-        // bis sie im Cockpit wieder freigeschaltet sind.
-        const { data: manualBots } = await ctx.admin
-          .from("bots")
-          .select("id")
-          .eq("user_id", ctx.userId)
-          .eq("manual_mode", true);
-        const blocked = new Set((manualBots ?? []).map((b) => b.id));
-
-        const claimed = [];
-        for (const job of (candidates ?? []).filter((j) => !blocked.has(j.bot_id))) {
-          // Vor dem Claim pruefen: ungueltige Auftraege sofort als failed
-          // markieren und niemals an den Worker geben.
-          const validation = validateJob(job.type, job.group_id, job.recipient_id, job.payload);
+        for (const job of candidates ?? []) {
+          const validation = validateJob(
+            job.type,
+            job.group_id,
+            job.recipient_id,
+            job.payload,
+            job.generated_text,
+          );
           if (!validation.valid) {
             await ctx.admin
               .from("jobs")
               .update({
                 status: "failed",
                 error: validation.errors.join("; "),
+                error_code: "invalid_payload",
+                error_message: validation.errors.join("; "),
                 finished_at: new Date().toISOString(),
               })
               .eq("id", job.id)
               .eq("status", "pending");
-            continue;
           }
-
-          const { data, error: claimErr } = await ctx.admin
-            .from("jobs")
-            .update({
-              status: "running",
-              claimed_at: new Date().toISOString(),
-              claimed_by: ctx.workerId,
-              attempts: job.attempts + 1,
-            })
-            .eq("id", job.id)
-            .eq("status", "pending")
-            .select("*")
-            .maybeSingle();
-          if (!claimErr && data) claimed.push(data);
         }
 
-        // Bot-Kontext mitliefern, damit der Worker Limits und Zeitfenster kennt.
-        const botIds = [...new Set(claimed.map((j) => j.bot_id))];
+        // Atomares Abholen in der Datenbank.
+        const { data: claimed, error } = await ctx.admin.rpc("claim_jobs", {
+          p_user_id: ctx.userId,
+          p_worker_id: ctx.workerId,
+          p_bot_ids: (allowedBotIds.length ? allowedBotIds : null) as unknown as string[],
+          p_types: allowedTypes,
+          p_limit: limit,
+        });
+        if (error) return json({ error: { code: "server_error", message: error.message } }, 500);
+
+        const jobs = (claimed ?? []).slice(0, limit);
+
+        // Nur die fuer die Ausfuehrung noetigen Bot-Daten mitliefern.
+        const botIds = [...new Set(jobs.map((j) => j.bot_id))];
         const { data: bots } = botIds.length
-          ? await ctx.admin.from("bots").select("*").in("id", botIds)
+          ? await ctx.admin
+              .from("bots")
+              .select(
+                "id, name, session_status, manual_mode, paused, browser_mode, work_start, work_end, daily_limit, jitter_min, jitter_max, warmup_stage",
+              )
+              .in("id", botIds)
+              .eq("user_id", ctx.userId)
           : { data: [] };
 
         return json({
-          jobs: claimed.slice(0, limit),
+          contract_version: CONTRACT_VERSION,
+          jobs,
           bots: bots ?? [],
           limit,
           max_limit: MAX_LIMIT,
+          blocking_session_states: BLOCKING_SESSION_STATES,
         });
       },
     },

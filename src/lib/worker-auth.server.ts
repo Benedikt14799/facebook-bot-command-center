@@ -1,7 +1,10 @@
 /**
  * Authentifizierung der externen Worker (lokaler Rechner / VPS mit Playwright).
- * Der Worker schickt sein Token per Header, wir pruefen es serverseitig gegen die
- * workers-Tabelle, aktualisieren den Heartbeat und geben einen Admin-Client zurueck.
+ *
+ * Der Worker schickt seinen Schluessel per Header. Gespeichert ist nur ein
+ * nicht rueckrechenbarer SHA-256-Hash (Tabelle worker_tokens). Mehrere gueltige
+ * Schluessel pro Worker sind moeglich (ueberlappende Rotation); widerrufene
+ * Schluessel werden abgelehnt.
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
@@ -10,36 +13,72 @@ export type WorkerCtx = {
   admin: SupabaseClient<Database>;
   workerId: string;
   userId: string;
+  /** Serverseitig ermittelt — niemals aus der Anfrage uebernommen. */
+  capabilities: string[];
+  mode: string;
+  allowedBotIds: string[];
+  tokenId: string;
 };
+
+/** SHA-256-Hex eines Schluessels (Web Crypto, laeuft auch im Worker-Runtime). */
+export async function hashWorkerToken(token: string): Promise<string> {
+  const bytes = new TextEncoder().encode(token);
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
 
 export async function authenticateWorker(request: Request): Promise<WorkerCtx | Response> {
   const token =
     request.headers.get("x-worker-token") ??
     request.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ??
     "";
-  if (!token) return json({ error: "Missing worker token" }, 401);
+  if (!token) return json({ error: { code: "unauthorized", message: "Missing worker token" } }, 401);
 
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { data, error } = await supabaseAdmin
-    .from("workers")
-    .select("id, user_id")
-    .eq("token", token)
+  const hash = await hashWorkerToken(token);
+
+  const { data: tokenRow, error } = await supabaseAdmin
+    .from("worker_tokens")
+    .select("id, worker_id, user_id, revoked_at")
+    .eq("token_hash", hash)
     .maybeSingle();
 
-  if (error) return json({ error: "Auth error" }, 500);
-  if (!data) return json({ error: "Invalid worker token" }, 401);
+  if (error) return json({ error: { code: "auth_error", message: "Auth error" } }, 500);
+  if (!tokenRow || tokenRow.revoked_at)
+    return json({ error: { code: "unauthorized", message: "Invalid worker token" } }, 401);
 
+  const { data: worker } = await supabaseAdmin
+    .from("workers")
+    .select("id, user_id, capabilities, mode, revoked_at")
+    .eq("id", tokenRow.worker_id)
+    .maybeSingle();
+
+  if (!worker || worker.revoked_at)
+    return json({ error: { code: "unauthorized", message: "Worker revoked" } }, 401);
+
+  const nowIso = new Date().toISOString();
   await supabaseAdmin
     .from("workers")
-    .update({ last_seen_at: new Date().toISOString(), status: "online" })
-    .eq("id", data.id);
+    .update({ last_seen_at: nowIso, status: "online" })
+    .eq("id", worker.id);
+  await supabaseAdmin.from("worker_tokens").update({ last_used_at: nowIso }).eq("id", tokenRow.id);
+
+  const { data: links } = await supabaseAdmin
+    .from("worker_bots")
+    .select("bot_id")
+    .eq("worker_id", worker.id);
 
   return {
     admin: supabaseAdmin as unknown as SupabaseClient<Database>,
-    workerId: data.id,
-    userId: data.user_id,
+    workerId: worker.id,
+    userId: worker.user_id,
+    capabilities: worker.capabilities ?? [],
+    mode: worker.mode ?? "dry_run",
+    allowedBotIds: (links ?? []).map((l) => l.bot_id),
+    tokenId: tokenRow.id,
   };
 }
+
 
 export function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {

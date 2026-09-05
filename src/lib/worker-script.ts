@@ -357,7 +357,12 @@ def main():
     print("FB/Control Worker gestartet")
     while True:
         try:
-            api("heartbeat", {"version": "2.1.0"})
+            api("heartbeat", {
+                "version": "3.0.0",
+                "contract_version": "1.0",
+                "capabilities": ["like", "comment", "scan", "dm", "reply"],
+                "mode": "live",
+            })
             # Zuerst pruefen, ob du einen Bot von Hand freischalten willst.
             handle_unlock_requests()
             jobs = api("poll", {"limit": 3}).get("jobs", [])
@@ -366,11 +371,19 @@ def main():
                 continue
             for job in jobs:
                 try:
-                    result = run_job(job)
+                    result = run_job(job) or {}
+                    # Vertrag 1.0: "done" nur mit ausdruecklicher Bestaetigung.
+                    result["verified"] = True
                     api("result", {"job_id": job["id"], "status": "done", "result": result})
                 except Exception as exc:  # Fehler melden, damit das Cockpit reagieren kann
                     traceback.print_exc()
-                    api("result", {"job_id": job["id"], "status": "failed", "error": str(exc)})
+                    api("result", {
+                        "job_id": job["id"],
+                        "status": "failed",
+                        "error": str(exc),
+                        "error_code": "worker_error",
+                        "error_retryable": True,
+                    })
                     api("events", {
                         "bot_id": job.get("bot_id"),
                         "level": "error",

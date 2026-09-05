@@ -5,7 +5,10 @@
  * deshalb identisch mit der Worker-Health-Seite.
  */
 import { createFileRoute } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
+import { createWorkerToken, revokeWorkerToken } from "@/lib/worker-tokens.functions";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+
 import { useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { InfoHint } from "@/components/InfoHint";
@@ -50,6 +53,8 @@ function publicApiBase(origin: string) {
 function WorkersPage() {
   const qc = useQueryClient();
   const [name, setName] = useState("");
+  const [issuedToken, setIssuedToken] = useState<string | null>(null);
+  const [issuedFor, setIssuedFor] = useState<string | null>(null);
   const baseUrl = typeof window !== "undefined" ? publicApiBase(window.location.origin) : "";
 
   const workers = useQuery({
@@ -57,6 +62,42 @@ function WorkersPage() {
     queryFn: () => selectAll("workers"),
     refetchInterval: 30_000,
   });
+
+  const tokens = useQuery({
+    queryKey: ["worker_tokens"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("worker_tokens")
+        .select("id, worker_id, token_prefix, label, created_at, last_used_at, revoked_at")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const issueToken = useServerFn(createWorkerToken);
+  const issue = useMutation({
+    mutationFn: async (workerId: string) => issueToken({ data: { worker_id: workerId } }),
+    onSuccess: (res, workerId) => {
+      setIssuedToken(res.token);
+      setIssuedFor(workerId);
+      toast.success("Neuer Schlüssel erzeugt");
+      qc.invalidateQueries({ queryKey: ["worker_tokens"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const revokeToken = useServerFn(revokeWorkerToken);
+  const revoke = useMutation({
+    mutationFn: async (tokenId: string) => revokeToken({ data: { token_id: tokenId } }),
+    onSuccess: () => {
+      toast.success("Schlüssel widerrufen");
+      qc.invalidateQueries({ queryKey: ["worker_tokens"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+
 
   const create = useMutation({
     mutationFn: async () => {
@@ -110,45 +151,101 @@ function WorkersPage() {
               </div>
               <StatusBadge value={effectiveWorkerStatus(w.status, w.last_seen_at)} />
             </div>
+
+            <div className="mt-3 space-y-2">
+              {(tokens.data ?? [])
+                .filter((t) => t.worker_id === w.id)
+                .map((t) => (
+                  <div key={t.id} className="flex flex-wrap items-center gap-2 text-xs">
+                    <code className="rounded bg-secondary px-2 py-1 font-mono text-foreground">
+                      {t.token_prefix}…
+                    </code>
+                    <span className="text-muted-foreground">
+                      {t.revoked_at
+                        ? `widerrufen ${fmt(t.revoked_at)}`
+                        : `aktiv · zuletzt genutzt ${fmt(t.last_used_at)}`}
+                    </span>
+                    {!t.revoked_at && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => revoke.mutate(t.id)}
+                        disabled={revoke.isPending}
+                      >
+                        Widerrufen
+                      </Button>
+                    )}
+                  </div>
+                ))}
+              {(tokens.data ?? []).filter((t) => t.worker_id === w.id && !t.revoked_at).length ===
+                0 && (
+                <p className="text-xs text-muted-foreground">
+                  Kein aktiver Schlüssel — bitte einen neuen erzeugen.
+                </p>
+              )}
+            </div>
+
             <div className="mt-3 flex flex-wrap items-center gap-2">
-              <code className="max-w-full truncate rounded bg-secondary px-2 py-1 font-mono text-xs text-foreground">
-                {w.token}
-              </code>
               <Button
                 size="sm"
                 variant="outline"
-                onClick={() => {
-                  navigator.clipboard.writeText(w.token);
-                  toast.success("Token kopiert");
-                }}
+                onClick={() => issue.mutate(w.id)}
+                disabled={issue.isPending}
               >
-                Token kopieren
+                Neuen Schlüssel erzeugen
               </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => {
-                  // Fertiges Startskript mit Token und Basis-URL herunterladen
-                  const blob = new Blob([workerScript(baseUrl, w.token)], {
-                    type: "text/x-python",
-                  });
-                  const url = URL.createObjectURL(blob);
-                  const a = document.createElement("a");
-                  a.href = url;
-                  a.download = "fbcontrol_worker.py";
-                  a.click();
-                  URL.revokeObjectURL(url);
-                }}
-              >
-                Worker-Skript herunterladen
-              </Button>
-              <InfoHint text="Lädt ein fertiges Python-Skript mit deinem Token herunter. Nur noch 'pip install requests playwright' ausführen und starten — dann holt sich dieser Worker automatisch Aufträge." />
+              <InfoHint text="Der neue Schlüssel wird nur einmal angezeigt. Der alte bleibt gültig, bis du ihn widerrufst — so sperrst du dich nicht versehentlich aus." />
               <Button size="sm" variant="ghost" onClick={() => remove.mutate(w.id)}>
                 Löschen
               </Button>
             </div>
+
+            {issuedFor === w.id && issuedToken && (
+              <div className="mt-3 rounded-md border border-border bg-secondary/60 p-3">
+                <p className="text-xs text-muted-foreground">
+                  Neuer Schlüssel — jetzt kopieren, er wird nicht erneut angezeigt:
+                </p>
+                <code className="mt-1 block break-all font-mono text-xs text-foreground">
+                  {issuedToken}
+                </code>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      navigator.clipboard.writeText(issuedToken);
+                      toast.success("Schlüssel kopiert");
+                    }}
+                  >
+                    Kopieren
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      // Fertiges Startskript mit Schluessel und Basis-URL herunterladen
+                      const blob = new Blob([workerScript(baseUrl, issuedToken)], {
+                        type: "text/x-python",
+                      });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement("a");
+                      a.href = url;
+                      a.download = "fbcontrol_worker.py";
+                      a.click();
+                      URL.revokeObjectURL(url);
+                    }}
+                  >
+                    Worker-Skript herunterladen
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => setIssuedToken(null)}>
+                    Ausblenden
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         ))}
+
         {(workers.data ?? []).length === 0 && (
           <p className="text-sm text-muted-foreground">Noch kein Worker registriert.</p>
         )}

@@ -166,22 +166,31 @@ export type Database = {
       bot_secrets: {
         Row: {
           antidetect_key: string | null
+          antidetect_key_enc: string | null
           bot_id: string
+          enc_key_id: string | null
           proxy_password: string | null
+          proxy_password_enc: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
           antidetect_key?: string | null
+          antidetect_key_enc?: string | null
           bot_id: string
+          enc_key_id?: string | null
           proxy_password?: string | null
+          proxy_password_enc?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
           antidetect_key?: string | null
+          antidetect_key_enc?: string | null
           bot_id?: string
+          enc_key_id?: string | null
           proxy_password?: string | null
+          proxy_password_enc?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -199,6 +208,9 @@ export type Database = {
         Row: {
           bot_id: string
           cookies: Json
+          cookies_enc: string | null
+          enc_key_id: string | null
+          expires_at: string | null
           updated_at: string
           user_agent: string | null
           user_id: string
@@ -206,6 +218,9 @@ export type Database = {
         Insert: {
           bot_id: string
           cookies: Json
+          cookies_enc?: string | null
+          enc_key_id?: string | null
+          expires_at?: string | null
           updated_at?: string
           user_agent?: string | null
           user_id?: string
@@ -213,6 +228,9 @@ export type Database = {
         Update: {
           bot_id?: string
           cookies?: Json
+          cookies_enc?: string | null
+          enc_key_id?: string | null
+          expires_at?: string | null
           updated_at?: string
           user_agent?: string | null
           user_id?: string
@@ -270,6 +288,7 @@ export type Database = {
           session_updated_at: string | null
           simulate: boolean
           status: string
+          test_run_id: string | null
           text_mode: string
           timezone: string
           tone: string | null
@@ -329,6 +348,7 @@ export type Database = {
           session_updated_at?: string | null
           simulate?: boolean
           status?: string
+          test_run_id?: string | null
           text_mode?: string
           timezone?: string
           tone?: string | null
@@ -388,6 +408,7 @@ export type Database = {
           session_updated_at?: string | null
           simulate?: boolean
           status?: string
+          test_run_id?: string | null
           text_mode?: string
           timezone?: string
           tone?: string | null
@@ -555,6 +576,7 @@ export type Database = {
           name: string
           notes: string | null
           status: string
+          test_run_id: string | null
           tone: string | null
           topic: string | null
           updated_at: string
@@ -578,6 +600,7 @@ export type Database = {
           name: string
           notes?: string | null
           status?: string
+          test_run_id?: string | null
           tone?: string | null
           topic?: string | null
           updated_at?: string
@@ -601,6 +624,7 @@ export type Database = {
           name?: string
           notes?: string | null
           status?: string
+          test_run_id?: string | null
           tone?: string | null
           topic?: string | null
           updated_at?: string
@@ -636,12 +660,20 @@ export type Database = {
           bot_id: string
           claimed_at: string | null
           claimed_by: string | null
+          contract_version: string | null
           created_at: string
           error: string | null
+          error_code: string | null
+          error_message: string | null
+          error_retryable: boolean | null
+          error_stage: string | null
+          executor_version: string | null
           finished_at: string | null
           generated_text: string | null
           group_id: string | null
           id: string
+          max_attempts: number
+          mode: string | null
           needs_approval: boolean
           payload: Json
           recipient_id: string | null
@@ -649,7 +681,9 @@ export type Database = {
           retried_from_job_id: string | null
           scheduled_for: string
           source: string
+          started_at: string | null
           status: string
+          test_run_id: string | null
           type: string
           updated_at: string
           user_id: string
@@ -659,12 +693,20 @@ export type Database = {
           bot_id: string
           claimed_at?: string | null
           claimed_by?: string | null
+          contract_version?: string | null
           created_at?: string
           error?: string | null
+          error_code?: string | null
+          error_message?: string | null
+          error_retryable?: boolean | null
+          error_stage?: string | null
+          executor_version?: string | null
           finished_at?: string | null
           generated_text?: string | null
           group_id?: string | null
           id?: string
+          max_attempts?: number
+          mode?: string | null
           needs_approval?: boolean
           payload?: Json
           recipient_id?: string | null
@@ -672,7 +714,9 @@ export type Database = {
           retried_from_job_id?: string | null
           scheduled_for?: string
           source?: string
+          started_at?: string | null
           status?: string
+          test_run_id?: string | null
           type: string
           updated_at?: string
           user_id?: string
@@ -682,12 +726,20 @@ export type Database = {
           bot_id?: string
           claimed_at?: string | null
           claimed_by?: string | null
+          contract_version?: string | null
           created_at?: string
           error?: string | null
+          error_code?: string | null
+          error_message?: string | null
+          error_retryable?: boolean | null
+          error_stage?: string | null
+          executor_version?: string | null
           finished_at?: string | null
           generated_text?: string | null
           group_id?: string | null
           id?: string
+          max_attempts?: number
+          mode?: string | null
           needs_approval?: boolean
           payload?: Json
           recipient_id?: string | null
@@ -695,7 +747,9 @@ export type Database = {
           retried_from_job_id?: string | null
           scheduled_for?: string
           source?: string
+          started_at?: string | null
           status?: string
+          test_run_id?: string | null
           type?: string
           updated_at?: string
           user_id?: string
@@ -885,6 +939,7 @@ export type Database = {
           source: string
           stage: string
           state: string
+          test_run_id: string | null
           updated_at: string
           user_id: string
         }
@@ -910,6 +965,7 @@ export type Database = {
           source?: string
           stage?: string
           state?: string
+          test_run_id?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -935,6 +991,7 @@ export type Database = {
           source?: string
           stage?: string
           state?: string
+          test_run_id?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -1015,45 +1072,210 @@ export type Database = {
           },
         ]
       }
-      workers: {
+      worker_bots: {
+        Row: {
+          bot_id: string
+          created_at: string
+          id: string
+          user_id: string
+          worker_id: string
+        }
+        Insert: {
+          bot_id: string
+          created_at?: string
+          id?: string
+          user_id: string
+          worker_id: string
+        }
+        Update: {
+          bot_id?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+          worker_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "worker_bots_bot_id_fkey"
+            columns: ["bot_id"]
+            isOneToOne: false
+            referencedRelation: "bots"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "worker_bots_worker_id_fkey"
+            columns: ["worker_id"]
+            isOneToOne: false
+            referencedRelation: "workers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      worker_tokens: {
         Row: {
           created_at: string
           id: string
-          last_seen_at: string | null
-          name: string
-          status: string
-          token: string
+          label: string | null
+          last_used_at: string | null
+          revoked_at: string | null
+          token_hash: string
+          token_prefix: string
           user_id: string
-          version: string | null
+          worker_id: string
         }
         Insert: {
           created_at?: string
           id?: string
-          last_seen_at?: string | null
-          name: string
-          status?: string
-          token?: string
-          user_id?: string
-          version?: string | null
+          label?: string | null
+          last_used_at?: string | null
+          revoked_at?: string | null
+          token_hash: string
+          token_prefix?: string
+          user_id: string
+          worker_id: string
         }
         Update: {
           created_at?: string
           id?: string
+          label?: string | null
+          last_used_at?: string | null
+          revoked_at?: string | null
+          token_hash?: string
+          token_prefix?: string
+          user_id?: string
+          worker_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "worker_tokens_worker_id_fkey"
+            columns: ["worker_id"]
+            isOneToOne: false
+            referencedRelation: "workers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workers: {
+        Row: {
+          bot_id: string | null
+          capabilities: string[]
+          contract_version: string | null
+          created_at: string
+          id: string
+          last_error: string | null
+          last_event_at: string | null
+          last_ip: string | null
+          last_seen_at: string | null
+          mode: string
+          name: string
+          revoked_at: string | null
+          status: string
+          test_run_id: string | null
+          updated_at: string
+          user_id: string
+          version: string | null
+        }
+        Insert: {
+          bot_id?: string | null
+          capabilities?: string[]
+          contract_version?: string | null
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          last_event_at?: string | null
+          last_ip?: string | null
           last_seen_at?: string | null
-          name?: string
+          mode?: string
+          name: string
+          revoked_at?: string | null
           status?: string
-          token?: string
+          test_run_id?: string | null
+          updated_at?: string
           user_id?: string
           version?: string | null
         }
-        Relationships: []
+        Update: {
+          bot_id?: string | null
+          capabilities?: string[]
+          contract_version?: string | null
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          last_event_at?: string | null
+          last_ip?: string | null
+          last_seen_at?: string | null
+          mode?: string
+          name?: string
+          revoked_at?: string | null
+          status?: string
+          test_run_id?: string | null
+          updated_at?: string
+          user_id?: string
+          version?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workers_bot_id_fkey"
+            columns: ["bot_id"]
+            isOneToOne: false
+            referencedRelation: "bots"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      claim_jobs: {
+        Args: {
+          p_bot_ids: string[]
+          p_limit: number
+          p_types: string[]
+          p_user_id: string
+          p_worker_id: string
+        }
+        Returns: {
+          attempts: number
+          bot_id: string
+          claimed_at: string | null
+          claimed_by: string | null
+          contract_version: string | null
+          created_at: string
+          error: string | null
+          error_code: string | null
+          error_message: string | null
+          error_retryable: boolean | null
+          error_stage: string | null
+          executor_version: string | null
+          finished_at: string | null
+          generated_text: string | null
+          group_id: string | null
+          id: string
+          max_attempts: number
+          mode: string | null
+          needs_approval: boolean
+          payload: Json
+          recipient_id: string | null
+          result: Json | null
+          retried_from_job_id: string | null
+          scheduled_for: string
+          source: string
+          started_at: string | null
+          status: string
+          test_run_id: string | null
+          type: string
+          updated_at: string
+          user_id: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "jobs"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
     }
     Enums: {
       [_ in never]: never
