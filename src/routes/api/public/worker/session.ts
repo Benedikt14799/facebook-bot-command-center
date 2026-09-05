@@ -140,7 +140,6 @@ export const Route = createFileRoute("/api/public/worker/session")({
             {
               bot_id: body.bot_id,
               user_id: ctx.userId,
-              // Klartext nur, solange kein Schluessel gesetzt ist.
               // Cookies liegen ausschliesslich verschluesselt vor.
               cookies: [] as never,
               cookies_enc: enc.ciphertext,
