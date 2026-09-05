@@ -58,7 +58,7 @@ export const Route = createFileRoute("/api/public/worker/poll")({
         // Erlaubte Bots serverseitig bestimmen (Zuordnung im Cockpit).
         let allowedBotIds = ctx.allowedBotIds;
         if (typeof body.bot_id === "string" && body.bot_id) {
-          if (allowedBotIds.length && !allowedBotIds.includes(body.bot_id)) {
+          if (!allowedBotIds.includes(body.bot_id)) {
             return json(
               { error: { code: "forbidden", message: "Bot ist diesem Worker nicht zugeordnet." } },
               403,

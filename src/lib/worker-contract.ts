@@ -81,6 +81,7 @@ export type ApiErrorCode =
   | "status_mismatch"
   | "result_mismatch"
   | "verification_required"
+  | "dry_run_mode"
   | "server_error";
 
 /**
