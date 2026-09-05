@@ -98,38 +98,42 @@ function checkRequirement(
   groupId: string | null | undefined,
   recipientId: string | null | undefined,
   payload: Record<string, unknown>,
+  generatedText?: string | null,
 ): string | null {
+  const p = asRecord(payload);
   switch (req.kind) {
     case "group":
       return groupId ? null : req.message;
     case "recipient": {
       if (recipientId) return null;
-      const p = asRecord(payload);
       if (p["recipient_id"] && typeof p["recipient_id"] === "string") return null;
       if (p["profile_url"] && typeof p["profile_url"] === "string") return null;
       return req.message;
     }
     case "count": {
-      const p = asRecord(payload);
-      const count = typeof p["count"] === "number" ? p["count"] : Number(p["count"]);
-      if (Number.isFinite(count) && count >= req.min && count <= req.max) return null;
-      return req.message;
+      const count = p["count"];
+      if (typeof count !== "number" || !Number.isInteger(count)) return req.message;
+      return count >= req.min && count <= req.max ? null : req.message;
     }
     case "post": {
-      const p = asRecord(payload);
-      if (p["post_url"] && typeof p["post_url"] === "string") return null;
-      if (p["post_id"] && typeof p["post_id"] === "string") return null;
+      if (typeof p["post_url"] === "string" && p["post_url"].trim()) return null;
+      if (typeof p["post_id"] === "string" && p["post_id"].trim()) return null;
       return req.message;
     }
+    case "text": {
+      const raw = typeof p["text"] === "string" ? p["text"] : (generatedText ?? "");
+      if (typeof raw !== "string" || !raw.trim()) return req.message;
+      return raw.length <= req.max ? null : req.message;
+    }
     case "limit": {
-      const p = asRecord(payload);
-      if (p["limit"] === undefined) return null; // optional
-      const limit = typeof p["limit"] === "number" ? p["limit"] : Number(p["limit"]);
-      if (Number.isFinite(limit) && limit >= req.min && limit <= req.max) return null;
-      return req.message;
+      if (p["limit"] === undefined || p["limit"] === null) return null; // optional
+      const limit = p["limit"];
+      if (typeof limit !== "number" || !Number.isInteger(limit)) return req.message;
+      return limit >= req.min && limit <= req.max ? null : req.message;
     }
   }
 }
+
 
 /** Validierungsergebnis. */
 export type JobValidationResult = { valid: true } | { valid: false; errors: string[] };
