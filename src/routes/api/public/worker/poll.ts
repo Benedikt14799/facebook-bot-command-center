@@ -68,12 +68,22 @@ export const Route = createFileRoute("/api/public/worker/poll")({
         }
 
         // Faehigkeiten -> erlaubte Auftragstypen.
+        // Ohne serverseitig hinterlegte Faehigkeiten gibt es keine Auftraege.
         const capabilities = ctx.capabilities;
-        const allowedTypes = capabilities.length
-          ? Object.entries(CAPABILITY_BY_JOB_TYPE)
-              .filter(([, cap]) => capabilities.includes(cap))
-              .map(([type]) => type)
-          : Object.keys(CAPABILITY_BY_JOB_TYPE);
+        const allowedTypes = Object.entries(CAPABILITY_BY_JOB_TYPE)
+          .filter(([, cap]) => capabilities.includes(cap))
+          .map(([type]) => type);
+        if (!allowedTypes.length) {
+          return json({
+            contract_version: CONTRACT_VERSION,
+            effective_mode: effectiveMode,
+            jobs: [],
+            bots: [],
+            limit,
+            max_limit: MAX_LIMIT,
+            blocking_session_states: BLOCKING_SESSION_STATES,
+          });
+        }
 
         // Ungueltige faellige Auftraege vorab aussortieren (nie ausliefern).
         const { data: candidates } = await ctx.admin
