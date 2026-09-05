@@ -57,6 +57,7 @@ function WorkersPage() {
   const [name, setName] = useState("");
   const [issuedToken, setIssuedToken] = useState<string | null>(null);
   const [issuedFor, setIssuedFor] = useState<string | null>(null);
+  const [showBinding, setShowBinding] = useState(false);
   const baseUrl = typeof window !== "undefined" ? publicApiBase(window.location.origin) : "";
 
   const workers = useQuery({
