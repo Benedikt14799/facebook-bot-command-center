@@ -9,6 +9,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { createWorkerToken, revokeWorkerToken } from "@/lib/worker-tokens.functions";
 import { encryptLegacySecrets } from "@/lib/secret-backfill.functions";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 import { useState } from "react";
 import { AppShell } from "@/components/AppShell";
@@ -56,6 +57,7 @@ function WorkersPage() {
   const [name, setName] = useState("");
   const [issuedToken, setIssuedToken] = useState<string | null>(null);
   const [issuedFor, setIssuedFor] = useState<string | null>(null);
+  const [showBinding, setShowBinding] = useState(false);
   const baseUrl = typeof window !== "undefined" ? publicApiBase(window.location.origin) : "";
 
   const workers = useQuery({
@@ -154,7 +156,7 @@ function WorkersPage() {
       hint="Worker sind deine eigenen Ausführungsprogramme (z. B. Python/Playwright auf PC oder VPS). Sie melden sich mit dem Token an, holen Aufträge ab und führen sie auf Facebook aus."
       subtitle="Deine Ausführungs-Clients"
       actions={
-        <div className="flex gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Input
             className="h-9 w-48"
             placeholder="Worker-Name"
@@ -164,6 +166,15 @@ function WorkersPage() {
           <Button size="sm" onClick={() => create.mutate()} disabled={!name}>
             Anlegen
           </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => backfill.mutate()}
+            disabled={backfill.isPending}
+          >
+            Alte Zugangsdaten verschlüsseln
+          </Button>
+          <InfoHint text="Prüft gespeicherte Anmeldedaten und Passwörter und verschlüsselt alles, was noch offen abgelegt war. Kann jederzeit wiederholt werden." />
         </div>
       }
     >
@@ -232,6 +243,22 @@ function WorkersPage() {
                 {w.live_enabled ? "Echtbetrieb freigegeben" : "Nur Probebetrieb"}
               </Button>
               <InfoHint text="Solange nur Probebetrieb aktiv ist, führt der Worker keine echten Aktionen aus und meldet jeden Auftrag als übersprungen. Erst mit deiner Freigabe sind echte Aktionen möglich." />
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  const blob = new Blob([workerScript(baseUrl)], { type: "text/x-python" });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement("a");
+                  a.href = url;
+                  a.download = "fbcontrol_worker.py";
+                  a.click();
+                  URL.revokeObjectURL(url);
+                }}
+              >
+                Worker-Skript herunterladen
+              </Button>
+              <InfoHint text="Das Skript enthält keinen Schlüssel. Vor dem Start setzt du FB_CONTROL_WORKER_TOKEN, optional FB_CONTROL_BOT_ID und FB_CONTROL_MODE (Standard: Probebetrieb)." />
               <Button size="sm" variant="ghost" onClick={() => remove.mutate(w.id)}>
                 Löschen
               </Button>
@@ -267,39 +294,9 @@ function WorkersPage() {
               </div>
             )}
 
-            <div className="mt-3">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => {
-                  // Startskript ohne Schluessel: der Schluessel kommt aus der Umgebung.
-                  const blob = new Blob([workerScript(baseUrl)], { type: "text/x-python" });
-                  const url = URL.createObjectURL(blob);
-                  const a = document.createElement("a");
-                  a.href = url;
-                  a.download = "fbcontrol_worker.py";
-                  a.click();
-                  URL.revokeObjectURL(url);
-                }}
-              >
-                Worker-Skript herunterladen
-              </Button>
-              <InfoHint text="Das Skript enthält keinen Schlüssel. Vor dem Start setzt du FB_CONTROL_WORKER_TOKEN, optional FB_CONTROL_BOT_ID und FB_CONTROL_MODE (Standard: Probebetrieb)." />
-            </div>
           </div>
         ))}
 
-        <div className="flex flex-wrap items-center gap-2">
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => backfill.mutate()}
-            disabled={backfill.isPending}
-          >
-            Alte Zugangsdaten verschlüsseln
-          </Button>
-          <InfoHint text="Prüft gespeicherte Anmeldedaten und Passwörter und verschlüsselt alles, was noch offen abgelegt war. Kann jederzeit wiederholt werden." />
-        </div>
 
         {(workers.data ?? []).length === 0 && (
           <p className="text-sm text-muted-foreground">Noch kein Worker registriert.</p>
@@ -307,22 +304,40 @@ function WorkersPage() {
       </div>
 
       <section className="mt-6 rounded-lg border border-border bg-card p-4">
-        <h2 className="flex items-center gap-2 text-sm font-medium text-foreground">
-          Anbindung{" "}
-          <InfoHint text="So verbindest du deinen Worker: Token als Header mitschicken und die gezeigten Endpunkte abfragen. Details stehen in WORKER_INTEGRATION.md." />
-        </h2>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Dein lokaler Worker spricht die API mit dem Header{" "}
-          <code className="font-mono">x-worker-token</code> an.
-        </p>
-        <pre className="mt-3 overflow-x-auto rounded bg-secondary p-3 font-mono text-xs text-foreground">
-          {`POST ${baseUrl}/api/public/worker/heartbeat   { "version": "1.0.0" }
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="flex items-center gap-2 text-sm font-medium text-foreground">
+            Anbindung
+            <InfoHint text="So verbindest du deinen Worker: Token als Header mitschicken und die gezeigten Endpunkte abfragen. Details stehen in WORKER_INTEGRATION.md." />
+          </h2>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => setShowBinding((s) => !s)}
+            aria-label={showBinding ? "Anbindung einklappen" : "Anbindung ausklappen"}
+          >
+            {showBinding ? (
+              <ChevronUp className="h-4 w-4" />
+            ) : (
+              <ChevronDown className="h-4 w-4" />
+            )}
+          </Button>
+        </div>
+        {showBinding && (
+          <>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Dein lokaler Worker spricht die API mit dem Header{" "}
+              <code className="font-mono">x-worker-token</code> an.
+            </p>
+            <pre className="mt-3 overflow-x-auto rounded bg-secondary p-3 font-mono text-xs text-foreground">
+              {`POST ${baseUrl}/api/public/worker/heartbeat   { "version": "1.0.0" }
 POST ${baseUrl}/api/public/worker/poll        { "bot_id": "optional", "limit": 5 }
 POST ${baseUrl}/api/public/worker/result      { "job_id": "...", "status": "done", "result": {} }
 POST ${baseUrl}/api/public/worker/messages    { "bot_id": "...", "direction": "in", "body": "..." }
 POST ${baseUrl}/api/public/worker/events      { "level": "info", "type": "login", "message": "..." }
 GET  ${baseUrl}/api/public/worker/session?bot_id=...`}
-        </pre>
+            </pre>
+          </>
+        )}
       </section>
     </AppShell>
   );
