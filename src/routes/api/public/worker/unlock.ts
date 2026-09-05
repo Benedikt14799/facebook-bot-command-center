@@ -11,7 +11,7 @@
  *     hier "done" - der manuelle Modus wird aufgehoben.
  */
 import { createFileRoute } from "@tanstack/react-router";
-import { authenticateWorker, json, readJsonBody } from "@/lib/worker-auth.server";
+import { apiError, assertBotAllowed, authenticateWorker, json, readJsonBody } from "@/lib/worker-auth.server";
 import { clearManualMode, notify } from "@/lib/alerts.server";
 
 export const Route = createFileRoute("/api/public/worker/unlock")({
@@ -27,8 +27,9 @@ export const Route = createFileRoute("/api/public/worker/unlock")({
           .select("id, name, unlock_state, unlock_requested_at, manual_reason")
           .eq("user_id", ctx.userId)
           .in("unlock_state", ["requested"]);
-        if (error) return json({ error: error.message }, 500);
-        return json({ requests: data ?? [] });
+        if (error) return apiError("server_error", error.message, 500);
+        // Nur Bots, die diesem Worker zugeordnet sind.
+        return json({ requests: (data ?? []).filter((b) => ctx.allowedBotIds.includes(b.id)) });
       },
 
       // Fortschritt melden: open | done | failed | cancelled
@@ -42,7 +43,10 @@ export const Route = createFileRoute("/api/public/worker/unlock")({
           state?: string;
           note?: string;
         } | null;
-        if (!body?.bot_id || !body.state) return json({ error: "bot_id and state required" }, 400);
+        if (!body?.bot_id || !body.state)
+          return apiError("invalid_payload", "bot_id und state sind Pflichtfelder.", 400);
+        const denied = assertBotAllowed(ctx, body.bot_id);
+        if (denied) return denied;
 
         if (body.state === "done") {
           await clearManualMode(ctx.admin, {
@@ -54,7 +58,8 @@ export const Route = createFileRoute("/api/public/worker/unlock")({
         }
 
         const allowed = ["open", "failed", "cancelled"];
-        if (!allowed.includes(body.state)) return json({ error: "unknown state" }, 400);
+        if (!allowed.includes(body.state))
+          return apiError("invalid_payload", "Unbekannter Zustand.", 400);
 
         await ctx.admin
           .from("bots")

@@ -6,7 +6,7 @@
  * Antworten den kompletten Verlauf als Kontext nutzen koennen.
  */
 import { createFileRoute } from "@tanstack/react-router";
-import { authenticateWorker, json, readJsonBody } from "@/lib/worker-auth.server";
+import { apiError, assertBotAllowed, authenticateWorker, json, readJsonBody } from "@/lib/worker-auth.server";
 import { advanceStage, logContact, upsertRecipient } from "@/lib/contacts.server";
 
 export const Route = createFileRoute("/api/public/worker/messages")({
@@ -35,10 +35,17 @@ export const Route = createFileRoute("/api/public/worker/messages")({
         } | null;
 
         if (!body?.body || !body.direction) {
-          return json(
-            { error: { code: "invalid_payload", message: "direction and body required" } },
-            400,
-          );
+          return apiError("invalid_payload", "direction und body sind Pflichtfelder.", 400);
+        }
+        if (!["in", "out"].includes(body.direction)) {
+          return apiError("invalid_payload", "direction muss \"in\" oder \"out\" sein.", 400);
+        }
+        if (body.body.length > 5000) {
+          return apiError("invalid_payload", "Der Text ist zu lang (max. 5000 Zeichen).", 400);
+        }
+        if (body.bot_id) {
+          const denied = assertBotAllowed(ctx, body.bot_id);
+          if (denied) return denied;
         }
 
         // Idempotenz: dieselbe Fremdkennung darf keine zweite Nachricht und
