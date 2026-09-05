@@ -4,7 +4,7 @@
  * optionalen Antidetect-Start per CDP, menschliches Verhalten, IP-Check und
  * Checkpoint-Erkennung.
  */
-export function workerScript(baseUrl: string, token: string, botHint = "") {
+export function workerScript(baseUrl: string, botHint = "") {
   return `#!/usr/bin/env python3
 """FB/Control Worker - Tarnung, Proxy und menschliches Verhalten.
 
@@ -12,25 +12,43 @@ Installation:
     pip install requests playwright playwright-stealth
     playwright install chromium
 
+Konfiguration (nur ueber Umgebungsvariablen, NIE im Skript):
+    export FB_CONTROL_BASE_URL="${baseUrl}"
+    export FB_CONTROL_WORKER_TOKEN="<dein Worker-Schluessel>"
+    export FB_CONTROL_WORKER_ID="<optional>"
+    export FB_CONTROL_BOT_ID="<optional>"
+    export FB_CONTROL_MODE="dry_run"   # dry_run (Standard) oder live
+
 Start:
     python fbcontrol_worker.py
 
-Der Worker holt Auftraege aus dem Cockpit ab. Proxy, Fingerprint, Verhalten und
-Cookies kommen aus /worker/session. Die eigentlichen Facebook-Klicks baust du in
-run_job() ein - nutze dabei immer human_type/human_pause/human_scroll.
+Im Probebetrieb (dry_run) wird KEINE Plattformaktion ausgefuehrt. Ergebnisse
+werden als "skipped" mit dem Code DRY_RUN gemeldet und nie als verifiziert.
 """
 import os
 import random
+import sys
 import time
 import traceback
 
 import requests
 
-BASE_URL = "${baseUrl}"
-TOKEN = "${token}"
+BASE_URL = os.environ.get("FB_CONTROL_BASE_URL", "${baseUrl}").rstrip("/")
+TOKEN = os.environ.get("FB_CONTROL_WORKER_TOKEN", "")
+WORKER_ID = os.environ.get("FB_CONTROL_WORKER_ID") or None
+BOT_ID = os.environ.get("FB_CONTROL_BOT_ID") or None
+MODE = (os.environ.get("FB_CONTROL_MODE") or "dry_run").strip().lower()
 POLL_SECONDS = 20
 PROFILE_DIR = os.path.expanduser("~/.fbcontrol/profiles")
 ${botHint}
+
+if not TOKEN:
+    sys.exit(
+        "Kein Worker-Schluessel gefunden. Bitte FB_CONTROL_WORKER_TOKEN setzen, "
+        "z. B.: export FB_CONTROL_WORKER_TOKEN=\\"...\\""
+    )
+if MODE not in ("dry_run", "live"):
+    sys.exit("FB_CONTROL_MODE muss dry_run oder live sein.")
 
 session = requests.Session()
 session.headers.update({"x-worker-token": TOKEN, "content-type": "application/json"})
@@ -329,7 +347,7 @@ def run_job(job: dict) -> dict:
             if check_blocked(page, bot_id):
                 raise RuntimeError("Checkpoint nach Aktion erkannt")
 
-            if text and kind in ("comment", "comment_post", "dm_new_member", "reply_message", "follow_up"):
+            if text and kind in ("comment_post", "dm_new_member", "reply_message"):
                 api("messages", {
                     "bot_id": bot_id,
                     "group_id": job.get("group_id"),
@@ -354,15 +372,20 @@ def run_job(job: dict) -> dict:
 
 
 def main():
-    print("FB/Control Worker gestartet")
+    print(f"FB/Control Worker gestartet (Modus: {MODE})")
     while True:
         try:
-            api("heartbeat", {
-                "version": "3.0.0",
+            hb = api("heartbeat", {
+                "version": "3.1.0",
                 "contract_version": "1.0",
                 "capabilities": ["like", "comment", "scan", "dm", "reply"],
-                "mode": "live",
+                "mode": MODE,
+                **({"bot_id": BOT_ID} if BOT_ID else {}),
             })
+            # Wirksam ist immer der Modus vom Server, nie der eigene Wunsch.
+            effective_mode = (hb or {}).get("effective_mode", "dry_run")
+            if effective_mode != "live":
+                print("Probebetrieb: es werden keine Plattformaktionen ausgefuehrt.")
             # Zuerst pruefen, ob du einen Bot von Hand freischalten willst.
             handle_unlock_requests()
             jobs = api("poll", {"limit": 3}).get("jobs", [])
@@ -371,10 +394,30 @@ def main():
                 continue
             for job in jobs:
                 try:
+                    if effective_mode != "live":
+                        api("result", {
+                            "job_id": job["id"],
+                            "status": "skipped",
+                            "result": {"verified": False, "dry_run": True},
+                            "error_code": "DRY_RUN",
+                            "error": "Probebetrieb: keine Aktion ausgefuehrt.",
+                            "error_retryable": False,
+                        })
+                        continue
                     result = run_job(job) or {}
-                    # Vertrag 1.0: "done" nur mit ausdruecklicher Bestaetigung.
-                    result["verified"] = True
-                    api("result", {"job_id": job["id"], "status": "done", "result": result})
+                    # Vertrag 1.0: "done" nur, wenn die Ausfuehrung wirklich
+                    # bestaetigt wurde. Niemals pauschal setzen.
+                    if result.get("verified") is True:
+                        api("result", {"job_id": job["id"], "status": "done", "result": result})
+                    else:
+                        api("result", {
+                            "job_id": job["id"],
+                            "status": "failed",
+                            "result": result,
+                            "error": "Ausfuehrung nicht verifiziert.",
+                            "error_code": "not_verified",
+                            "error_retryable": True,
+                        })
                 except Exception as exc:  # Fehler melden, damit das Cockpit reagieren kann
                     traceback.print_exc()
                     api("result", {

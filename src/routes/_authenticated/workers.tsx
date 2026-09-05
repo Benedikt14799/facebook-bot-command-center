@@ -7,6 +7,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { createWorkerToken, revokeWorkerToken } from "@/lib/worker-tokens.functions";
+import { encryptLegacySecrets } from "@/lib/secret-backfill.functions";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { useState } from "react";
@@ -112,6 +113,33 @@ function WorkersPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  // Freigabe fuer den Echtbetrieb — nur hier, nie durch den Worker selbst.
+  const setLive = useMutation({
+    mutationFn: async ({ id, live }: { id: string; live: boolean }) => {
+      const { error } = await supabase
+        .from("workers")
+        .update({ live_enabled: live, mode: live ? "live" : "dry_run" })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: (_d, v) => {
+      toast.success(v.live ? "Echtbetrieb freigegeben" : "Auf Probebetrieb gestellt");
+      qc.invalidateQueries({ queryKey: ["workers"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  // Altbestand nachträglich verschlüsseln (wiederholbar, überspringt Fertiges).
+  const runBackfill = useServerFn(encryptLegacySecrets);
+  const backfill = useMutation({
+    mutationFn: async () => runBackfill({ data: {} as never }),
+    onSuccess: (r) =>
+      toast.success(
+        `Verschlüsselt: ${r.sessions} Sitzungen, ${r.secrets} Zugangsdaten, ${r.skipped} bereits erledigt.`,
+      ),
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const remove = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("workers").delete().eq("id", id);
@@ -195,6 +223,15 @@ function WorkersPage() {
                 Neuen Schlüssel erzeugen
               </Button>
               <InfoHint text="Der neue Schlüssel wird nur einmal angezeigt. Der alte bleibt gültig, bis du ihn widerrufst — so sperrst du dich nicht versehentlich aus." />
+              <Button
+                size="sm"
+                variant={w.live_enabled ? "default" : "outline"}
+                onClick={() => setLive.mutate({ id: w.id, live: !w.live_enabled })}
+                disabled={setLive.isPending}
+              >
+                {w.live_enabled ? "Echtbetrieb freigegeben" : "Nur Probebetrieb"}
+              </Button>
+              <InfoHint text="Solange nur Probebetrieb aktiv ist, führt der Worker keine echten Aktionen aus und meldet jeden Auftrag als übersprungen. Erst mit deiner Freigabe sind echte Aktionen möglich." />
               <Button size="sm" variant="ghost" onClick={() => remove.mutate(w.id)}>
                 Löschen
               </Button>
@@ -219,32 +256,50 @@ function WorkersPage() {
                   >
                     Kopieren
                   </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => {
-                      // Fertiges Startskript mit Schluessel und Basis-URL herunterladen
-                      const blob = new Blob([workerScript(baseUrl, issuedToken)], {
-                        type: "text/x-python",
-                      });
-                      const url = URL.createObjectURL(blob);
-                      const a = document.createElement("a");
-                      a.href = url;
-                      a.download = "fbcontrol_worker.py";
-                      a.click();
-                      URL.revokeObjectURL(url);
-                    }}
-                  >
-                    Worker-Skript herunterladen
-                  </Button>
                   <Button size="sm" variant="ghost" onClick={() => setIssuedToken(null)}>
                     Ausblenden
                   </Button>
                 </div>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Der Schlüssel steht nie im heruntergeladenen Skript. Setze ihn vor dem Start als
+                  Umgebungsvariable: <code>export FB_CONTROL_WORKER_TOKEN=…</code>
+                </p>
               </div>
             )}
+
+            <div className="mt-3">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  // Startskript ohne Schluessel: der Schluessel kommt aus der Umgebung.
+                  const blob = new Blob([workerScript(baseUrl)], { type: "text/x-python" });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement("a");
+                  a.href = url;
+                  a.download = "fbcontrol_worker.py";
+                  a.click();
+                  URL.revokeObjectURL(url);
+                }}
+              >
+                Worker-Skript herunterladen
+              </Button>
+              <InfoHint text="Das Skript enthält keinen Schlüssel. Vor dem Start setzt du FB_CONTROL_WORKER_TOKEN, optional FB_CONTROL_BOT_ID und FB_CONTROL_MODE (Standard: Probebetrieb)." />
+            </div>
           </div>
         ))}
+
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => backfill.mutate()}
+            disabled={backfill.isPending}
+          >
+            Alte Zugangsdaten verschlüsseln
+          </Button>
+          <InfoHint text="Prüft gespeicherte Anmeldedaten und Passwörter und verschlüsselt alles, was noch offen abgelegt war. Kann jederzeit wiederholt werden." />
+        </div>
 
         {(workers.data ?? []).length === 0 && (
           <p className="text-sm text-muted-foreground">Noch kein Worker registriert.</p>

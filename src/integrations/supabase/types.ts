@@ -1166,6 +1166,7 @@ export type Database = {
           last_event_at: string | null
           last_ip: string | null
           last_seen_at: string | null
+          live_enabled: boolean
           mode: string
           name: string
           revoked_at: string | null
@@ -1185,6 +1186,7 @@ export type Database = {
           last_event_at?: string | null
           last_ip?: string | null
           last_seen_at?: string | null
+          live_enabled?: boolean
           mode?: string
           name: string
           revoked_at?: string | null
@@ -1204,6 +1206,7 @@ export type Database = {
           last_event_at?: string | null
           last_ip?: string | null
           last_seen_at?: string | null
+          live_enabled?: boolean
           mode?: string
           name?: string
           revoked_at?: string | null

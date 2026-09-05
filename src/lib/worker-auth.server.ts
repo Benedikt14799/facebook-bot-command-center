@@ -101,7 +101,7 @@ export async function readJsonBody<T extends Record<string, unknown>>(
   try {
     raw = await request.text();
   } catch {
-    return json({ error: "Ungültiger JSON-Body." }, 400);
+    return json({ error: { code: "invalid_json", message: "Ungültiger JSON-Body." } }, 400);
   }
   if (!raw.trim()) return {} as T;
 
@@ -109,10 +109,26 @@ export async function readJsonBody<T extends Record<string, unknown>>(
   try {
     parsed = JSON.parse(raw);
   } catch {
-    return json({ error: "Ungültiger JSON-Body." }, 400);
+    return json({ error: { code: "invalid_json", message: "Ungültiger JSON-Body." } }, 400);
   }
   if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
-    return json({ error: "Ungültiger JSON-Body." }, 400);
+    return json({ error: { code: "invalid_json", message: "Ungültiger JSON-Body." } }, 400);
   }
   return parsed as T;
+}
+
+/** Einheitliches Fehlerformat fuer alle Worker-Endpunkte. */
+export function apiError(code: string, message: string, status = 400) {
+  return json({ error: { code, message } }, status);
+}
+
+/**
+ * Prueft serverseitig, ob der Bot diesem Worker zugeordnet ist
+ * (Tabelle worker_bots). Liefert eine Fehlerantwort oder null.
+ */
+export function assertBotAllowed(ctx: WorkerCtx, botId: string | null | undefined) {
+  if (!botId) return apiError("invalid_payload", "bot_id fehlt.", 400);
+  if (!ctx.allowedBotIds.includes(botId))
+    return apiError("forbidden", "Bot ist diesem Worker nicht zugeordnet.", 403);
+  return null;
 }

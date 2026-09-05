@@ -87,6 +87,22 @@ export const Route = createFileRoute("/api/public/worker/result")({
           );
         }
 
+        // Echtbetrieb: "done" nur von einem serverseitig freigegebenen Worker.
+        if (requested === "done") {
+          const { data: workerRow } = await ctx.admin
+            .from("workers")
+            .select("mode, live_enabled")
+            .eq("id", ctx.workerId)
+            .maybeSingle();
+          if (!workerRow?.live_enabled || workerRow.mode !== "live") {
+            return fail(
+              "dry_run_mode",
+              "Der Worker ist nicht für den Echtbetrieb freigegeben. Erlaubt sind skipped oder failed.",
+              409,
+            );
+          }
+        }
+
         const { data: fullJob, error: loadErr } = await ctx.admin
           .from("jobs")
           .select("*")

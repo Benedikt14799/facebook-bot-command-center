@@ -74,3 +74,19 @@ export async function decryptSecret<T = unknown>(
     return null;
   }
 }
+
+/**
+ * Wie encryptSecret, bricht aber ab, wenn kein Schluessel im Secret-Management
+ * hinterlegt ist. Damit landet nie etwas im Klartext in der Datenbank.
+ */
+export async function requireEncryptSecret(
+  value: unknown,
+): Promise<{ ciphertext: string; keyId: string }> {
+  const enc = await encryptSecret(value);
+  if (!enc) {
+    throw new Error(
+      "Kein Verschlüsselungsschlüssel konfiguriert — Geheimnisse werden nicht gespeichert.",
+    );
+  }
+  return enc;
+}

@@ -6,7 +6,7 @@
  * eine Benachrichtigung erzeugt.
  */
 import { createFileRoute } from "@tanstack/react-router";
-import { authenticateWorker, json, readJsonBody } from "@/lib/worker-auth.server";
+import { apiError, assertBotAllowed, authenticateWorker, json, readJsonBody } from "@/lib/worker-auth.server";
 import { enterManualMode, isManualTrigger } from "@/lib/alerts.server";
 
 export const Route = createFileRoute("/api/public/worker/events")({
@@ -25,7 +25,12 @@ export const Route = createFileRoute("/api/public/worker/events")({
           meta?: unknown;
         } | null;
 
-        if (!body?.message || !body.type) return json({ error: "type and message required" }, 400);
+        if (!body?.message || !body.type)
+          return apiError("invalid_payload", "type und message sind Pflichtfelder.", 400);
+        if (body.bot_id) {
+          const denied = assertBotAllowed(ctx, body.bot_id);
+          if (denied) return denied;
+        }
 
         const { error } = await ctx.admin.from("events").insert({
           user_id: ctx.userId,
@@ -35,7 +40,7 @@ export const Route = createFileRoute("/api/public/worker/events")({
           message: body.message,
           meta: (body.meta ?? {}) as never,
         });
-        if (error) return json({ error: error.message }, 500);
+        if (error) return apiError("server_error", error.message, 500);
 
         // Checkpoint/CAPTCHA/Sperre/Login: sofort alles anhalten und melden.
         if (body.bot_id && isManualTrigger(body.type)) {

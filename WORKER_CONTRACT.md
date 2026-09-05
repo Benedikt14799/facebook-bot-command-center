@@ -155,3 +155,33 @@ ausschließlich aus dem Secret-Management (`WORKER_SECRETS_KEY_V1`) und ist
 `unauthorized`, `forbidden`, `invalid_json`, `invalid_payload`, `not_found`,
 `conflict`, `status_mismatch`, `result_mismatch`, `verification_required`,
 `server_error`.
+
+
+## Nachtrag Version 1.1 — Sicherheitsrunde
+
+- **Schlüssel:** nur als Umgebungsvariable (`FB_CONTROL_WORKER_TOKEN`).
+  Downloads und Beispiele enthalten niemals einen echten Schlüssel.
+- **Betriebsart:** Standard `dry_run`. `live` gilt nur, wenn der Server
+  `live_enabled` **und** `mode = live` für diesen Worker gesetzt hat. Die
+  Angabe des Workers ist unverbindlich; `effective_mode` in der Antwort von
+  `heartbeat` und `poll` ist maßgeblich.
+- **Probebetrieb:** Ergebnis `skipped` mit `error_code = DRY_RUN` und
+  `result.verified = false`. Keine Nachrichten, keine Kontaktakten.
+- **`done`:** nur bei `result.verified === true` und nur von einem für den
+  Echtbetrieb freigegebenen Worker (sonst `dry_run_mode`, HTTP 409).
+- **Bot-Bindung:** Jeder Zugriff mit `bot_id` (session, events, messages,
+  recipients, ip-report, unlock, result) prüft `worker_bots`; fremder Bot →
+  HTTP 403 `forbidden`.
+- **Abholen:** `claim_jobs` verlangt zusätzlich ein Lebenszeichen der letzten
+  90 Sekunden, eine bestehende Worker-Bot-Zuordnung und das Arbeitszeitfenster
+  des Bots (`active_from`/`active_to` in der Zeitzone des Bots).
+- **Geheimnisse:** Cookies, Proxy-Passwörter und Antidetect-Schlüssel werden
+  immer verschlüsselt gespeichert (AES-GCM, Schlüssel aus dem Secret-Management,
+  `enc_key_id` für Rotation). Fehlt der Schlüssel → `server_error`, kein Klartext.
+  Altbestand wird über den wiederholbaren Lauf **Alte Zugangsdaten verschlüsseln**
+  auf der Worker-Seite nachgezogen.
+- **Idempotenz:** Datenbank-Eindeutigkeit verhindert doppelte Nachrichten
+  (`messages`) und doppelte Kontaktakten (`contact_events`) zum selben Auftrag.
+- **Fehlerformat:** immer `{"error":{"code":"…","message":"…"}}`.
+- **`follow_up`:** wird nicht mehr angelegt oder ausgeliefert; historische
+  Datensätze bleiben lesbar.

@@ -46,6 +46,15 @@ export const Route = createFileRoute("/api/public/worker/poll")({
           limit = n;
         }
 
+        // Wirksamer Modus kommt ausschliesslich vom Server.
+        const { data: workerRow } = await ctx.admin
+          .from("workers")
+          .select("mode, live_enabled")
+          .eq("id", ctx.workerId)
+          .maybeSingle();
+        const effectiveMode =
+          workerRow?.live_enabled && workerRow?.mode === "live" ? "live" : "dry_run";
+
         // Erlaubte Bots serverseitig bestimmen (Zuordnung im Cockpit).
         let allowedBotIds = ctx.allowedBotIds;
         if (typeof body.bot_id === "string" && body.bot_id) {
@@ -118,7 +127,7 @@ export const Route = createFileRoute("/api/public/worker/poll")({
           ? await ctx.admin
               .from("bots")
               .select(
-                "id, name, session_status, manual_mode, paused, browser_mode, work_start, work_end, daily_limit, jitter_min, jitter_max, warmup_stage",
+                "id, name, session_status, manual_mode, paused, browser_mode, active_from, active_to, timezone, cap_likes, cap_comments, cap_dms, jitter_minutes, warmup_preset",
               )
               .in("id", botIds)
               .eq("user_id", ctx.userId)
@@ -126,6 +135,7 @@ export const Route = createFileRoute("/api/public/worker/poll")({
 
         return json({
           contract_version: CONTRACT_VERSION,
+          effective_mode: effectiveMode,
           jobs,
           bots: bots ?? [],
           limit,
