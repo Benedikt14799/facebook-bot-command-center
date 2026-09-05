@@ -147,6 +147,7 @@ export function validateJob(
   groupId: string | null | undefined,
   recipientId: string | null | undefined,
   payload: unknown,
+  generatedText?: string | null,
 ): JobValidationResult {
   if (!isKnownJobType(type)) {
     return { valid: false, errors: [`Unbekannter Auftragstyp: ${type}`] };
@@ -154,9 +155,10 @@ export function validateJob(
   const errors: string[] = [];
   const normalizedPayload = asRecord(payload);
   for (const req of REQUIREMENTS[type]) {
-    const err = checkRequirement(req, groupId, recipientId, normalizedPayload);
+    const err = checkRequirement(req, groupId, recipientId, normalizedPayload, generatedText);
     if (err) errors.push(err);
   }
+
   if (errors.length) return { valid: false, errors };
   return { valid: true };
 }
