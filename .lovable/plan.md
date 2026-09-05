@@ -42,7 +42,7 @@ Nichts davon löst echte Facebook-Aktionen aus; alles bleibt im technischen Prob
 
 ## Stufe 2 – Vor der Abnahme
 
-6. Neue Aufträge starten immer als `pending`; Status-, Claim- und Zeitfelder sind für
+7. Neue Aufträge starten immer als `pending`; Status-, Claim- und Zeitfelder sind für
    Clients gesperrt. Der interne Sonderfall `pending → failed` bei ungültigen Aufträgen
    wird im Vertrag dokumentiert.
 7. Abgeschlossene Aufträge sind vollständig unveränderlich – in Oberfläche, Serverfunktionen,
