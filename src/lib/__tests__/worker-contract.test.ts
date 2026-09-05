@@ -12,7 +12,8 @@ import {
   TERMINAL_STATUSES,
 } from "@/lib/worker-contract";
 import { hashWorkerToken } from "@/lib/worker-auth.server";
-import { decryptSecret, encryptSecret } from "@/lib/secret-crypto.server";
+import { decryptSecret, encryptSecret, requireEncryptSecret } from "@/lib/secret-crypto.server";
+import { workerScript } from "@/lib/worker-script";
 
 describe("Zustandsmodell", () => {
   it("kennt nur die kanonischen Zustaende", () => {
@@ -111,5 +112,24 @@ describe("Schluessel und Geheimnisse", () => {
   it("ohne Schluessel wird nichts verschluesselt", async () => {
     delete process.env["WORKER_SECRETS_KEY_V1"];
     expect(await encryptSecret({ a: 1 })).toBeNull();
+  });
+
+  it("ohne Schluessel bricht das Speichern ab statt Klartext zu schreiben", async () => {
+    delete process.env["WORKER_SECRETS_KEY_V1"];
+    await expect(requireEncryptSecret({ a: 1 })).rejects.toThrow();
+  });
+
+  it("das erzeugte Worker-Skript enthaelt keinen Schluessel", () => {
+    const script = workerScript("https://beispiel.lovable.app");
+    expect(script).not.toMatch(/fbc_/);
+    expect(script).toContain("FB_CONTROL_WORKER_TOKEN");
+    expect(script).not.toContain('result["verified"] = True');
+  });
+
+  it("Probebetrieb ist der Standard und meldet skipped mit DRY_RUN", () => {
+    const script = workerScript("https://beispiel.lovable.app");
+    expect(script).toContain('FB_CONTROL_MODE") or "dry_run"');
+    expect(script).toContain('"status": "skipped"');
+    expect(script).toContain('"error_code": "DRY_RUN"');
   });
 });
