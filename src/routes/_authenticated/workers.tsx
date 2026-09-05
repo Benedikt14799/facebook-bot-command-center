@@ -219,28 +219,36 @@ function WorkersPage() {
                   >
                     Kopieren
                   </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => {
-                      // Fertiges Startskript mit Schluessel und Basis-URL herunterladen
-                      const blob = new Blob([workerScript(baseUrl, issuedToken)], {
-                        type: "text/x-python",
-                      });
-                      const url = URL.createObjectURL(blob);
-                      const a = document.createElement("a");
-                      a.href = url;
-                      a.download = "fbcontrol_worker.py";
-                      a.click();
-                      URL.revokeObjectURL(url);
-                    }}
-                  >
-                    Worker-Skript herunterladen
-                  </Button>
                   <Button size="sm" variant="ghost" onClick={() => setIssuedToken(null)}>
                     Ausblenden
                   </Button>
                 </div>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Der Schlüssel steht nie im heruntergeladenen Skript. Setze ihn vor dem Start als
+                  Umgebungsvariable: <code>export FB_CONTROL_WORKER_TOKEN=…</code>
+                </p>
+              </div>
+            )}
+
+            <div className="mt-3">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  // Startskript ohne Schluessel: der Schluessel kommt aus der Umgebung.
+                  const blob = new Blob([workerScript(baseUrl)], { type: "text/x-python" });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement("a");
+                  a.href = url;
+                  a.download = "fbcontrol_worker.py";
+                  a.click();
+                  URL.revokeObjectURL(url);
+                }}
+              >
+                Worker-Skript herunterladen
+              </Button>
+              <InfoHint text="Das Skript enthält keinen Schlüssel. Vor dem Start setzt du FB_CONTROL_WORKER_TOKEN, optional FB_CONTROL_BOT_ID und FB_CONTROL_MODE (Standard: Probebetrieb)." />
+            </div>
               </div>
             )}
           </div>
