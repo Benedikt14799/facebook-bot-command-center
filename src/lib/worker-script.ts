@@ -278,6 +278,10 @@ def handle_unlock_requests():
     """
     from playwright.sync_api import sync_playwright
 
+    if MODE != "live":
+        print("Probebetrieb: keine Freischaltung, kein Browserstart.")
+        return
+
     try:
         reqs = api_get("unlock").get("requests", [])
     except Exception as exc:
@@ -386,8 +390,10 @@ def main():
             effective_mode = (hb or {}).get("effective_mode", "dry_run")
             if effective_mode != "live":
                 print("Probebetrieb: es werden keine Plattformaktionen ausgefuehrt.")
-            # Zuerst pruefen, ob du einen Bot von Hand freischalten willst.
-            handle_unlock_requests()
+            # Freischaltungen oeffnen ein echtes Browserfenster und sind
+            # deshalb nur im Live-Betrieb nach Serverfreigabe erlaubt.
+            if effective_mode == "live":
+                handle_unlock_requests()
             jobs = api("poll", {"limit": 3}).get("jobs", [])
             if not jobs:
                 time.sleep(POLL_SECONDS + random.uniform(0, 10))

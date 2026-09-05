@@ -38,7 +38,7 @@ export const Route = createFileRoute("/api/public/worker/session")({
 
         const { data: sessionData, error: sessionError } = await ctx.admin
           .from("bot_sessions")
-          .select("cookies, cookies_enc, enc_key_id, user_agent, updated_at")
+          .select("cookies_enc, enc_key_id, user_agent, updated_at")
           .eq("bot_id", botId)
           .eq("user_id", ctx.userId)
           .maybeSingle();
@@ -46,25 +46,57 @@ export const Route = createFileRoute("/api/public/worker/session")({
 
         const { data: secrets } = await ctx.admin
           .from("bot_secrets")
-          .select("proxy_password, proxy_password_enc, antidetect_key, antidetect_key_enc, enc_key_id")
+          .select("proxy_password_enc, antidetect_key_enc, enc_key_id")
           .eq("bot_id", botId)
           .eq("user_id", ctx.userId)
           .maybeSingle();
 
-        // Verschluesselt abgelegte Geheimnisse entschluesseln (Schluessel nur
-        // aus dem Secret-Management, nie aus der Datenbank).
-        const cookies =
-          (await decryptSecret<unknown[]>(sessionData?.cookies_enc, sessionData?.enc_key_id)) ??
-          sessionData?.cookies ??
-          [];
-        const proxyPassword =
-          (await decryptSecret<string>(secrets?.proxy_password_enc, secrets?.enc_key_id)) ??
-          secrets?.proxy_password ??
-          null;
-        const antidetectKey =
-          (await decryptSecret<string>(secrets?.antidetect_key_enc, secrets?.enc_key_id)) ??
-          secrets?.antidetect_key ??
-          null;
+        // Nur verschluesselt abgelegte Geheimnisse werden ausgeliefert.
+        // Kein Klartext-Fallback: schlaegt die Entschluesselung fehl, endet
+        // die Anfrage mit einem strukturierten Fehler.
+        const cookies = sessionData?.cookies_enc
+          ? await decryptSecret<unknown[]>(sessionData.cookies_enc, sessionData.enc_key_id)
+          : [];
+        if (cookies === null)
+          return json(
+            {
+              error: {
+                code: "server_error",
+                message: "Sitzungscookies konnten nicht entschlüsselt werden.",
+              },
+            },
+            500,
+          );
+
+        let proxyPassword: string | null = null;
+        if (secrets?.proxy_password_enc) {
+          proxyPassword = await decryptSecret<string>(secrets.proxy_password_enc, secrets.enc_key_id);
+          if (proxyPassword === null)
+            return json(
+              {
+                error: {
+                  code: "server_error",
+                  message: "Proxy-Passwort konnte nicht entschlüsselt werden.",
+                },
+              },
+              500,
+            );
+        }
+
+        let antidetectKey: string | null = null;
+        if (secrets?.antidetect_key_enc) {
+          antidetectKey = await decryptSecret<string>(secrets.antidetect_key_enc, secrets.enc_key_id);
+          if (antidetectKey === null)
+            return json(
+              {
+                error: {
+                  code: "server_error",
+                  message: "Antidetect-Schlüssel konnte nicht entschlüsselt werden.",
+                },
+              },
+              500,
+            );
+        }
 
         const fingerprint = normalizeFingerprint(bot.fingerprint);
         return json({
