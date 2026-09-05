@@ -12,7 +12,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { authenticateWorker, json, readJsonBody } from "@/lib/worker-auth.server";
 import { validateJob } from "@/lib/job-validation";
 import { advanceStage, logContact, upsertRecipient } from "@/lib/contacts.server";
-import { REPORTABLE_STATUSES, TERMINAL_STATUSES } from "@/lib/worker-contract";
+import { REPORTABLE_STATUSES, TERMINAL_STATUSES, computeEffectiveMode } from "@/lib/worker-contract";
 
 /** Auftragstyp -> Art des Eintrags in der Kontaktakte. */
 const KIND_BY_TYPE: Record<string, string> = {
