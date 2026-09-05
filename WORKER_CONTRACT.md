@@ -80,7 +80,11 @@ Antwort:
 ```
 
 `effective_mode` und `effective_capabilities` sind maßgeblich — der Worker kann
-sich nicht selbst auf `live` setzen.
+sich weder selbst auf `live` setzen noch sich Fähigkeiten selbst verleihen. Die
+im Heartbeat gemeldeten `capabilities` sind rein informativ und werden nicht
+gespeichert; Fähigkeiten werden ausschließlich administrativ im Cockpit
+freigegeben. `effective_mode` ist nur dann `live`, wenn die Freigabe
+(`live_enabled`) gesetzt ist **und** der Modus `live` lautet.
 
 ### POST /poll
 
@@ -92,9 +96,13 @@ sich nicht selbst auf `live` setzen.
 - Das Abholen läuft in der Datenbank mit `FOR UPDATE SKIP LOCKED`: zwei
   parallele Worker erhalten nie denselben Auftrag.
 - Ungültige Aufträge werden vorher auf `failed` gesetzt und nie ausgeliefert.
-- Es werden nur Bots berücksichtigt, die dem Worker zugeordnet sind (oder alle,
-  wenn keine Zuordnung besteht), die nicht pausiert und nicht im manuellen Modus
-  sind und deren Sitzung nicht gesperrt ist.
+- Es werden ausschließlich Bots berücksichtigt, die dem Worker im Cockpit
+  ausdrücklich zugeordnet sind. **Keine Zuordnung bedeutet keine Aufträge.**
+  Zusätzlich muss der Bot aktiv sein (nicht pausiert, nicht im manuellen Modus)
+  und seine Sitzung darf nicht gesperrt sein.
+- Es werden nur Auftragstypen ausgeliefert, für die der Worker **serverseitig
+  freigegebene Fähigkeiten** besitzt. **Keine freigegebenen Fähigkeiten bedeutet
+  keine Aufträge.** Im Heartbeat gemeldete Fähigkeiten werden nicht übernommen.
 
 Antwort: `{ "contract_version", "jobs": [...], "bots": [...], "limit", "max_limit": 25 }`.
 

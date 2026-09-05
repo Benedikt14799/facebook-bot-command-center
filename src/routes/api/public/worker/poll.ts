@@ -14,6 +14,7 @@ import {
   BLOCKING_SESSION_STATES,
   CAPABILITY_BY_JOB_TYPE,
   CONTRACT_VERSION,
+  computeEffectiveMode,
 } from "@/lib/worker-contract";
 
 const MAX_LIMIT = 25;
@@ -52,8 +53,7 @@ export const Route = createFileRoute("/api/public/worker/poll")({
           .select("mode, live_enabled")
           .eq("id", ctx.workerId)
           .maybeSingle();
-        const effectiveMode =
-          workerRow?.live_enabled && workerRow?.mode === "live" ? "live" : "dry_run";
+        const effectiveMode = computeEffectiveMode(workerRow);
 
         // Erlaubte Bots serverseitig bestimmen (Zuordnung im Cockpit).
         let allowedBotIds = ctx.allowedBotIds;
