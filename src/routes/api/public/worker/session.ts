@@ -38,7 +38,7 @@ export const Route = createFileRoute("/api/public/worker/session")({
 
         const { data: sessionData, error: sessionError } = await ctx.admin
           .from("bot_sessions")
-          .select("cookies, cookies_enc, enc_key_id, user_agent, updated_at")
+          .select("cookies_enc, enc_key_id, user_agent, updated_at")
           .eq("bot_id", botId)
           .eq("user_id", ctx.userId)
           .maybeSingle();
