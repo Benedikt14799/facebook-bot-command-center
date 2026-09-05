@@ -64,10 +64,22 @@ export const Route = createFileRoute("/api/public/worker/result")({
         if (!fullJob) return json({ error: "job not found" }, 404);
 
         // Bereits abgeschlossene Auftraege duerfen nicht mehr veraendert werden.
+        // Identische Wiederholung -> 200 (idempotent), abweichender Inhalt -> 409.
         const TERMINAL = ["done", "failed", "skipped", "cancelled"];
         if (TERMINAL.includes(fullJob.status)) {
-          if (fullJob.status === requested) return json({ ok: true, unchanged: true });
-          return json({ error: "job already finished", status: fullJob.status }, 409);
+          if (fullJob.status !== requested) {
+            return json(
+              { error: "job already finished", status: fullJob.status, reason: "status_mismatch" },
+              409,
+            );
+          }
+          const sameResult = canonical(fullJob.result ?? null) === canonical(body.result ?? null);
+          const sameError = (fullJob.error ?? null) === (body.error ?? null);
+          if (sameResult && sameError) return json({ ok: true, unchanged: true });
+          return json(
+            { error: "job already finished", status: fullJob.status, reason: "result_mismatch" },
+            409,
+          );
         }
 
         // Ergebnis nur vom Worker akzeptieren, der den Auftrag uebernommen hat.
