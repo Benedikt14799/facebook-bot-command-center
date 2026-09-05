@@ -7,6 +7,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { createWorkerToken, revokeWorkerToken } from "@/lib/worker-tokens.functions";
+import { encryptLegacySecrets } from "@/lib/secret-backfill.functions";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { useState } from "react";
@@ -125,6 +126,17 @@ function WorkersPage() {
       toast.success(v.live ? "Echtbetrieb freigegeben" : "Auf Probebetrieb gestellt");
       qc.invalidateQueries({ queryKey: ["workers"] });
     },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  // Altbestand nachträglich verschlüsseln (wiederholbar, überspringt Fertiges).
+  const runBackfill = useServerFn(encryptLegacySecrets);
+  const backfill = useMutation({
+    mutationFn: async () => runBackfill({ data: {} as never }),
+    onSuccess: (r) =>
+      toast.success(
+        `Verschlüsselt: ${r.sessions} Sitzungen, ${r.secrets} Zugangsdaten, ${r.skipped} bereits erledigt.`,
+      ),
     onError: (e: Error) => toast.error(e.message),
   });
 
@@ -276,6 +288,18 @@ function WorkersPage() {
             </div>
           </div>
         ))}
+
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => backfill.mutate()}
+            disabled={backfill.isPending}
+          >
+            Alte Zugangsdaten verschlüsseln
+          </Button>
+          <InfoHint text="Prüft gespeicherte Anmeldedaten und Passwörter und verschlüsselt alles, was noch offen abgelegt war. Kann jederzeit wiederholt werden." />
+        </div>
 
         {(workers.data ?? []).length === 0 && (
           <p className="text-sm text-muted-foreground">Noch kein Worker registriert.</p>
