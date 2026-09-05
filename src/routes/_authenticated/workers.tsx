@@ -249,8 +249,6 @@ function WorkersPage() {
               </Button>
               <InfoHint text="Das Skript enthält keinen Schlüssel. Vor dem Start setzt du FB_CONTROL_WORKER_TOKEN, optional FB_CONTROL_BOT_ID und FB_CONTROL_MODE (Standard: Probebetrieb)." />
             </div>
-              </div>
-            )}
           </div>
         ))}
 
