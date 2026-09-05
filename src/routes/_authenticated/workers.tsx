@@ -5,7 +5,10 @@
  * deshalb identisch mit der Worker-Health-Seite.
  */
 import { createFileRoute } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
+import { createWorkerToken, revokeWorkerToken } from "@/lib/worker-tokens.functions";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+
 import { useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { InfoHint } from "@/components/InfoHint";
