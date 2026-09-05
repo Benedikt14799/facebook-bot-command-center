@@ -232,11 +232,11 @@ function JobsPage() {
             <DialogTrigger asChild>
               <Button size="sm">Auftrag planen</Button>
             </DialogTrigger>
-            <DialogContent className="max-h-[90vh] overflow-hidden">
+            <DialogContent className="max-h-[90vh] overflow-hidden flex flex-col">
               <DialogHeader>
                 <DialogTitle>Neuer Auftrag</DialogTitle>
               </DialogHeader>
-              <div className="space-y-3 overflow-y-auto pr-1">
+              <div className="flex-1 min-h-0 space-y-3 overflow-y-auto pr-1">
                 <div className="space-y-1.5">
                   <Label className="flex items-center gap-2">
                     Bot{" "}
@@ -741,7 +741,7 @@ function EditJobDialog({
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-h-[90vh] overflow-hidden">
+      <DialogContent className="max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle>
             {done
@@ -751,7 +751,7 @@ function EditJobDialog({
                 : "Auftrag bearbeiten"}
           </DialogTitle>
         </DialogHeader>
-        <div className="space-y-3 overflow-y-auto pr-1">
+        <div className="flex-1 min-h-0 space-y-3 overflow-y-auto pr-1">
           {retriedFrom ? (
             <div className="rounded-md border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
               Wiederholung eines fehlgeschlagenen Auftrags (Ursprung:{" "}
