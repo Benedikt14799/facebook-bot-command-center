@@ -56,11 +56,9 @@ export async function authenticateWorker(request: Request): Promise<WorkerCtx | 
   if (!worker || worker.revoked_at)
     return json({ error: { code: "unauthorized", message: "Worker revoked" } }, 401);
 
+  // Wichtig: Hier wird NICHT der Heartbeat/Online-Zustand gesetzt.
+  // Nur /heartbeat aktualisiert last_seen_at und status.
   const nowIso = new Date().toISOString();
-  await supabaseAdmin
-    .from("workers")
-    .update({ last_seen_at: nowIso, status: "online" })
-    .eq("id", worker.id);
   await supabaseAdmin.from("worker_tokens").update({ last_used_at: nowIso }).eq("id", tokenRow.id);
 
   const { data: links } = await supabaseAdmin
