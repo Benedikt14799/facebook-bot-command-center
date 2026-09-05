@@ -415,16 +415,37 @@ function JobsPage() {
                 <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
                   <div className="flex gap-1">
                     {j.needs_approval && j.status === "pending" && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() =>
-                          patch.mutate({ id: j.id, values: { needs_approval: false } })
-                        }
-                      >
-                        Freigeben
-                      </Button>
+                      <>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() =>
+                            patch.mutate({ id: j.id, values: { needs_approval: false } })
+                          }
+                        >
+                          Freigeben
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-destructive"
+                          onClick={() =>
+                            patch.mutate({
+                              id: j.id,
+                              values: {
+                                status: "cancelled",
+                                needs_approval: false,
+                                error: "Freigabe abgelehnt",
+                                finished_at: new Date().toISOString(),
+                              },
+                            })
+                          }
+                        >
+                          Ablehnen
+                        </Button>
+                      </>
                     )}
+
                     <Button size="sm" variant="ghost" onClick={() => setEditing(j)}>
                       Bearbeiten
                     </Button>
