@@ -25,13 +25,14 @@ export const Route = createFileRoute("/api/public/worker/ip-report")({
           type?: string;
           latency_ms?: number;
         } | null;
-        const denied = assertBotAllowed(ctx, body?.bot_id);
-        if (denied) return denied;
+        const botId = body?.bot_id;
+        const denied = assertBotAllowed(ctx, botId);
+        if (denied || !body || !botId) return denied ?? apiError("invalid_payload", "bot_id fehlt.", 400);
 
         const { data: bot } = await ctx.admin
           .from("bots")
           .select("id, proxy_country, paused")
-          .eq("id", body.bot_id)
+          .eq("id", botId)
           .eq("user_id", ctx.userId)
           .maybeSingle();
         if (!bot) return apiError("not_found", "Bot nicht gefunden.", 404);
@@ -58,13 +59,13 @@ export const Route = createFileRoute("/api/public/worker/ip-report")({
             proxy_checked_at: checkedAt,
             ...(body.hosting ? { paused: true } : {}),
           })
-          .eq("id", body.bot_id)
+          .eq("id", botId)
           .eq("user_id", ctx.userId);
 
         if (warnings.length) {
           await ctx.admin.from("events").insert({
             user_id: ctx.userId,
-            bot_id: body.bot_id,
+            bot_id: botId,
             level: "warn",
             type: "proxy_warning",
             message: warnings.join(" "),
