@@ -36,10 +36,21 @@ export const Route = createFileRoute("/_authenticated/workers")({
   component: WorkersPage,
 });
 
+/**
+ * Adresse fuer externe Worker: die Vorschau-Adresse (id-preview--…) ist durch
+ * einen vorgelagerten Zugriffsschutz gesperrt und liefert 401/403, bevor die
+ * API-Route erreicht wird. Deshalb immer die stabile oeffentliche Adresse
+ * project--<id>.lovable.app verwenden.
+ */
+function publicApiBase(origin: string) {
+  const m = origin.match(/^https:\/\/(?:id-preview--|preview--)?([0-9a-f-]{36})(?:-dev)?\.lovable\.app$/i);
+  return m ? `https://project--${m[1]}.lovable.app` : origin;
+}
+
 function WorkersPage() {
   const qc = useQueryClient();
   const [name, setName] = useState("");
-  const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
+  const baseUrl = typeof window !== "undefined" ? publicApiBase(window.location.origin) : "";
 
   const workers = useQuery({
     queryKey: ["workers"],
