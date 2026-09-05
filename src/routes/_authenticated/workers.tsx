@@ -9,7 +9,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { createWorkerToken, revokeWorkerToken } from "@/lib/worker-tokens.functions";
 import { encryptLegacySecrets } from "@/lib/secret-backfill.functions";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp, Trash2 } from "lucide-react";
 
 import { useState } from "react";
 import { AppShell } from "@/components/AppShell";
@@ -195,24 +195,34 @@ function WorkersPage() {
               {(tokens.data ?? [])
                 .filter((t) => t.worker_id === w.id)
                 .map((t) => (
-                  <div key={t.id} className="flex flex-wrap items-center gap-2 text-xs">
-                    <code className="rounded bg-secondary px-2 py-1 font-mono text-foreground">
-                      {t.token_prefix}…
-                    </code>
-                    <span className="text-muted-foreground">
-                      {t.revoked_at
-                        ? `widerrufen ${fmt(t.revoked_at)}`
-                        : `aktiv · zuletzt genutzt ${fmt(t.last_used_at)}`}
-                    </span>
+                  <div
+                    key={t.id}
+                    className="flex flex-col gap-2 rounded-md border border-border bg-secondary/30 p-3 text-xs sm:flex-row sm:items-center sm:justify-between"
+                  >
+                    <div className="flex flex-wrap items-center gap-2">
+                      <code className="rounded bg-secondary px-2 py-1 font-mono text-foreground">
+                        {t.token_prefix}…
+                      </code>
+                      <span className="text-muted-foreground">
+                        {t.revoked_at
+                          ? `widerrufen ${fmt(t.revoked_at)}`
+                          : `aktiv · zuletzt genutzt ${fmt(t.last_used_at)}`}
+                      </span>
+                    </div>
                     {!t.revoked_at && (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => revoke.mutate(t.id)}
-                        disabled={revoke.isPending}
-                      >
-                        Widerrufen
-                      </Button>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                          onClick={() => revoke.mutate(t.id)}
+                          disabled={revoke.isPending}
+                        >
+                          <Trash2 className="mr-1 h-3.5 w-3.5" />
+                          Schlüssel widerrufen
+                        </Button>
+                        <InfoHint text="Der Schlüssel wird sofort ungültig. Der Worker kann sich damit nicht mehr anmelden und muss einen neuen Schlüssel erhalten." />
+                      </div>
                     )}
                   </div>
                 ))}
