@@ -9,6 +9,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { createWorkerToken, revokeWorkerToken } from "@/lib/worker-tokens.functions";
 import { encryptLegacySecrets } from "@/lib/secret-backfill.functions";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 import { useState } from "react";
 import { AppShell } from "@/components/AppShell";
