@@ -8,7 +8,7 @@
  */
 import { createFileRoute } from "@tanstack/react-router";
 import { authenticateWorker, json, readJsonBody } from "@/lib/worker-auth.server";
-import { ALL_CAPABILITIES, CONTRACT_VERSION } from "@/lib/worker-contract";
+import { CONTRACT_VERSION, computeEffectiveMode } from "@/lib/worker-contract";
 
 export const Route = createFileRoute("/api/public/worker/heartbeat")({
   server: {
@@ -30,12 +30,8 @@ export const Route = createFileRoute("/api/public/worker/heartbeat")({
 
         const asText = (v: unknown) => (typeof v === "string" && v.trim() ? v.trim() : null);
 
-        // Nur bekannte Faehigkeiten uebernehmen.
-        const capabilities = Array.isArray(body.capabilities)
-          ? [...new Set(body.capabilities.filter((c): c is string => typeof c === "string"))].filter(
-              (c) => ALL_CAPABILITIES.includes(c),
-            )
-          : null;
+        // Vom Worker gemeldete Faehigkeiten sind reine Information und werden
+        // NIE gespeichert. Wirksam sind nur serverseitig freigegebene Werte.
 
         // Bot-Zuordnung nur, wenn der Bot wirklich dem Benutzer gehoert.
         let botId: string | null = null;
@@ -60,7 +56,6 @@ export const Route = createFileRoute("/api/public/worker/heartbeat")({
             last_seen_at: nowIso,
             last_event_at: nowIso,
             last_error: asText(body.message),
-            ...(capabilities ? { capabilities } : {}),
             ...(botId ? { bot_id: botId } : {}),
           })
           .eq("id", ctx.workerId);
@@ -68,7 +63,7 @@ export const Route = createFileRoute("/api/public/worker/heartbeat")({
         // Wirksame Werte kommen immer vom Server zurueck.
         const { data: worker } = await ctx.admin
           .from("workers")
-          .select("capabilities, mode")
+          .select("capabilities, mode, live_enabled")
           .eq("id", ctx.workerId)
           .maybeSingle();
 
@@ -77,7 +72,7 @@ export const Route = createFileRoute("/api/public/worker/heartbeat")({
           worker_id: ctx.workerId,
           contract_version: CONTRACT_VERSION,
           server_time: nowIso,
-          effective_mode: worker?.mode ?? "dry_run",
+          effective_mode: computeEffectiveMode(worker),
           effective_capabilities: worker?.capabilities ?? [],
           allowed_bot_ids: ctx.allowedBotIds,
         });

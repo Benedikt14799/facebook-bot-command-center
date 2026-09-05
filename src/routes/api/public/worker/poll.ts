@@ -52,8 +52,7 @@ export const Route = createFileRoute("/api/public/worker/poll")({
           .select("mode, live_enabled")
           .eq("id", ctx.workerId)
           .maybeSingle();
-        const effectiveMode =
-          workerRow?.live_enabled && workerRow?.mode === "live" ? "live" : "dry_run";
+        const effectiveMode = computeEffectiveMode(workerRow);
 
         // Erlaubte Bots serverseitig bestimmen (Zuordnung im Cockpit).
         let allowedBotIds = ctx.allowedBotIds;

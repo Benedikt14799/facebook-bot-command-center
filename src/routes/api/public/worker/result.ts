@@ -94,7 +94,7 @@ export const Route = createFileRoute("/api/public/worker/result")({
             .select("mode, live_enabled")
             .eq("id", ctx.workerId)
             .maybeSingle();
-          if (!workerRow?.live_enabled || workerRow.mode !== "live") {
+          if (computeEffectiveMode(workerRow) !== "live") {
             return fail(
               "dry_run_mode",
               "Der Worker ist nicht für den Echtbetrieb freigegeben. Erlaubt sind skipped oder failed.",
