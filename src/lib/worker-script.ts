@@ -288,9 +288,6 @@ def handle_unlock_requests():
         print("Freischaltung konnte nicht abgefragt werden:", exc)
         return
 
-    if MODE != "live":
-        return
-
     for req in reqs:
         bot_id = req["id"]
         print(f"[unlock] Öffne Fenster für {req.get('name') or bot_id}")
