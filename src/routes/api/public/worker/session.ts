@@ -6,7 +6,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { authenticateWorker, json, readJsonBody } from "@/lib/worker-auth.server";
 import { normalizeAntidetect, normalizeBehavior, normalizeFingerprint } from "@/lib/stealth";
 import { clearManualMode } from "@/lib/alerts.server";
-import { decryptSecret, encryptSecret } from "@/lib/secret-crypto.server";
+import { decryptSecret, requireEncryptSecret } from "@/lib/secret-crypto.server";
 import { SESSION_STATES } from "@/lib/worker-contract";
 
 export const Route = createFileRoute("/api/public/worker/session")({
@@ -16,7 +16,13 @@ export const Route = createFileRoute("/api/public/worker/session")({
         const ctx = await authenticateWorker(request);
         if (ctx instanceof Response) return ctx;
         const botId = new URL(request.url).searchParams.get("bot_id");
-        if (!botId) return json({ error: "bot_id required" }, 400);
+        if (!botId)
+          return json({ error: { code: "invalid_payload", message: "bot_id fehlt." } }, 400);
+        if (!ctx.allowedBotIds.includes(botId))
+          return json(
+            { error: { code: "forbidden", message: "Bot ist diesem Worker nicht zugeordnet." } },
+            403,
+          );
 
         // Tarnprofil: Proxy, Fingerprint, Verhalten und Antidetect-Konfiguration.
         const { data: bot, error: botError } = await ctx.admin
@@ -27,8 +33,8 @@ export const Route = createFileRoute("/api/public/worker/session")({
           .eq("id", botId)
           .eq("user_id", ctx.userId)
           .maybeSingle();
-        if (botError) return json({ error: botError.message }, 500);
-        if (!bot) return json({ error: "bot not found" }, 404);
+        if (botError) return json({ error: { code: "server_error", message: botError.message } }, 500);
+        if (!bot) return json({ error: { code: "not_found", message: "Bot nicht gefunden." } }, 404);
 
         const { data: sessionData, error: sessionError } = await ctx.admin
           .from("bot_sessions")
@@ -36,7 +42,7 @@ export const Route = createFileRoute("/api/public/worker/session")({
           .eq("bot_id", botId)
           .eq("user_id", ctx.userId)
           .maybeSingle();
-        if (sessionError) return json({ error: sessionError.message }, 500);
+        if (sessionError) return json({ error: { code: "server_error", message: sessionError.message } }, 500);
 
         const { data: secrets } = await ctx.admin
           .from("bot_secrets")
@@ -94,7 +100,13 @@ export const Route = createFileRoute("/api/public/worker/session")({
           user_agent?: string;
           status?: string;
         } | null;
-        if (!body?.bot_id) return json({ error: "bot_id required" }, 400);
+        if (!body?.bot_id)
+          return json({ error: { code: "invalid_payload", message: "bot_id fehlt." } }, 400);
+        if (!ctx.allowedBotIds.includes(body.bot_id))
+          return json(
+            { error: { code: "forbidden", message: "Bot ist diesem Worker nicht zugeordnet." } },
+            403,
+          );
 
         const state = typeof body.status === "string" ? body.status : "ok";
         if (!SESSION_STATES.includes(state as never)) {
@@ -110,21 +122,35 @@ export const Route = createFileRoute("/api/public/worker/session")({
         }
 
         if (body.cookies) {
-          const enc = await encryptSecret(body.cookies);
+          let enc: { ciphertext: string; keyId: string };
+          try {
+            enc = await requireEncryptSecret(body.cookies);
+          } catch {
+            return json(
+              {
+                error: {
+                  code: "server_error",
+                  message: "Verschlüsselung nicht konfiguriert — Sitzung wurde nicht gespeichert.",
+                },
+              },
+              500,
+            );
+          }
           const { error } = await ctx.admin.from("bot_sessions").upsert(
             {
               bot_id: body.bot_id,
               user_id: ctx.userId,
               // Klartext nur, solange kein Schluessel gesetzt ist.
-              cookies: (enc ? [] : body.cookies) as never,
-              cookies_enc: enc?.ciphertext ?? null,
-              enc_key_id: enc?.keyId ?? null,
+              // Cookies liegen ausschliesslich verschluesselt vor.
+              cookies: [] as never,
+              cookies_enc: enc.ciphertext,
+              enc_key_id: enc.keyId,
               user_agent: body.user_agent ?? null,
               updated_at: new Date().toISOString(),
             },
             { onConflict: "bot_id" },
           );
-          if (error) return json({ error: error.message }, 500);
+          if (error) return json({ error: { code: "server_error", message: error.message } }, 500);
         }
 
         const status = state;
