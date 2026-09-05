@@ -23,6 +23,16 @@ const KIND_BY_TYPE: Record<string, string> = {
   reply_message: "reply_out",
 };
 
+/** Kanonische Serialisierung: Reihenfolge der Schluessel spielt keine Rolle. */
+function canonical(value: unknown): string {
+  if (value === null || typeof value !== "object") return JSON.stringify(value ?? null);
+  if (Array.isArray(value)) return `[${value.map(canonical).join(",")}]`;
+  const entries = Object.entries(value as Record<string, unknown>)
+    .filter(([, v]) => v !== undefined)
+    .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
+  return `{${entries.map(([k, v]) => `${JSON.stringify(k)}:${canonical(v)}`).join(",")}}`;
+}
+
 export const Route = createFileRoute("/api/public/worker/result")({
   server: {
     handlers: {
@@ -64,10 +74,22 @@ export const Route = createFileRoute("/api/public/worker/result")({
         if (!fullJob) return json({ error: "job not found" }, 404);
 
         // Bereits abgeschlossene Auftraege duerfen nicht mehr veraendert werden.
+        // Identische Wiederholung -> 200 (idempotent), abweichender Inhalt -> 409.
         const TERMINAL = ["done", "failed", "skipped", "cancelled"];
         if (TERMINAL.includes(fullJob.status)) {
-          if (fullJob.status === requested) return json({ ok: true, unchanged: true });
-          return json({ error: "job already finished", status: fullJob.status }, 409);
+          if (fullJob.status !== requested) {
+            return json(
+              { error: "job already finished", status: fullJob.status, reason: "status_mismatch" },
+              409,
+            );
+          }
+          const sameResult = canonical(fullJob.result ?? null) === canonical(body.result ?? null);
+          const sameError = (fullJob.error ?? null) === (body.error ?? null);
+          if (sameResult && sameError) return json({ ok: true, unchanged: true });
+          return json(
+            { error: "job already finished", status: fullJob.status, reason: "result_mismatch" },
+            409,
+          );
         }
 
         // Ergebnis nur vom Worker akzeptieren, der den Auftrag uebernommen hat.

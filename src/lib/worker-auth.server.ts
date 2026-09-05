@@ -17,7 +17,7 @@ export async function authenticateWorker(request: Request): Promise<WorkerCtx | 
     request.headers.get("x-worker-token") ??
     request.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ??
     "";
-  if (!token) return new Response("Missing worker token", { status: 401 });
+  if (!token) return json({ error: "Missing worker token" }, 401);
 
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data, error } = await supabaseAdmin
@@ -26,8 +26,8 @@ export async function authenticateWorker(request: Request): Promise<WorkerCtx | 
     .eq("token", token)
     .maybeSingle();
 
-  if (error) return new Response("Auth error", { status: 500 });
-  if (!data) return new Response("Invalid worker token", { status: 401 });
+  if (error) return json({ error: "Auth error" }, 500);
+  if (!data) return json({ error: "Invalid worker token" }, 401);
 
   await supabaseAdmin
     .from("workers")
