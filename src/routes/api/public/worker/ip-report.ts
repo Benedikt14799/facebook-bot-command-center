@@ -4,7 +4,7 @@
  * Bot optional pausiert.
  */
 import { createFileRoute } from "@tanstack/react-router";
-import { authenticateWorker, json, readJsonBody } from "@/lib/worker-auth.server";
+import { apiError, assertBotAllowed, authenticateWorker, json, readJsonBody } from "@/lib/worker-auth.server";
 
 export const Route = createFileRoute("/api/public/worker/ip-report")({
   server: {
@@ -25,7 +25,8 @@ export const Route = createFileRoute("/api/public/worker/ip-report")({
           type?: string;
           latency_ms?: number;
         } | null;
-        if (!body?.bot_id) return json({ error: "bot_id required" }, 400);
+        const denied = assertBotAllowed(ctx, body?.bot_id);
+        if (denied) return denied;
 
         const { data: bot } = await ctx.admin
           .from("bots")
@@ -33,7 +34,7 @@ export const Route = createFileRoute("/api/public/worker/ip-report")({
           .eq("id", body.bot_id)
           .eq("user_id", ctx.userId)
           .maybeSingle();
-        if (!bot) return json({ error: "bot not found" }, 404);
+        if (!bot) return apiError("not_found", "Bot nicht gefunden.", 404);
 
         const checkedAt = new Date().toISOString();
         const check = { ...body, ok: true, source: "worker", checked_at: checkedAt };
@@ -67,7 +68,7 @@ export const Route = createFileRoute("/api/public/worker/ip-report")({
             level: "warn",
             type: "proxy_warning",
             message: warnings.join(" "),
-            data: check as never,
+            meta: check as never,
           });
         }
 

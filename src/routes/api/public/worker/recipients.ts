@@ -4,7 +4,7 @@
  * und schreibt einen Eintrag in ihre Kontaktakte.
  */
 import { createFileRoute } from "@tanstack/react-router";
-import { authenticateWorker, json, readJsonBody } from "@/lib/worker-auth.server";
+import { apiError, assertBotAllowed, authenticateWorker, json, readJsonBody } from "@/lib/worker-auth.server";
 import { logContact, upsertRecipient } from "@/lib/contacts.server";
 
 type Person = {
@@ -27,13 +27,18 @@ export const Route = createFileRoute("/api/public/worker/recipients")({
         const parsedBody = await readJsonBody(request);
         if (parsedBody instanceof Response) return parsedBody;
         const body = parsedBody as (Person & { people?: Person[] }) | null;
-        if (!body) return json({ error: "body required" }, 400);
+        if (!body) return apiError("invalid_payload", "Körper fehlt.", 400);
 
         const people = Array.isArray(body.people) ? body.people : [body];
         const ids: string[] = [];
 
         for (const p of people) {
           if (!p.name && !p.fb_user_id && !p.profile_url) continue;
+          const botId = p.bot_id ?? body.bot_id ?? null;
+          if (botId) {
+            const denied = assertBotAllowed(ctx, botId);
+            if (denied) return denied;
+          }
           const id = await upsertRecipient(ctx.admin, {
             userId: ctx.userId,
             groupId: p.group_id ?? body.group_id ?? null,

@@ -116,3 +116,19 @@ export async function readJsonBody<T extends Record<string, unknown>>(
   }
   return parsed as T;
 }
+
+/** Einheitliches Fehlerformat fuer alle Worker-Endpunkte. */
+export function apiError(code: string, message: string, status = 400) {
+  return json({ error: { code, message } }, status);
+}
+
+/**
+ * Prueft serverseitig, ob der Bot diesem Worker zugeordnet ist
+ * (Tabelle worker_bots). Liefert eine Fehlerantwort oder null.
+ */
+export function assertBotAllowed(ctx: WorkerCtx, botId: string | null | undefined) {
+  if (!botId) return apiError("invalid_payload", "bot_id fehlt.", 400);
+  if (!ctx.allowedBotIds.includes(botId))
+    return apiError("forbidden", "Bot ist diesem Worker nicht zugeordnet.", 403);
+  return null;
+}
