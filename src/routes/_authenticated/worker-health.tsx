@@ -68,7 +68,7 @@ function WorkerHealthPage() {
 
   const failed = (jobs.data ?? []).filter((j) => j.status === "failed");
   const recentRuns = (jobs.data ?? [])
-    .filter((j) => ["done", "failed", "claimed", "running"].includes(j.status))
+    .filter((j) => ["done", "failed", "skipped", "running"].includes(j.status))
     .slice(0, 20);
 
   /**
