@@ -195,6 +195,15 @@ function WorkersPage() {
                 Neuen Schlüssel erzeugen
               </Button>
               <InfoHint text="Der neue Schlüssel wird nur einmal angezeigt. Der alte bleibt gültig, bis du ihn widerrufst — so sperrst du dich nicht versehentlich aus." />
+              <Button
+                size="sm"
+                variant={w.live_enabled ? "default" : "outline"}
+                onClick={() => setLive.mutate({ id: w.id, live: !w.live_enabled })}
+                disabled={setLive.isPending}
+              >
+                {w.live_enabled ? "Echtbetrieb freigegeben" : "Nur Probebetrieb"}
+              </Button>
+              <InfoHint text="Solange nur Probebetrieb aktiv ist, führt der Worker keine echten Aktionen aus und meldet jeden Auftrag als übersprungen. Erst mit deiner Freigabe sind echte Aktionen möglich." />
               <Button size="sm" variant="ghost" onClick={() => remove.mutate(w.id)}>
                 Löschen
               </Button>
