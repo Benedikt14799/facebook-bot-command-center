@@ -7,7 +7,7 @@
  */
 
 export type JobType =
-  "dm_new_member" | "reply_message" | "like_posts" | "comment_post" | "scan_group" | "follow_up";
+  "dm_new_member" | "reply_message" | "like_posts" | "comment_post" | "scan_group";
 
 /** Pflichtfeld-Regeln fuer jeden Auftragstyp. */
 export type JobRequirement =
@@ -15,6 +15,7 @@ export type JobRequirement =
   | { kind: "recipient"; message: string }
   | { kind: "count"; min: number; max: number; message: string }
   | { kind: "post"; message: string }
+  | { kind: "text"; max: number; message: string }
   | { kind: "limit"; min: number; max: number; message: string };
 
 const REQUIREMENTS: Record<JobType, JobRequirement[]> = {
@@ -33,9 +34,20 @@ const REQUIREMENTS: Record<JobType, JobRequirement[]> = {
       kind: "post",
       message: "Für ‚Beitrag kommentieren‘ muss post_url oder post_id angegeben werden.",
     },
+    {
+      kind: "text",
+      max: 2000,
+      message: "Für ‚Beitrag kommentieren‘ wird ein Text (höchstens 2000 Zeichen) benötigt.",
+    },
   ],
   scan_group: [
     { kind: "group", message: "Für ‚Gruppe scannen‘ muss eine Gruppe ausgewählt werden." },
+    {
+      kind: "limit",
+      min: 1,
+      max: 100,
+      message: "Die Scan-Tiefe muss eine ganze Zahl zwischen 1 und 100 sein.",
+    },
   ],
   dm_new_member: [
     {
@@ -43,20 +55,26 @@ const REQUIREMENTS: Record<JobType, JobRequirement[]> = {
       message:
         "Für ‚Neues Gruppenmitglied anschreiben‘ muss eine Person (recipient_id oder profile_url) angegeben werden.",
     },
+    {
+      kind: "text",
+      max: 2000,
+      message:
+        "Für ‚Neues Gruppenmitglied anschreiben‘ wird ein Text (höchstens 2000 Zeichen) benötigt.",
+    },
   ],
   reply_message: [
     {
       kind: "recipient",
       message: "Für ‚Auf Nachricht antworten‘ muss eine Person (recipient_id) angegeben werden.",
     },
-  ],
-  follow_up: [
     {
-      kind: "recipient",
-      message: "Für ‚Follow-up-Nachricht‘ muss eine Person (recipient_id) angegeben werden.",
+      kind: "text",
+      max: 2000,
+      message: "Für ‚Auf Nachricht antworten‘ wird ein Text (höchstens 2000 Zeichen) benötigt.",
     },
   ],
 };
+
 
 /** Alle bekannten Auftragstypen, die validiert werden koennen. */
 export const VALIDATED_JOB_TYPES = Object.keys(REQUIREMENTS) as JobType[];
