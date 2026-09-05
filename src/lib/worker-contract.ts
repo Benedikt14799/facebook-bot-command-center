@@ -82,3 +82,15 @@ export type ApiErrorCode =
   | "result_mismatch"
   | "verification_required"
   | "server_error";
+
+/**
+ * Wirksamer Betriebsmodus eines Workers — zentral und ueberall identisch.
+ * Nur eine serverseitige Freigabe (live_enabled) zusammen mit mode = "live"
+ * ergibt "live"; alles andere bleibt "dry_run".
+ */
+export function computeEffectiveMode(worker: {
+  mode?: string | null;
+  live_enabled?: boolean | null;
+} | null | undefined): "dry_run" | "live" {
+  return worker?.live_enabled === true && worker?.mode === "live" ? "live" : "dry_run";
+}
