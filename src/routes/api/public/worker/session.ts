@@ -6,6 +6,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { authenticateWorker, json, readJsonBody } from "@/lib/worker-auth.server";
 import { normalizeAntidetect, normalizeBehavior, normalizeFingerprint } from "@/lib/stealth";
 import { clearManualMode } from "@/lib/alerts.server";
+import { decryptSecret, encryptSecret } from "@/lib/secret-crypto.server";
+import { SESSION_STATES } from "@/lib/worker-contract";
 
 export const Route = createFileRoute("/api/public/worker/session")({
   server: {
@@ -30,7 +32,7 @@ export const Route = createFileRoute("/api/public/worker/session")({
 
         const { data: sessionData, error: sessionError } = await ctx.admin
           .from("bot_sessions")
-          .select("cookies, user_agent, updated_at")
+          .select("cookies, cookies_enc, enc_key_id, user_agent, updated_at")
           .eq("bot_id", botId)
           .eq("user_id", ctx.userId)
           .maybeSingle();
@@ -38,14 +40,29 @@ export const Route = createFileRoute("/api/public/worker/session")({
 
         const { data: secrets } = await ctx.admin
           .from("bot_secrets")
-          .select("proxy_password, antidetect_key")
+          .select("proxy_password, proxy_password_enc, antidetect_key, antidetect_key_enc, enc_key_id")
           .eq("bot_id", botId)
           .eq("user_id", ctx.userId)
           .maybeSingle();
 
+        // Verschluesselt abgelegte Geheimnisse entschluesseln (Schluessel nur
+        // aus dem Secret-Management, nie aus der Datenbank).
+        const cookies =
+          (await decryptSecret<unknown[]>(sessionData?.cookies_enc, sessionData?.enc_key_id)) ??
+          sessionData?.cookies ??
+          [];
+        const proxyPassword =
+          (await decryptSecret<string>(secrets?.proxy_password_enc, secrets?.enc_key_id)) ??
+          secrets?.proxy_password ??
+          null;
+        const antidetectKey =
+          (await decryptSecret<string>(secrets?.antidetect_key_enc, secrets?.enc_key_id)) ??
+          secrets?.antidetect_key ??
+          null;
+
         const fingerprint = normalizeFingerprint(bot.fingerprint);
         return json({
-          cookies: sessionData?.cookies ?? [],
+          cookies,
           user_agent: sessionData?.user_agent ?? fingerprint.user_agent ?? null,
           updated_at: sessionData?.updated_at ?? null,
           proxy: bot.proxy_host
@@ -53,7 +70,7 @@ export const Route = createFileRoute("/api/public/worker/session")({
                 type: bot.proxy_type,
                 server: `${bot.proxy_protocol ?? "http"}://${bot.proxy_host}:${bot.proxy_port ?? 8080}`,
                 username: bot.proxy_user ?? null,
-                password: secrets?.proxy_password ?? null,
+                password: proxyPassword,
                 country: bot.proxy_country ?? null,
                 rotate_url: bot.proxy_rotate_url ?? null,
               }
@@ -62,7 +79,7 @@ export const Route = createFileRoute("/api/public/worker/session")({
           behavior: normalizeBehavior(bot.behavior),
           browser_mode: bot.browser_mode ?? "stealth",
           antidetect: bot.antidetect
-            ? { ...normalizeAntidetect(bot.antidetect), api_key: secrets?.antidetect_key ?? null }
+            ? { ...normalizeAntidetect(bot.antidetect), api_key: antidetectKey }
             : null,
         });
       },
@@ -79,12 +96,29 @@ export const Route = createFileRoute("/api/public/worker/session")({
         } | null;
         if (!body?.bot_id) return json({ error: "bot_id required" }, 400);
 
+        const state = typeof body.status === "string" ? body.status : "ok";
+        if (!SESSION_STATES.includes(state as never)) {
+          return json(
+            {
+              error: {
+                code: "invalid_payload",
+                message: `Ungültiger Sitzungszustand. Erlaubt: ${SESSION_STATES.join(", ")}.`,
+              },
+            },
+            400,
+          );
+        }
+
         if (body.cookies) {
+          const enc = await encryptSecret(body.cookies);
           const { error } = await ctx.admin.from("bot_sessions").upsert(
             {
               bot_id: body.bot_id,
               user_id: ctx.userId,
-              cookies: body.cookies as never,
+              // Klartext nur, solange kein Schluessel gesetzt ist.
+              cookies: (enc ? [] : body.cookies) as never,
+              cookies_enc: enc?.ciphertext ?? null,
+              enc_key_id: enc?.keyId ?? null,
               user_agent: body.user_agent ?? null,
               updated_at: new Date().toISOString(),
             },
@@ -93,7 +127,7 @@ export const Route = createFileRoute("/api/public/worker/session")({
           if (error) return json({ error: error.message }, 500);
         }
 
-        const status = body.status ?? "ok";
+        const status = state;
         await ctx.admin
           .from("bots")
           .update({
