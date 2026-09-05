@@ -112,6 +112,22 @@ function WorkersPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  // Freigabe fuer den Echtbetrieb — nur hier, nie durch den Worker selbst.
+  const setLive = useMutation({
+    mutationFn: async ({ id, live }: { id: string; live: boolean }) => {
+      const { error } = await supabase
+        .from("workers")
+        .update({ live_enabled: live, mode: live ? "live" : "dry_run" })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: (_d, v) => {
+      toast.success(v.live ? "Echtbetrieb freigegeben" : "Auf Probebetrieb gestellt");
+      qc.invalidateQueries({ queryKey: ["workers"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const remove = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("workers").delete().eq("id", id);
