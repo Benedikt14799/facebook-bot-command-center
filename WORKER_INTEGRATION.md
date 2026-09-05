@@ -213,3 +213,16 @@ Alternativ lassen sich die Cookies im Cockpit als JSON einfügen.
 - Alle Worker-Endpunkte erwarten als Body ein JSON-Objekt. Ungültiges JSON sowie Arrays, Zahlen, Strings und `null` werden mit HTTP 400 und `{ "error": "Ungültiger JSON-Body." }` abgelehnt. Ein leerer Body gilt als `{}`; Pflichtfeldprüfungen greifen weiterhin.
 - `poll` liefert nie mehr als 25 Aufträge, unabhängig vom gewünschten `limit`.
 - Wiederholung fehlgeschlagener Aufträge: Der ursprüngliche Auftrag bleibt mit seiner ID, dem Status `failed` und dem Fehlertext erhalten. Es entsteht ein neuer Auftrag im Status `pending` mit `retried_from_job_id` als Verweis auf den Ursprung.
+- Alle Fehlerantworten (auch fehlendes oder ungültiges Worker-Token) enthalten einen JSON-Körper mit `error`.
+
+### `result` bei bereits abgeschlossenen Aufträgen
+
+| Fall                                                    | Antwort                                        |
+| ------------------------------------------------------- | ---------------------------------------------- |
+| unbekannter oder fehlender Status / fehlende `job_id`   | HTTP 400, Auftrag unverändert                  |
+| gleicher Status **und** gleiche `result`/`error`-Inhalte | HTTP 200 `{ "ok": true, "unchanged": true }`   |
+| gleicher Status, abweichender Inhalt                    | HTTP 409, `reason: "result_mismatch"`          |
+| abweichender Status                                     | HTTP 409, `reason: "status_mismatch"`          |
+
+Der Vergleich der Inhalte ist reihenfolgeunabhängig. In allen 400/409-Fällen bleiben
+Auftrag, Fehlertext, Nachrichten und Kontaktakte unverändert.
