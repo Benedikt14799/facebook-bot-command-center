@@ -36,6 +36,8 @@ const nav = [
   { to: "/workers", label: "Worker", icon: Server },
   { to: "/worker-health", label: "Worker-Health", icon: HeartPulse },
   { to: "/unlock", label: "Freischaltung", icon: KeyRound },
+  { to: "/test-data", label: "Testdaten", icon: FlaskConical },
+
 ] as const;
 
 export function AppShell({
