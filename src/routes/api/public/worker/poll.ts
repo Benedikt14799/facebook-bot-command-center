@@ -104,7 +104,7 @@ export const Route = createFileRoute("/api/public/worker/poll")({
         const { data: claimed, error } = await ctx.admin.rpc("claim_jobs", {
           p_user_id: ctx.userId,
           p_worker_id: ctx.workerId,
-          p_bot_ids: allowedBotIds.length ? allowedBotIds : null,
+          p_bot_ids: (allowedBotIds.length ? allowedBotIds : null) as unknown as string[],
           p_types: allowedTypes,
           p_limit: limit,
         });
