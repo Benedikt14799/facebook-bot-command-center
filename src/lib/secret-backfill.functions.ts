@@ -14,7 +14,10 @@ export const encryptLegacySecrets = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { requireEncryptSecret } = await import("@/lib/secret-crypto.server");
-    const supabase = context.supabase;
+    // Sitzungsdaten sind fuer Benutzer nicht lesbar; der Lauf nutzt daher den
+    // Serverzugang, arbeitet aber ausschliesslich auf den eigenen Daten.
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const supabase = supabaseAdmin;
 
     let sessions = 0;
     let secrets = 0;
