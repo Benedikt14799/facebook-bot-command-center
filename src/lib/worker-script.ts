@@ -372,15 +372,20 @@ def run_job(job: dict) -> dict:
 
 
 def main():
-    print("FB/Control Worker gestartet")
+    print(f"FB/Control Worker gestartet (Modus: {MODE})")
     while True:
         try:
-            api("heartbeat", {
-                "version": "3.0.0",
+            hb = api("heartbeat", {
+                "version": "3.1.0",
                 "contract_version": "1.0",
                 "capabilities": ["like", "comment", "scan", "dm", "reply"],
-                "mode": "live",
+                "mode": MODE,
+                **({"bot_id": BOT_ID} if BOT_ID else {}),
             })
+            # Wirksam ist immer der Modus vom Server, nie der eigene Wunsch.
+            effective_mode = (hb or {}).get("effective_mode", "dry_run")
+            if effective_mode != "live":
+                print("Probebetrieb: es werden keine Plattformaktionen ausgefuehrt.")
             # Zuerst pruefen, ob du einen Bot von Hand freischalten willst.
             handle_unlock_requests()
             jobs = api("poll", {"limit": 3}).get("jobs", [])
@@ -389,10 +394,30 @@ def main():
                 continue
             for job in jobs:
                 try:
+                    if effective_mode != "live":
+                        api("result", {
+                            "job_id": job["id"],
+                            "status": "skipped",
+                            "result": {"verified": False, "dry_run": True},
+                            "error_code": "DRY_RUN",
+                            "error": "Probebetrieb: keine Aktion ausgefuehrt.",
+                            "error_retryable": False,
+                        })
+                        continue
                     result = run_job(job) or {}
-                    # Vertrag 1.0: "done" nur mit ausdruecklicher Bestaetigung.
-                    result["verified"] = True
-                    api("result", {"job_id": job["id"], "status": "done", "result": result})
+                    # Vertrag 1.0: "done" nur, wenn die Ausfuehrung wirklich
+                    # bestaetigt wurde. Niemals pauschal setzen.
+                    if result.get("verified") is True:
+                        api("result", {"job_id": job["id"], "status": "done", "result": result})
+                    else:
+                        api("result", {
+                            "job_id": job["id"],
+                            "status": "failed",
+                            "result": result,
+                            "error": "Ausfuehrung nicht verifiziert.",
+                            "error_code": "not_verified",
+                            "error_retryable": True,
+                        })
                 except Exception as exc:  # Fehler melden, damit das Cockpit reagieren kann
                     traceback.print_exc()
                     api("result", {
