@@ -177,6 +177,8 @@ ausschließlich aus dem Secret-Management (`WORKER_SECRETS_KEY_V1`) und ist
   `result.verified = false`. Keine Nachrichten, keine Kontaktakten.
 - **`done`:** nur bei `result.verified === true` und nur von einem für den
   Echtbetrieb freigegebenen Worker (sonst `dry_run_mode`, HTTP 409).
+- **Bot-Filter im Poll:** Ein übermittelter `bot_id` wird immer gegen die
+  serverseitige Zuordnung geprüft; ein Worker kann keinen Bot selbst wählen.
 - **Bot-Bindung:** Jeder Zugriff mit `bot_id` (session, events, messages,
   recipients, ip-report, unlock, result) prüft `worker_bots`; fremder Bot →
   HTTP 403 `forbidden`.

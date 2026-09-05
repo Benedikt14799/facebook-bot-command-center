@@ -43,7 +43,7 @@ export async function authenticateWorker(request: Request): Promise<WorkerCtx | 
     .eq("token_hash", hash)
     .maybeSingle();
 
-  if (error) return json({ error: { code: "auth_error", message: "Auth error" } }, 500);
+  if (error) return json({ error: { code: "server_error", message: "Auth error" } }, 500);
   if (!tokenRow || tokenRow.revoked_at)
     return json({ error: { code: "unauthorized", message: "Invalid worker token" } }, 401);
 
