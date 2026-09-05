@@ -35,7 +35,22 @@ export const Route = createFileRoute("/api/public/worker/messages")({
         } | null;
 
         if (!body?.body || !body.direction) {
-          return json({ error: "direction and body required" }, 400);
+          return json(
+            { error: { code: "invalid_payload", message: "direction and body required" } },
+            400,
+          );
+        }
+
+        // Idempotenz: dieselbe Fremdkennung darf keine zweite Nachricht und
+        // keine doppelten Nebenwirkungen erzeugen.
+        if (body.external_id) {
+          const { data: known } = await ctx.admin
+            .from("messages")
+            .select("id")
+            .eq("user_id", ctx.userId)
+            .eq("external_id", body.external_id)
+            .maybeSingle();
+          if (known) return json({ ok: true, unchanged: true, message_id: known.id });
         }
 
         const direction = body.direction === "in" ? "in" : "out";
@@ -79,7 +94,10 @@ export const Route = createFileRoute("/api/public/worker/messages")({
           external_id: body.external_id ?? null,
           source: "worker",
         });
-        if (error) return json({ error: error.message }, 500);
+        // Rennen auf dieselbe Fremdkennung: still und idempotent beenden.
+        if (error && (error as { code?: string }).code === "23505")
+          return json({ ok: true, unchanged: true });
+        if (error) return json({ error: { code: "server_error", message: error.message } }, 500);
 
         if (recipientId) {
           await logContact(ctx.admin, {
